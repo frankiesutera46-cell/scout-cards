@@ -66,8 +66,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 
 /* ---- BODY ---- */
 .eb{display:flex;flex:1;min-height:0}
-.field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC}
+.field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
 .field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15)}
+.inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
 
 /* ---- RIGHT PANEL ---- */
 .rp{width:230px;border-left:1px solid rgba(58,58,56,.12);padding:14px;overflow-y:auto;flex-shrink:0;background:#F7F7F5}
@@ -854,6 +855,47 @@ function buildField(){
   return s;
 }
 
+// Inline edit: overlay an input on top of SVG text
+function startInlineEdit(key,val,callback){
+  var existing=document.querySelector('.inline-edit');
+  if(existing)existing.remove();
+  var svg=document.getElementById('fSvg');
+  if(!svg)return;
+  var wrap=svg.closest('.field-wrap');
+  if(!wrap)return;
+  // Find the target rect or text element
+  var tgt=svg.querySelector('[data-dp="t_'+key+'"]');
+  if(!tgt&&key.indexOf('tb_')===0)tgt=svg.querySelector('[data-tb="'+key.substring(3)+'"]');
+  if(!tgt)return;
+  var svgRect=svg.getBoundingClientRect();
+  var tgtRect=tgt.getBoundingClientRect();
+  var inp=document.createElement('input');
+  inp.type='text';
+  inp.className='inline-edit';
+  inp.value=val||'';
+  var wrapRect=wrap.getBoundingClientRect();
+  inp.style.left=(tgtRect.left-wrapRect.left)+'px';
+  inp.style.top=(tgtRect.top-wrapRect.top)+'px';
+  inp.style.width=Math.max(120,tgtRect.width+20)+'px';
+  inp.style.height=tgtRect.height+'px';
+  inp.style.fontSize=(tgtRect.height*0.7)+'px';
+  wrap.appendChild(inp);
+  inp.focus();
+  inp.select();
+  var done=false;
+  function finish(){
+    if(done)return;done=true;
+    var nv=inp.value;
+    if(inp.parentNode)inp.remove();
+    callback(nv);
+  }
+  inp.addEventListener('keydown',function(e2){
+    if(e2.key==='Enter'){e2.preventDefault();finish()}
+    if(e2.key==='Escape'){done=true;if(inp.parentNode)inp.remove()}
+  });
+  inp.addEventListener('blur',finish);
+}
+
 // Build draggable text labels for play name, D&D, notes on the field
 var LABEL_DEF_SZ={fmhash:14,play:14,dd:14,notes:11};
 function labelSz(card,key){if(!card.lsz)card.lsz={};return card.lsz[key]||(LABEL_DEF_SZ[key]||9)}
@@ -1560,16 +1602,22 @@ function bind(){
         if(dp.indexOf('t_')===0){
           var labelKey=dp.substring(2);
           selLabel=labelKey;selPlayer=null;
-          // Header labels (play, dd) are not draggable — click to edit
+          // Header labels (play, dd) are not draggable — inline edit
           if(labelKey==='play'){
-            var nv=prompt('Play name:',cards[activeIdx].play||'');
-            if(nv!==null){cards[activeIdx].play=nv;var pEl=document.getElementById('pI');if(pEl)pEl.value=nv;}
-            selLabel=null;e.preventDefault();render();bindDrag();return;
+            selLabel=null;e.preventDefault();
+            startInlineEdit('play',cards[activeIdx].play||'',function(nv){
+              cards[activeIdx].play=nv;var pEl=document.getElementById('pI');if(pEl)pEl.value=nv;
+              render();bindDrag();
+            });
+            return;
           }
           if(labelKey==='dd'){
-            var nv2=prompt('Down & Distance:',cards[activeIdx].dd||'');
-            if(nv2!==null){cards[activeIdx].dd=nv2;var dEl=document.getElementById('dI');if(dEl)dEl.value=nv2;}
-            selLabel=null;e.preventDefault();render();bindDrag();return;
+            selLabel=null;e.preventDefault();
+            startInlineEdit('dd',cards[activeIdx].dd||'',function(nv){
+              cards[activeIdx].dd=nv;var dEl=document.getElementById('dI');if(dEl)dEl.value=nv;
+              render();bindDrag();
+            });
+            return;
           }
           var pt2=svgPoint(svg,e);
           var curCard2=cards[activeIdx];
@@ -1881,45 +1929,46 @@ function bind(){
       }
       e.preventDefault();return;
     }
-    // Label editing on double-click
+    // Label editing on double-click (inline)
     var dpAttr=tgt.getAttribute&&tgt.getAttribute('data-dp');
     if(dpAttr&&dpAttr.indexOf('t_')===0){
       var lk=dpAttr.substring(2);
       pushUndo();
       if(lk==='play'){
-        var nv=prompt('Play name:',card.play||'');
-        if(nv!==null){card.play=nv;document.getElementById('pI').value=nv;render()}
+        startInlineEdit('play',card.play||'',function(nv){
+          card.play=nv;var pEl=document.getElementById('pI');if(pEl)pEl.value=nv;render();
+        });
       }else if(lk==='dd'){
-        var nv2=prompt('Down & Distance:',card.dd||'');
-        if(nv2!==null){card.dd=nv2;document.getElementById('dI').value=nv2;render()}
+        startInlineEdit('dd',card.dd||'',function(nv){
+          card.dd=nv;var dEl=document.getElementById('dI');if(dEl)dEl.value=nv;render();
+        });
       }else if(lk==='notes'){
-        var nv3=prompt('Card notes:',card.notes||'');
-        if(nv3!==null){card.notes=nv3;document.getElementById('nI').value=nv3;render()}
+        startInlineEdit('notes',card.notes||'',function(nv){
+          card.notes=nv;var nEl=document.getElementById('nI');if(nEl)nEl.value=nv;render();
+        });
       }else if(lk==='fmhash'){
-        // fmhash is auto-generated, not directly editable — select it for resize/move
         selLabel='fmhash';render();
       }else if(lk.indexOf('pn_')===0){
         var pnk2=lk.substring(3);
-        var nv4=prompt('Note for '+pnk2+':',card.pn[pnk2]||'');
-        if(nv4!==null){
-          if(nv4===''){delete card.pn[pnk2];delete card.lpos[lk];if(card.lsz)delete card.lsz[lk]}
-          else{card.pn[pnk2]=nv4}
+        startInlineEdit(lk,card.pn[pnk2]||'',function(nv){
+          if(nv===''){delete card.pn[pnk2];delete card.lpos[lk];if(card.lsz)delete card.lsz[lk]}
+          else{card.pn[pnk2]=nv}
           render();
-        }
+        });
       }
       e.preventDefault();return;
     }
-    // Text box editing
+    // Text box editing (inline)
     var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
     if(tbAttr!==null&&tbAttr!==undefined){
       var idx=parseInt(tbAttr);
       var tb=card.textBoxes[idx];
       if(tb){
-        var newText=prompt('Edit text:',tb.text);
-        if(newText===null)return;
-        if(newText===''){card.textBoxes.splice(idx,1);selTextBox=null}
-        else{tb.text=newText}
-        render();
+        startInlineEdit('tb_'+idx,tb.text,function(nv){
+          if(nv===''){card.textBoxes.splice(idx,1);selTextBox=null}
+          else{tb.text=nv}
+          render();
+        });
       }
       e.preventDefault();return;
     }
