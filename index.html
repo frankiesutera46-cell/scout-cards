@@ -346,6 +346,8 @@ function loadFromCloud(){
   });
 }
 
+function getScoutReports(){return games[activeGameIdx].scoutReports||(games[activeGameIdx].scoutReports=[])}
+
 function buildSavePayload(){
   // Sync current state back to games array
   games[activeGameIdx].cards=cards;
@@ -644,7 +646,7 @@ var nid=1;
 function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:''}}
 
 // Multi-week game system
-function mkGame(name){return{name:name||'Week 1',cards:[mkCard()]}}
+function mkGame(name){return{name:name||'Week 1',cards:[mkCard()],scoutReports:[]}}
 var games=[mkGame('Week 1')];
 var activeGameIdx=0;
 var cards=games[0].cards;
@@ -1304,6 +1306,7 @@ function render(){
   h+='<option value="">Grid</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
   h+='</select>';
   h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">Share</button>';
+  h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
   h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Team</button>';
   h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
   h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700">?</button>';
@@ -1376,6 +1379,37 @@ function render(){
   }
   h+='</div>';
 
+  h+='</div></div>';
+
+  // Scouting Reports Modal
+  var sr=getScoutReports();
+  h+='<div id="reportsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
+  h+='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Scouting Reports</span><button id="reportsClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-bottom:16px;letter-spacing:.05em">Upload scouting report PDFs for <strong>'+esc(gameTitle)+'</strong>. These change each week.</div>';
+  // Upload area
+  h+='<div style="margin-bottom:16px;padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px;text-align:center">';
+  h+='<input type="file" id="srUploadFile" accept=".pdf" multiple style="display:none"/>';
+  h+='<button id="srUploadBtn" style="padding:8px 20px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">+ Upload PDF</button>';
+  h+='<div id="srUploadStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-top:6px;min-height:16px"></div>';
+  h+='</div>';
+  // Report list
+  h+='<div id="srList">';
+  if(sr.length===0){
+    h+='<div style="text-align:center;padding:20px;color:rgba(58,58,56,.35);font-family:\'JetBrains Mono\',monospace;font-size:11px">No scouting reports for this week</div>';
+  }else{
+    for(var sri=0;sri<sr.length;sri++){
+      var rpt=sr[sri];
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid rgba(58,58,56,.1);border-radius:2px;margin-bottom:6px">';
+      if(rpt.thumb){h+='<img src="'+rpt.thumb+'" style="width:48px;height:62px;object-fit:cover;border-radius:2px;border:1px solid rgba(58,58,56,.1);flex-shrink:0"/>';}
+      else{h+='<div style="width:48px;height:62px;background:rgba(58,58,56,.06);border-radius:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">&#x1F4CB;</div>';}
+      h+='<div style="flex:1;min-width:0"><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:13px;color:#3A3A38;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(rpt.name)+'</div>';
+      h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.35);margin-top:2px">Scouting Report</div></div>';
+      h+='<button class="sr-del-btn" data-sridx="'+sri+'" style="background:none;border:1px solid rgba(255,140,105,.3);color:#FF8C69;font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:500;letter-spacing:.05em;text-transform:uppercase;flex-shrink:0">Delete</button>';
+      h+='</div>';
+    }
+  }
+  h+='</div>';
   h+='</div></div>';
 
   // Help Modal
@@ -2172,6 +2206,62 @@ function bind(){
         playbooksModal.style.display='none';
         render();
       });
+    }
+  }
+
+  // Scouting Reports modal
+  var btnReports=document.getElementById('btnReports');
+  var reportsModal=document.getElementById('reportsModal');
+  if(btnReports&&reportsModal){
+    btnReports.addEventListener('click',function(){reportsModal.style.display='flex'});
+    document.getElementById('reportsClose').addEventListener('click',function(){reportsModal.style.display='none'});
+    reportsModal.addEventListener('click',function(e){if(e.target===reportsModal)reportsModal.style.display='none'});
+    // Upload
+    var srUploadBtn=document.getElementById('srUploadBtn');
+    var srUploadFile=document.getElementById('srUploadFile');
+    srUploadBtn.addEventListener('click',function(){srUploadFile.click()});
+    srUploadFile.addEventListener('change',async function(){
+      if(!this.files.length)return;
+      if(!supabase||!currentUser){document.getElementById('srUploadStatus').textContent='Sign in to upload';return}
+      var status=document.getElementById('srUploadStatus');
+      var sr=getScoutReports();
+      for(var fi=0;fi<this.files.length;fi++){
+        var file=this.files[fi];
+        status.textContent='Uploading '+(fi+1)+'/'+this.files.length+'...';
+        var thumb=await pdfThumbnail(file);
+        var storagePath=currentUser.id+'/reports/'+Date.now()+'_'+file.name;
+        var upRes=await supabase.storage.from('playbooks').upload(storagePath,file,{contentType:'application/pdf',upsert:true});
+        if(!upRes.error){
+          sr.push({name:file.name.replace(/\.pdf$/i,''),path:storagePath,thumb:thumb});
+        }else{
+          status.textContent='Upload failed: '+upRes.error.message;
+        }
+      }
+      status.textContent='Done!';
+      srUploadFile.value='';
+      autoSave();
+      reportsModal.style.display='none';
+      render();
+    });
+    // Delete buttons
+    var srDelBtns=document.querySelectorAll('.sr-del-btn');
+    for(var sdi=0;sdi<srDelBtns.length;sdi++){
+      (function(btn){
+        btn.addEventListener('click',async function(){
+          var idx=parseInt(btn.getAttribute('data-sridx'));
+          var sr=getScoutReports();
+          var rpt=sr[idx];
+          if(!rpt)return;
+          if(!confirm('Delete "'+rpt.name+'"?'))return;
+          if(supabase&&currentUser&&rpt.path){
+            await supabase.storage.from('playbooks').remove([rpt.path]);
+          }
+          sr.splice(idx,1);
+          autoSave();
+          reportsModal.style.display='none';
+          render();
+        });
+      })(srDelBtns[sdi]);
     }
   }
 
@@ -3210,6 +3300,17 @@ function shareToPlayers(){
   var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:460px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
   mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Share to Players</span><button id="shareModalClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
   mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">'+cardCount+' scout card'+(cardCount!==1?'s':'')+' from <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
+  // Scouting reports info
+  var srForShare=getScoutReports();
+  if(srForShare.length>0){
+    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
+    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:6px;font-weight:500">Scouting Reports ('+srForShare.length+' PDF'+(srForShare.length!==1?'s':'')+')</label>';
+    for(var sri=0;sri<srForShare.length;sri++){
+      mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4CB; '+esc(srForShare[sri].name)+'</div>';
+    }
+    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">Week-specific reports included in this share.</div>';
+    mh+='</div>';
+  }
   // Playbook library info
   if(userPlaybooks.length>0){
     mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
@@ -3265,7 +3366,12 @@ function shareToPlayers(){
       }
 
       var glossaryMeta=glossaryPdf?{name:glossaryPdf.name,path:glossaryPdf.path,thumb:glossaryPdf.thumb||''}:null;
-      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta};
+      var reportsMeta=[];
+      var srList=getScoutReports();
+      for(var ri=0;ri<srList.length;ri++){
+        reportsMeta.push({name:srList[ri].name,path:srList[ri].path,thumb:srList[ri].thumb||''});
+      }
+      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta,reports:reportsMeta};
 
       status.textContent='Saving to cloud...';
       var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
@@ -3297,9 +3403,11 @@ function renderShareViewer(data){
   var logo=brand.logoUrl||'';
   var playbooks=data.playbooks||[];
   var glossary=data.glossary||null;
+  var reports=data.reports||[];
   var hasPb=playbooks.length>0;
   var hasGlossary=!!glossary;
-  var hasTabs=hasPb||hasGlossary;
+  var hasReports=reports.length>0;
+  var hasTabs=hasPb||hasGlossary||hasReports;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Juice Box Football';
   // Ensure viewport meta exists for mobile
@@ -3426,17 +3534,41 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   html+='<p>Tap a card to enlarge · Click Watch Film for Hudl</p>';
   html+='</div>';
 
-  // Tabs (if playbooks or glossary exist)
+  // Tabs
   if(hasTabs){
     html+='<div class="sv-tabs">';
-    html+='<button class="sv-tab active" data-tab="cards">Scout Cards</button>';
+    if(hasReports){html+='<button class="sv-tab active" data-tab="reports">Scouting Report</button>';}
+    html+='<button class="sv-tab'+(hasReports?'':' active')+'" data-tab="cards">Scout Cards</button>';
     if(hasPb){html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';}
     if(hasGlossary){html+='<button class="sv-tab" data-tab="glossary">Glossary</button>';}
     html+='</div>';
   }
 
   // === SCOUT CARDS SECTION ===
-  html+='<div class="sv-section active" id="svCardsSection">';
+  // === SCOUTING REPORTS SECTION ===
+  if(hasReports){
+    html+='<div class="sv-section active" id="svReportsSection">';
+    html+='<div class="sv-grid">';
+    for(var ri=0;ri<reports.length;ri++){
+      var rpt=reports[ri];
+      var rptUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(rpt.path);
+      html+='<a class="sv-pb-card" href="'+esc(rptUrl)+'" target="_blank" rel="noopener">';
+      html+='<div class="sv-pb-thumb">';
+      if(rpt.thumb){html+='<img src="'+rpt.thumb+'"/>';}
+      else{html+='<div class="sv-pb-icon">&#x1F4CB;</div>';}
+      html+='</div>';
+      html+='<div class="sv-pb-info">';
+      html+='<div class="sv-pb-name">'+esc(rpt.name)+'</div>';
+      html+='<div class="sv-pb-meta">Scouting Report</div>';
+      html+='<div class="sv-pb-open">Open Report</div>';
+      html+='</div></a>';
+    }
+    html+='</div>';
+    html+='</div>';
+  }
+
+  // === SCOUT CARDS SECTION ===
+  html+='<div class="sv-section'+(hasReports?'':' active')+'" id="svCardsSection">';
   html+='<div class="sv-grid">';
   for(var i=0;i<shareCards.length;i++){
     var sc=shareCards[i];
@@ -3517,6 +3649,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
     var cardsSection=document.getElementById('svCardsSection');
     var pbSection=document.getElementById('svPlaybookSection');
     var glossarySection=document.getElementById('svGlossarySection');
+    var reportsSection=document.getElementById('svReportsSection');
     for(var tbi=0;tbi<tabs.length;tbi++){
       (function(tab){
         tab.addEventListener('click',function(){
@@ -3526,6 +3659,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
           cardsSection.classList.toggle('active',which==='cards');
           if(pbSection)pbSection.classList.toggle('active',which==='playbook');
           if(glossarySection)glossarySection.classList.toggle('active',which==='glossary');
+          if(reportsSection)reportsSection.classList.toggle('active',which==='reports');
         });
       })(tabs[tbi]);
     }
