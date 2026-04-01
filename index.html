@@ -2920,7 +2920,8 @@ function renderShareViewer(data){
   html+='.sv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}';
   html+='@media(max-width:900px){.sv-grid{grid-template-columns:repeat(2,1fr)}}';
   html+='@media(max-width:520px){.sv-grid{grid-template-columns:1fr}}';
-  html+='.sv-card{background:#1a1a1a;border-radius:8px;overflow:hidden;border:1px solid #333}';
+  html+='.sv-card{background:#1a1a1a;border-radius:8px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:transform .15s,border-color .15s}';
+  html+='.sv-card:hover{transform:scale(1.02);border-color:#555}';
   html+='.sv-card img{width:100%;display:block;border-bottom:1px solid #333}';
   html+='.sv-info{padding:10px 12px}';
   html+='.sv-play{font-weight:700;font-size:14px}';
@@ -2930,6 +2931,17 @@ function renderShareViewer(data){
   html+='.sv-film{display:block;margin-top:8px;background:#e11d48;color:#fff;text-align:center;padding:10px 0;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;transition:background .15s}';
   html+='.sv-film:hover{background:#c01640}';
   html+='.sv-foot{text-align:center;padding:24px 0;color:#555;font-size:11px}';
+  // Lightbox overlay
+  html+='.sv-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;flex-direction:column;padding:20px;cursor:pointer}';
+  html+='.sv-overlay.open{display:flex}';
+  html+='.sv-overlay img{max-width:90%;max-height:65vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}';
+  html+='.sv-overlay .sv-lb-info{text-align:center;margin-top:16px;max-width:600px}';
+  html+='.sv-overlay .sv-lb-play{font-size:22px;font-weight:700}';
+  html+='.sv-overlay .sv-lb-dd{font-size:14px;color:#aaa;margin-top:4px}';
+  html+='.sv-overlay .sv-lb-tags{margin-top:8px}';
+  html+='.sv-overlay .sv-film{display:inline-block;margin-top:12px;padding:12px 32px;font-size:15px;border-radius:8px}';
+  html+='.sv-overlay .sv-close{position:absolute;top:16px;right:24px;font-size:32px;color:#fff;cursor:pointer;opacity:.6;transition:opacity .15s;background:none;border:none;font-family:inherit}';
+  html+='.sv-overlay .sv-close:hover{opacity:1}';
   html+='</style>';
 
   html+='<div class="sv-wrap">';
@@ -2941,21 +2953,67 @@ function renderShareViewer(data){
   html+='<div class="sv-grid">';
   for(var i=0;i<shareCards.length;i++){
     var sc=shareCards[i];
-    html+='<div class="sv-card">';
+    html+='<div class="sv-card" data-idx="'+i+'">';
     if(sc.img){html+='<img src="'+sc.img+'"/>';}
     html+='<div class="sv-info">';
     html+='<div class="sv-play">'+(sc.play||'Unnamed')+'</div>';
     if(sc.dd){html+='<div class="sv-dd">'+esc(sc.dd)+'</div>';}
     if(sc.tags&&sc.tags.length){html+='<div class="sv-tags">';for(var ti=0;ti<sc.tags.length;ti++){html+='<span class="sv-tag">'+esc(sc.tags[ti])+'</span>';}html+='</div>';}
     if(sc.hudlUrl){
-      html+='<a href="'+esc(sc.hudlUrl)+'" target="_blank" rel="noopener" class="sv-film">▶ Watch Film</a>';
+      html+='<a href="'+esc(sc.hudlUrl)+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">▶ Watch Film</a>';
     }
     html+='</div></div>';
   }
   html+='</div>';
   html+='<div class="sv-foot">Scout Cards · Game Prep System</div>';
   html+='</div>';
+
+  // Lightbox overlay
+  html+='<div class="sv-overlay" id="svOverlay">';
+  html+='<button class="sv-close" id="svClose">&times;</button>';
+  html+='<img id="svLbImg" src=""/>';
+  html+='<div class="sv-lb-info">';
+  html+='<div class="sv-lb-play" id="svLbPlay"></div>';
+  html+='<div class="sv-lb-dd" id="svLbDd"></div>';
+  html+='<div class="sv-lb-tags" id="svLbTags"></div>';
+  html+='<div id="svLbFilm"></div>';
+  html+='</div></div>';
+
   document.body.innerHTML=html;
+
+  // Lightbox logic
+  var overlay=document.getElementById('svOverlay');
+  var lbImg=document.getElementById('svLbImg');
+  var lbPlay=document.getElementById('svLbPlay');
+  var lbDd=document.getElementById('svLbDd');
+  var lbTags=document.getElementById('svLbTags');
+  var lbFilm=document.getElementById('svLbFilm');
+  var svClose=document.getElementById('svClose');
+
+  function openLightbox(idx){
+    var sc=shareCards[idx];if(!sc)return;
+    lbImg.src=sc.img||'';
+    lbPlay.textContent=sc.play||'Unnamed';
+    lbDd.textContent=sc.dd||'';
+    var tagH='';
+    if(sc.tags&&sc.tags.length){for(var t=0;t<sc.tags.length;t++){tagH+='<span class="sv-tag" style="font-size:12px;padding:3px 10px">'+sc.tags[t]+'</span>';}}
+    lbTags.innerHTML=tagH;
+    if(sc.hudlUrl){lbFilm.innerHTML='<a href="'+sc.hudlUrl+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">▶ Watch Film</a>';}
+    else{lbFilm.innerHTML='';}
+    overlay.classList.add('open');
+  }
+  function closeLightbox(){overlay.classList.remove('open');}
+
+  // Card clicks
+  var cardEls=document.querySelectorAll('.sv-card');
+  for(var ci=0;ci<cardEls.length;ci++){
+    (function(el){el.addEventListener('click',function(){openLightbox(parseInt(el.getAttribute('data-idx')))})})(cardEls[ci]);
+  }
+  // Close on overlay background click
+  overlay.addEventListener('click',function(e){if(e.target===overlay)closeLightbox()});
+  svClose.addEventListener('click',closeLightbox);
+  // Close on Escape
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox()});
 }
 
 // ===== PRACTICE SCRIPT EXPORT =====
