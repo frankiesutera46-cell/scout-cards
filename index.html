@@ -596,7 +596,7 @@ function routePath(rk,px,py,playerIsOnRight){
     rswp: [[-10*X*m,0],[-4*X*m,-8*Y]],
     rdive:[[0,-6*Y]],
     // Block schemes
-    bpass:  [[0,0.5*Y]],                                            // Pass Pro - short set back
+    bpass:  [[0,1.2*Y]],                                             // Pass Pro - set back
     bdrive: [[0,-1.5*Y]],                                           // Drive/Base - straight ahead short
     bdown:  [[3*X*m,-1.5*Y]],                                       // Down block - angle inside
     breach: [[-3*X*m,-1.5*Y]],                                      // Reach block - angle outside
@@ -1059,7 +1059,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
       for(var j=1;j<pts.length;j++)d+=' L '+pts[j].x+' '+pts[j].y;
       var isMot=rt.t==='motion',isBlk=rt.t==='block';
       var isPassPro=(ra==='bpass');
-      var dash=isMot?' stroke-dasharray="6,4"':(isPassPro?' stroke-dasharray="4,3"':'');
+      var dash=isMot?' stroke-dasharray="6,4"':'';
       var sw=isBlk?2.5:2;
       s+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
       var ep=pts[pts.length-1];
@@ -1073,13 +1073,22 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
           s+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
         }
       } else {
-        // Blocking endpoint: flat perpendicular cap for all
+        // Blocking endpoint symbols
         if(pts.length>=2){
           var lp2=pts[pts.length-2];
           var ang2=Math.atan2(ep.y-lp2.y,ep.x-lp2.x);
-          var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
-          var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
-          s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+          if(isPassPro){
+            // Pass Pro: wide horizontal bar (kickstand/cup shape)
+            var barW=10;
+            var px1=ep.x+barW*Math.cos(ang2+1.57),py1=ep.y+barW*Math.sin(ang2+1.57);
+            var px2=ep.x+barW*Math.cos(ang2-1.57),py2=ep.y+barW*Math.sin(ang2-1.57);
+            s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
+          } else {
+            // Other blocks: standard perpendicular cap
+            var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
+            var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
+            s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+          }
         }
       }
     }
