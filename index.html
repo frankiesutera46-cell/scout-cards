@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Scout Card Generator</title>
+<title>Juice Box Football</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 190'%3E%3Crect x='78' y='0' width='5.5' height='50' rx='2.75' fill='%23B8A88A' transform='rotate(14,80,25)'/%3E%3Ccircle cx='92' cy='0' r='3.5' fill='%23B8A88A'/%3E%3Crect x='25' y='46' width='80' height='130' rx='4' fill='%232D4A3E'/%3E%3Crect x='25' y='46' width='24' height='130' fill='%233A5E4F'/%3E%3Cpolygon points='22,46 112,46 107,56 27,56' fill='%2324382F'/%3E%3Cpolygon points='27,56 65,46 107,56' fill='%232D4A3E'/%3E%3Ctext x='67' y='118' text-anchor='middle' font-family='Arial,sans-serif' font-size='42' font-weight='bold' fill='%23F5F0E8' letter-spacing='2'%3EJUICE%3C/text%3E%3Crect x='25' y='158' width='80' height='6' fill='%23B8A88A'/%3E%3C/svg%3E"/>
+<meta property="og:title" content="Juice Box Football — Game Prep"/>
+<meta property="og:description" content="Scout cards and film review for your team"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://juiceboxfootball.cc"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
 
 /* ---- TOP BAR ---- */
 .topbar{background:#1A3C2B;border-bottom:1px solid rgba(58,58,56,.2);padding:0 24px;display:flex;align-items:center;gap:16px;height:52px}
 .topbar .brand{display:flex;align-items:center;gap:10px}
-.topbar .brand .logo-mark{width:28px;height:28px;background:#F7F7F5;border-radius:2px;display:flex;align-items:center;justify-content:center}
-.topbar .brand .logo-mark svg{width:16px;height:16px;stroke:#1A3C2B}
-.topbar .brand span{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#F7F7F5}
-.topbar .brand .sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(247,247,245,.5);letter-spacing:0.1em;font-weight:400;margin-left:-4px}
+.topbar .brand .logo-mark{width:28px;height:40px;display:flex;align-items:center;justify-content:center}
+.topbar .brand .logo-mark svg{width:28px;height:40px}
+.topbar .brand span{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:20px;letter-spacing:0.08em;text-transform:uppercase;color:#F7F7F5}
+.topbar .brand .sub{font-family:'Oswald',sans-serif;font-size:8px;color:#B8A88A;letter-spacing:0.3em;font-weight:600;text-transform:uppercase}
 .topbar input{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:6px 12px;border-radius:2px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:border .15s}
 .topbar input:focus{outline:none;border-color:rgba(247,247,245,.5)}
 .topbar input::placeholder{color:rgba(247,247,245,.35)}
@@ -162,10 +167,10 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 #auth-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#F7F7F5;z-index:9999;display:flex;align-items:center;justify-content:center}
 #auth-screen.hidden{display:none}
 .auth-card{background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:4px;padding:48px 40px;width:380px;max-width:90vw;text-align:center}
-.auth-card .auth-logo{width:48px;height:48px;background:#1A3C2B;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px}
-.auth-card .auth-logo svg{width:28px;height:28px;stroke:#F7F7F5}
-.auth-card h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#1A3C2B;margin-bottom:4px}
-.auth-card .auth-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(58,58,56,.5);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px}
+.auth-card .auth-logo{width:60px;height:86px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+.auth-card .auth-logo svg{width:60px;height:86px}
+.auth-card h1{font-family:'Bebas Neue',sans-serif;font-size:32px;font-weight:400;color:#2D4A3E;margin-bottom:2px;letter-spacing:0.06em}
+.auth-card .auth-sub{font-family:'Oswald',sans-serif;font-size:11px;color:#B8A88A;letter-spacing:0.3em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
 .auth-card input{width:100%;padding:10px 14px;border:1px solid rgba(58,58,56,.15);border-radius:2px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:#3A3A38;margin-bottom:10px;transition:border .15s}
 .auth-card input:focus{outline:none;border-color:#1A3C2B}
 .auth-card input::placeholder{color:rgba(58,58,56,.35)}
@@ -196,9 +201,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 <!-- Auth Screen -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#F7F7F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-    <h1>Scout Cards</h1>
-    <div class="auth-sub">Game Prep System</div>
+    <div class="auth-logo"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#2D4A3E"/><rect x="25" y="46" width="24" height="130" fill="#3A5E4F"/><polygon points="22,46 112,46 107,56 27,56" fill="#24382F"/><polygon points="27,56 65,46 107,56" fill="#2D4A3E" stroke="#24382F" stroke-width="0.6"/><text x="67" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="42" font-weight="bold" fill="#F5F0E8" letter-spacing="2">JUICE</text><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>
+    <h1>Juice Box</h1>
+    <div class="auth-sub">Football</div>
     <div class="auth-err" id="authErr"></div>
     <div class="auth-msg" id="authMsg"></div>
     <form id="authForm">
@@ -1268,8 +1273,8 @@ function render(){
 
   // Topbar
   h+='<div class="topbar"><div class="brand">';
-  h+='<div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#F7F7F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>';
-  h+='<div><span>Scout Cards</span><div class="sub">Game Prep System</div></div></div>';
+  h+='<div class="logo-mark"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#F5F0E8"/><rect x="25" y="46" width="24" height="130" fill="#E0D9CC"/><polygon points="22,46 112,46 107,56 27,56" fill="#D6CEBD"/><polygon points="27,56 65,46 107,56" fill="#F5F0E8" stroke="#D6CEBD" stroke-width="0.6"/><text x="67" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="42" font-weight="bold" fill="#2D4A3E" letter-spacing="2">JUICE</text><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>';
+  h+='<div><span>Juice Box</span><div class="sub">Football</div></div></div>';
   h+='<select class="week-sel" id="weekSel">';
   for(var gi=0;gi<games.length;gi++){
     h+='<option value="'+gi+'"'+(gi===activeGameIdx?' selected':'')+'>'+esc(games[gi].name)+'</option>';
@@ -3130,7 +3135,7 @@ function shareToPlayers(){
 
 // ===== SHARE VIEWER (read-only) =====
 function renderShareViewer(data){
-  var game=data.game||'Scout Cards';
+  var game=data.game||'Game Prep';
   var shareCards=data.cards||[];
   var brand=data.branding||{};
   var pc=brand.primaryColor||'#1A3C2B';
@@ -3139,7 +3144,7 @@ function renderShareViewer(data){
   var playbooks=data.playbooks||[];
   var hasPb=playbooks.length>0;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
-  document.title=(tn?tn+' — ':'')+game+' — Film Review';
+  document.title=(tn?tn+' — ':'')+game+' — Juice Box Football';
   // Ensure viewport meta exists for mobile
   if(!document.querySelector('meta[name="viewport"]')){
     var vp=document.createElement('meta');vp.name='viewport';vp.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
@@ -3147,7 +3152,7 @@ function renderShareViewer(data){
   }
   // Load fonts via link tag (more reliable than @import in innerHTML)
   if(!document.querySelector('link[href*="Space+Grotesk"]')){
-    var fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap';
+    var fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap';
     document.head.appendChild(fl);
   }
   document.body.innerHTML='';
@@ -3251,7 +3256,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   html+='<div class="sv-topbar">';
   if(logo){html+='<img class="sv-logo" src="'+esc(logo)+'" onerror="this.style.display=\'none\'"/>';}
   html+='<div class="sv-brand">';
-  html+='<span class="sv-team">'+(tn?esc(tn):'Scout Cards')+'</span>';
+  html+='<span class="sv-team">'+(tn?esc(tn):'Juice Box Football')+'</span>';
   html+='<span class="sv-sub">Game Prep System</span>';
   html+='</div>';
   html+='<div class="sv-right">';
@@ -3313,7 +3318,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
     html+='</div>';
   }
 
-  html+='<div class="sv-foot">Scout Cards · Game Prep System</div>';
+  html+='<div class="sv-foot">Juice Box Football</div>';
   html+='</div>';
 
   // Lightbox overlay
@@ -3530,7 +3535,7 @@ var shareParam=new URLSearchParams(window.location.search).get('share');
 if(shareParam&&supabase){
   supabase.from('shares').select('data').eq('id',shareParam).single().then(function(res){
     if(res.error||!res.data){
-      document.body.innerHTML='<div style="text-align:center;padding:80px 20px;font-family:Arial,sans-serif;color:#333"><h2>Share not found</h2><p style="color:#888;margin-top:8px">This link may have expired or been removed.</p><a href="'+window.location.pathname+'" style="display:inline-block;margin-top:16px;color:#1A3C2B;font-weight:600">← Back to Scout Cards</a></div>';
+      document.body.innerHTML='<div style="text-align:center;padding:80px 20px;font-family:Arial,sans-serif;color:#333"><h2>Share not found</h2><p style="color:#888;margin-top:8px">This link may have expired or been removed.</p><a href="'+window.location.pathname+'" style="display:inline-block;margin-top:16px;color:#1A3C2B;font-weight:600">← Back to Juice Box Football</a></div>';
       return;
     }
     renderShareViewer(res.data.data);
