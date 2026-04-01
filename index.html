@@ -709,6 +709,12 @@ var selTextBox=null; // index of selected text box
 var tbNid=1;
 var selLine=null; // index of selected drawn line
 
+// ===== TEAM BRANDING =====
+var teamBranding={logoUrl:'',teamName:'',primaryColor:'#1A3C2B'};
+function loadBranding(){try{var r=localStorage.getItem('scoutBranding');if(r)teamBranding=Object.assign(teamBranding,JSON.parse(r))}catch(e){}}
+function saveBranding(){try{localStorage.setItem('scoutBranding',JSON.stringify(teamBranding))}catch(e){}}
+loadBranding();
+
 // ===== PRESETS (saved to localStorage) =====
 // Each preset: {name:string, data:object}
 // offPresets: saves current offensive player positions {fk, opos}
@@ -1237,7 +1243,24 @@ function render(){
   h+='<option value="">Grid Export</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
   h+='</select>';
   h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">&#x1F517; Share</button>';
+  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">&#x2699; Team</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
+  h+='</div></div>';
+
+  // Team Branding Modal
+  h+='<div id="brandingModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
+  h+='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:400px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Team Branding</span><button id="brandingClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  h+='<div style="margin-bottom:14px"><label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500">Team Name</label>';
+  h+='<input id="brandTeamName" type="text" value="'+esc(teamBranding.teamName)+'" placeholder="e.g. Corner Canyon Chargers" style="width:100%;padding:8px 10px;border:1px solid rgba(58,58,56,.15);border-radius:2px;font-family:\'Space Grotesk\',sans-serif;font-size:13px"/></div>';
+  h+='<div style="margin-bottom:14px"><label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500">Logo URL</label>';
+  h+='<input id="brandLogoUrl" type="url" value="'+esc(teamBranding.logoUrl)+'" placeholder="https://example.com/logo.png" style="width:100%;padding:8px 10px;border:1px solid rgba(58,58,56,.15);border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px"/>';
+  h+='<div style="font-size:10px;color:rgba(58,58,56,.4);margin-top:3px;font-family:\'JetBrains Mono\',monospace">Paste a direct link to your team logo image</div></div>';
+  h+='<div style="margin-bottom:14px"><label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500">Primary Color</label>';
+  h+='<div style="display:flex;align-items:center;gap:10px"><input id="brandColor" type="color" value="'+esc(teamBranding.primaryColor)+'" style="width:44px;height:34px;border:1px solid rgba(58,58,56,.15);border-radius:2px;cursor:pointer;padding:2px"/>';
+  h+='<span id="brandColorHex" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:#3A3A38">'+esc(teamBranding.primaryColor)+'</span></div></div>';
+  if(teamBranding.logoUrl){h+='<div style="margin-bottom:14px;text-align:center"><img src="'+esc(teamBranding.logoUrl)+'" style="max-height:60px;max-width:200px;object-fit:contain" onerror="this.style.display=\'none\'"/></div>';}
+  h+='<button id="brandingSave" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Save Branding</button>';
   h+='</div></div>';
 
   h+='<div class="layout">';
@@ -1858,6 +1881,26 @@ function bind(){
 
   var btnShare=document.getElementById('btnShare');
   if(btnShare)btnShare.addEventListener('click',function(){shareToPlayers()});
+
+  // Branding modal
+  var btnBranding=document.getElementById('btnBranding');
+  var brandingModal=document.getElementById('brandingModal');
+  if(btnBranding&&brandingModal){
+    btnBranding.addEventListener('click',function(){brandingModal.style.display='flex'});
+    document.getElementById('brandingClose').addEventListener('click',function(){brandingModal.style.display='none'});
+    brandingModal.addEventListener('click',function(e){if(e.target===brandingModal)brandingModal.style.display='none'});
+    var brandColor=document.getElementById('brandColor');
+    var brandColorHex=document.getElementById('brandColorHex');
+    brandColor.addEventListener('input',function(){brandColorHex.textContent=this.value});
+    document.getElementById('brandingSave').addEventListener('click',function(){
+      teamBranding.teamName=document.getElementById('brandTeamName').value.trim();
+      teamBranding.logoUrl=document.getElementById('brandLogoUrl').value.trim();
+      teamBranding.primaryColor=document.getElementById('brandColor').value;
+      saveBranding();
+      brandingModal.style.display='none';
+      render();
+    });
+  }
 
   var btnSignOut=document.getElementById('btnSignOut');
   if(btnSignOut)btnSignOut.addEventListener('click',function(){signOut()});
@@ -2888,7 +2931,7 @@ async function shareToPlayers(){
     shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
   }
   if(shareCards.length===0){alert('No cards to share');return}
-  var payload={game:gameTitle,cards:shareCards};
+  var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor}};
   var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
   if(res.error){
     if(res.error.message&&res.error.message.indexOf('does not exist')>=0){
@@ -2907,47 +2950,77 @@ async function shareToPlayers(){
 function renderShareViewer(data){
   var game=data.game||'Scout Cards';
   var shareCards=data.cards||[];
-  document.title=game+' — Film Review';
+  var brand=data.branding||{};
+  var pc=brand.primaryColor||'#1A3C2B';
+  var tn=brand.teamName||'';
+  var logo=brand.logoUrl||'';
+  document.title=(tn?tn+' — ':'')+game+' — Film Review';
   document.body.innerHTML='';
-  document.body.style.cssText='margin:0;font-family:Arial,sans-serif;background:#111;color:#fff';
+  document.body.style.cssText='margin:0;font-family:Arial,sans-serif;background:#EEEEEC;color:#3A3A38';
 
   var html='<style>';
-  html+='@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");';
-  html+='.sv-wrap{max-width:1200px;margin:0 auto;padding:16px;font-family:"Space Grotesk",Arial,sans-serif}';
-  html+='.sv-hdr{text-align:center;padding:16px 0 24px}';
-  html+='.sv-hdr h1{margin:0;font-size:28px;font-weight:700}';
-  html+='.sv-hdr p{margin:6px 0 0;color:#aaa;font-size:14px}';
-  html+='.sv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}';
+  html+='@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");';
+  html+='*{box-sizing:border-box;margin:0;padding:0}';
+  // Topbar
+  html+='.sv-topbar{background:'+pc+';padding:0 24px;display:flex;align-items:center;gap:14px;height:56px}';
+  html+='.sv-topbar .sv-logo{height:36px;width:36px;object-fit:contain;border-radius:2px}';
+  html+='.sv-topbar .sv-brand{display:flex;flex-direction:column;gap:1px}';
+  html+='.sv-topbar .sv-team{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#F7F7F5}';
+  html+='.sv-topbar .sv-sub{font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(247,247,245,.5);letter-spacing:.1em;font-weight:400}';
+  html+='.sv-topbar .sv-right{margin-left:auto;display:flex;align-items:center;gap:10px}';
+  html+='.sv-topbar .sv-count{font-family:"JetBrains Mono",monospace;color:rgba(247,247,245,.5);font-size:10px;letter-spacing:.1em}';
+  // Wrap
+  html+='.sv-wrap{max-width:1200px;margin:0 auto;padding:20px 16px;font-family:"Space Grotesk",Arial,sans-serif}';
+  // Header
+  html+='.sv-hdr{text-align:center;padding:20px 0 28px}';
+  html+='.sv-hdr h1{margin:0;font-family:"Space Grotesk",sans-serif;font-size:26px;font-weight:700;color:#1A3C2B;letter-spacing:.02em}';
+  html+='.sv-hdr p{margin:6px 0 0;font-family:"JetBrains Mono",monospace;color:rgba(58,58,56,.45);font-size:11px;letter-spacing:.08em}';
+  // Grid
+  html+='.sv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}';
   html+='@media(max-width:900px){.sv-grid{grid-template-columns:repeat(2,1fr)}}';
-  html+='@media(max-width:520px){.sv-grid{grid-template-columns:1fr}}';
-  html+='.sv-card{background:#1a1a1a;border-radius:8px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:transform .15s,border-color .15s}';
-  html+='.sv-card:hover{transform:scale(1.02);border-color:#555}';
-  html+='.sv-card img{width:100%;display:block;border-bottom:1px solid #333}';
+  html+='@media(max-width:520px){.sv-grid{grid-template-columns:1fr;gap:10px}}';
+  // Cards
+  html+='.sv-card{background:#F7F7F5;border-radius:2px;overflow:hidden;border:1px solid rgba(58,58,56,.12);cursor:pointer;transition:transform .15s,box-shadow .15s}';
+  html+='.sv-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08)}';
+  html+='.sv-card img{width:100%;display:block;border-bottom:1px solid rgba(58,58,56,.1)}';
   html+='.sv-info{padding:10px 12px}';
-  html+='.sv-play{font-weight:700;font-size:14px}';
-  html+='.sv-dd{font-size:12px;color:#aaa;margin-top:2px}';
-  html+='.sv-tags{margin-top:4px}';
-  html+='.sv-tag{display:inline-block;background:#333;color:#ccc;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px}';
-  html+='.sv-film{display:block;margin-top:8px;background:#e11d48;color:#fff;text-align:center;padding:10px 0;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;transition:background .15s}';
-  html+='.sv-film:hover{background:#c01640}';
-  html+='.sv-foot{text-align:center;padding:24px 0;color:#555;font-size:11px}';
+  html+='.sv-play{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;color:#3A3A38;letter-spacing:.02em}';
+  html+='.sv-dd{font-family:"JetBrains Mono",monospace;font-size:10px;color:rgba(58,58,56,.45);margin-top:2px;letter-spacing:.05em}';
+  html+='.sv-tags{margin-top:5px}';
+  html+='.sv-tag{display:inline-block;background:rgba(26,60,43,.06);color:'+pc+';font-family:"JetBrains Mono",monospace;font-size:9px;padding:2px 7px;border-radius:2px;margin-right:3px;font-weight:500;letter-spacing:.03em;border:1px solid rgba(26,60,43,.12)}';
+  html+='.sv-film{display:block;margin-top:8px;background:'+pc+';color:#F7F7F5;text-align:center;padding:9px 0;border-radius:2px;text-decoration:none;font-family:"JetBrains Mono",monospace;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;transition:opacity .15s}';
+  html+='.sv-film:hover{opacity:.85}';
+  // Footer
+  html+='.sv-foot{text-align:center;padding:28px 0;font-family:"JetBrains Mono",monospace;color:rgba(58,58,56,.3);font-size:9px;letter-spacing:.1em;text-transform:uppercase}';
   // Lightbox overlay
-  html+='.sv-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;flex-direction:column;padding:20px;cursor:pointer}';
+  html+='.sv-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;flex-direction:column;padding:20px;backdrop-filter:blur(4px)}';
   html+='.sv-overlay.open{display:flex}';
-  html+='.sv-overlay img{max-width:90%;max-height:65vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}';
-  html+='.sv-overlay .sv-lb-info{text-align:center;margin-top:16px;max-width:600px}';
-  html+='.sv-overlay .sv-lb-play{font-size:22px;font-weight:700}';
-  html+='.sv-overlay .sv-lb-dd{font-size:14px;color:#aaa;margin-top:4px}';
-  html+='.sv-overlay .sv-lb-tags{margin-top:8px}';
-  html+='.sv-overlay .sv-film{display:inline-block;margin-top:12px;padding:12px 32px;font-size:15px;border-radius:8px}';
-  html+='.sv-overlay .sv-close{position:absolute;top:16px;right:24px;font-size:32px;color:#fff;cursor:pointer;opacity:.6;transition:opacity .15s;background:none;border:none;font-family:inherit}';
-  html+='.sv-overlay .sv-close:hover{opacity:1}';
+  html+='.sv-overlay img{max-width:90%;max-height:60vh;border-radius:2px;box-shadow:0 8px 40px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1)}';
+  html+='.sv-lb-info{text-align:center;margin-top:20px;max-width:600px}';
+  html+='.sv-lb-play{font-family:"Space Grotesk",sans-serif;font-size:20px;font-weight:700;color:#F7F7F5}';
+  html+='.sv-lb-dd{font-family:"JetBrains Mono",monospace;font-size:12px;color:rgba(247,247,245,.5);margin-top:4px;letter-spacing:.05em}';
+  html+='.sv-lb-tags{margin-top:8px}';
+  html+='.sv-overlay .sv-tag{background:rgba(255,255,255,.1);color:#F7F7F5;border-color:rgba(255,255,255,.15);font-size:10px;padding:3px 10px}';
+  html+='.sv-overlay .sv-film{display:inline-block;margin-top:14px;padding:12px 36px;font-size:12px;border-radius:2px}';
+  html+='.sv-close{position:absolute;top:16px;right:24px;font-size:28px;color:#F7F7F5;cursor:pointer;opacity:.5;transition:opacity .15s;background:none;border:none;font-family:"JetBrains Mono",monospace}';
+  html+='.sv-close:hover{opacity:1}';
   html+='</style>';
+
+  // Topbar
+  html+='<div class="sv-topbar">';
+  if(logo){html+='<img class="sv-logo" src="'+esc(logo)+'" onerror="this.style.display=\'none\'"/>';}
+  html+='<div class="sv-brand">';
+  html+='<span class="sv-team">'+(tn?esc(tn):'Scout Cards')+'</span>';
+  html+='<span class="sv-sub">Game Prep System</span>';
+  html+='</div>';
+  html+='<div class="sv-right">';
+  html+='<span class="sv-count">'+shareCards.length+' play'+(shareCards.length!==1?'s':'')+'</span>';
+  html+='</div></div>';
 
   html+='<div class="sv-wrap">';
   html+='<div class="sv-hdr">';
-  html+='<h1>🏈 '+esc(game)+'</h1>';
-  html+='<p>'+shareCards.length+' play'+(shareCards.length!==1?'s':'')+' · Tap a card to watch film</p>';
+  html+='<h1>'+esc(game)+'</h1>';
+  html+='<p>Tap a card to enlarge · Click Watch Film for Hudl</p>';
   html+='</div>';
 
   html+='<div class="sv-grid">';
@@ -2960,7 +3033,7 @@ function renderShareViewer(data){
     if(sc.dd){html+='<div class="sv-dd">'+esc(sc.dd)+'</div>';}
     if(sc.tags&&sc.tags.length){html+='<div class="sv-tags">';for(var ti=0;ti<sc.tags.length;ti++){html+='<span class="sv-tag">'+esc(sc.tags[ti])+'</span>';}html+='</div>';}
     if(sc.hudlUrl){
-      html+='<a href="'+esc(sc.hudlUrl)+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">▶ Watch Film</a>';
+      html+='<a href="'+esc(sc.hudlUrl)+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">&#9654; Watch Film</a>';
     }
     html+='</div></div>';
   }
@@ -2996,9 +3069,9 @@ function renderShareViewer(data){
     lbPlay.textContent=sc.play||'Unnamed';
     lbDd.textContent=sc.dd||'';
     var tagH='';
-    if(sc.tags&&sc.tags.length){for(var t=0;t<sc.tags.length;t++){tagH+='<span class="sv-tag" style="font-size:12px;padding:3px 10px">'+sc.tags[t]+'</span>';}}
+    if(sc.tags&&sc.tags.length){for(var t=0;t<sc.tags.length;t++){tagH+='<span class="sv-tag">'+sc.tags[t]+'</span>';}}
     lbTags.innerHTML=tagH;
-    if(sc.hudlUrl){lbFilm.innerHTML='<a href="'+sc.hudlUrl+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">▶ Watch Film</a>';}
+    if(sc.hudlUrl){lbFilm.innerHTML='<a href="'+sc.hudlUrl+'" target="_blank" rel="noopener" class="sv-film" onclick="event.stopPropagation()">&#9654; Watch Film</a>';}
     else{lbFilm.innerHTML='';}
     overlay.classList.add('open');
   }
@@ -3009,10 +3082,8 @@ function renderShareViewer(data){
   for(var ci=0;ci<cardEls.length;ci++){
     (function(el){el.addEventListener('click',function(){openLightbox(parseInt(el.getAttribute('data-idx')))})})(cardEls[ci]);
   }
-  // Close on overlay background click
   overlay.addEventListener('click',function(e){if(e.target===overlay)closeLightbox()});
   svClose.addEventListener('click',closeLightbox);
-  // Close on Escape
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox()});
 }
 
