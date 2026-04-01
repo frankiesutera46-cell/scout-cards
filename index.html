@@ -2915,35 +2915,109 @@ async function exportPlayGrid(perPage){
 }
 
 // ===== SHARE TO PLAYERS =====
-async function shareToPlayers(){
+function shareToPlayers(){
   if(!supabase){alert('Supabase not loaded');return}
   if(!currentUser){alert('Sign in first');return}
-  // Build share payload — current game's cards with SVG images
-  games[activeGameIdx].cards=cards;
-  games[activeGameIdx].name=gameTitle;
-  var shareCards=[];
-  for(var i=0;i<cards.length;i++){
-    var c=cards[i];
-    if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
-    var svgStr=buildFullSVG(c);
-    var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
-    var img=canvas?canvas.toDataURL('image/png'):'';
-    shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
-  }
-  if(shareCards.length===0){alert('No cards to share');return}
-  var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor}};
-  var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
-  if(res.error){
-    if(res.error.message&&res.error.message.indexOf('does not exist')>=0){
-      alert('Share table not set up yet. Run this SQL in your Supabase SQL Editor:\n\ncreate table shares (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users, game_name text, data jsonb not null, created_at timestamptz default now());\nalter table shares enable row level security;\ncreate policy \"Anyone can read shares\" on shares for select using (true);\ncreate policy \"Auth users can create shares\" on shares for insert with check (auth.uid() = user_id);');
-    } else {
-      alert('Share failed: '+res.error.message);
+  // Show share modal
+  var existing=document.getElementById('shareModal');
+  if(existing)existing.remove();
+  var cardCount=0;
+  for(var ci=0;ci<cards.length;ci++){if(!activeTagFilter||cards[ci].tags&&cards[ci].tags.indexOf(activeTagFilter)>=0)cardCount++}
+  var m=document.createElement('div');m.id='shareModal';
+  m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center';
+  var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:460px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Share to Players</span><button id="shareModalClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">'+cardCount+' scout card'+(cardCount!==1?'s':'')+' from <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
+  // Playbook PDFs section
+  mh+='<div style="margin-bottom:16px;padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
+  mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:8px;font-weight:500">Attach Playbook PDFs (optional)</label>';
+  mh+='<input type="file" id="sharePdfFiles" accept=".pdf" multiple style="font-family:\'JetBrains Mono\',monospace;font-size:11px;width:100%"/>';
+  mh+='<div id="sharePdfList" style="margin-top:8px"></div>';
+  mh+='</div>';
+  // Status area
+  mh+='<div id="shareStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.5);margin-bottom:12px;min-height:18px"></div>';
+  mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Create Share Link</button>';
+  mh+='</div>';
+  m.innerHTML=mh;
+  document.body.appendChild(m);
+
+  // File input preview
+  var pdfInput=document.getElementById('sharePdfFiles');
+  var pdfList=document.getElementById('sharePdfList');
+  pdfInput.addEventListener('change',function(){
+    pdfList.innerHTML='';
+    for(var i=0;i<pdfInput.files.length;i++){
+      var f=pdfInput.files[i];
+      var sz=f.size<1048576?(Math.round(f.size/1024)+'KB'):(Math.round(f.size/1048576*10)/10+'MB');
+      pdfList.innerHTML+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:3px 0">&#x1F4C4; '+esc(f.name)+' <span style="color:rgba(58,58,56,.4)">'+sz+'</span></div>';
     }
-    return;
-  }
-  var shareUrl=window.location.origin+window.location.pathname+'?share='+res.data.id;
-  try{navigator.clipboard.writeText(shareUrl)}catch(e){}
-  prompt('Share link copied! Send this to your players:',shareUrl);
+  });
+
+  // Close modal
+  document.getElementById('shareModalClose').addEventListener('click',function(){m.remove()});
+  m.addEventListener('click',function(e){if(e.target===m)m.remove()});
+
+  // Confirm share
+  document.getElementById('shareConfirmBtn').addEventListener('click',async function(){
+    var btn=this;var status=document.getElementById('shareStatus');
+    btn.disabled=true;btn.textContent='GENERATING...';
+    status.textContent='Building card images...';
+    try{
+      games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
+      var shareCards=[];
+      for(var i=0;i<cards.length;i++){
+        var c=cards[i];
+        if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
+        var svgStr=buildFullSVG(c);
+        var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
+        var img=canvas?canvas.toDataURL('image/png'):'';
+        shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
+        status.textContent='Building card images... '+(i+1)+'/'+cards.length;
+      }
+      if(shareCards.length===0){alert('No cards to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
+      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:[]};
+
+      status.textContent='Saving to cloud...';
+      var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
+      if(res.error){
+        if(res.error.message&&res.error.message.indexOf('does not exist')>=0){
+          alert('Share table not set up. Check Supabase SQL setup.');
+        }else{alert('Share failed: '+res.error.message)}
+        btn.disabled=false;btn.textContent='CREATE SHARE LINK';return;
+      }
+      var shareId=res.data.id;
+
+      // Upload PDFs if any
+      var files=pdfInput.files;
+      var playbookMeta=[];
+      if(files.length>0){
+        for(var fi=0;fi<files.length;fi++){
+          var file=files[fi];
+          status.textContent='Uploading PDF '+(fi+1)+'/'+files.length+': '+file.name;
+          var storagePath=currentUser.id+'/'+shareId+'/'+Date.now()+'_'+file.name;
+          var upRes=await supabase.storage.from('playbooks').upload(storagePath,file,{contentType:'application/pdf',upsert:true});
+          if(!upRes.error){
+            playbookMeta.push({name:file.name.replace(/\.pdf$/i,''),path:storagePath});
+          }else{
+            console.warn('PDF upload failed:',upRes.error.message);
+          }
+        }
+        if(playbookMeta.length>0){
+          payload.playbooks=playbookMeta;
+          status.textContent='Saving playbook data...';
+          await supabase.from('shares').update({data:payload}).eq('id',shareId);
+        }
+      }
+
+      var shareUrl=window.location.origin+window.location.pathname+'?share='+shareId;
+      try{navigator.clipboard.writeText(shareUrl)}catch(e){}
+      m.remove();
+      prompt('Share link copied! Send this to your players:',shareUrl);
+    }catch(err){
+      alert('Share error: '+err.message);
+      btn.disabled=false;btn.textContent='CREATE SHARE LINK';
+    }
+  });
 }
 
 // ===== SHARE VIEWER (read-only) =====
@@ -2954,6 +3028,9 @@ function renderShareViewer(data){
   var pc=brand.primaryColor||'#1A3C2B';
   var tn=brand.teamName||'';
   var logo=brand.logoUrl||'';
+  var playbooks=data.playbooks||[];
+  var hasPb=playbooks.length>0;
+  var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Film Review';
   document.body.innerHTML='';
   document.body.style.cssText='margin:0;font-family:Arial,sans-serif;background:#EEEEEC;color:#3A3A38';
@@ -2969,10 +3046,17 @@ function renderShareViewer(data){
   html+='.sv-topbar .sv-sub{font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(247,247,245,.5);letter-spacing:.1em;font-weight:400}';
   html+='.sv-topbar .sv-right{margin-left:auto;display:flex;align-items:center;gap:10px}';
   html+='.sv-topbar .sv-count{font-family:"JetBrains Mono",monospace;color:rgba(247,247,245,.5);font-size:10px;letter-spacing:.1em}';
+  // Tabs
+  html+='.sv-tabs{display:flex;justify-content:center;gap:0;margin-bottom:4px}';
+  html+='.sv-tab{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:10px 28px;cursor:pointer;border:1px solid rgba(58,58,56,.15);background:transparent;color:rgba(58,58,56,.45);transition:all .15s}';
+  html+='.sv-tab:first-child{border-radius:2px 0 0 2px}';
+  html+='.sv-tab:last-child{border-radius:0 2px 2px 0;border-left:none}';
+  html+='.sv-tab.active{background:'+pc+';color:#F7F7F5;border-color:'+pc+'}';
+  html+='.sv-section{display:none}.sv-section.active{display:block}';
   // Wrap
   html+='.sv-wrap{max-width:1200px;margin:0 auto;padding:20px 16px;font-family:"Space Grotesk",Arial,sans-serif}';
   // Header
-  html+='.sv-hdr{text-align:center;padding:20px 0 28px}';
+  html+='.sv-hdr{text-align:center;padding:20px 0 24px}';
   html+='.sv-hdr h1{margin:0;font-family:"Space Grotesk",sans-serif;font-size:26px;font-weight:700;color:#1A3C2B;letter-spacing:.02em}';
   html+='.sv-hdr p{margin:6px 0 0;font-family:"JetBrains Mono",monospace;color:rgba(58,58,56,.45);font-size:11px;letter-spacing:.08em}';
   // Grid
@@ -2990,6 +3074,13 @@ function renderShareViewer(data){
   html+='.sv-tag{display:inline-block;background:rgba(26,60,43,.06);color:'+pc+';font-family:"JetBrains Mono",monospace;font-size:9px;padding:2px 7px;border-radius:2px;margin-right:3px;font-weight:500;letter-spacing:.03em;border:1px solid rgba(26,60,43,.12)}';
   html+='.sv-film{display:block;margin-top:8px;background:'+pc+';color:#F7F7F5;text-align:center;padding:9px 0;border-radius:2px;text-decoration:none;font-family:"JetBrains Mono",monospace;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;transition:opacity .15s}';
   html+='.sv-film:hover{opacity:.85}';
+  // Playbook section
+  html+='.sv-pb-wrap{max-width:900px;margin:0 auto}';
+  html+='.sv-pb-sel{width:100%;padding:10px 14px;background:#F7F7F5;border:1px solid rgba(58,58,56,.15);border-radius:2px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#3A3A38;cursor:pointer;margin-bottom:14px;appearance:auto}';
+  html+='.sv-pb-viewer{width:100%;height:80vh;border:1px solid rgba(58,58,56,.12);border-radius:2px;background:#fff;overflow:hidden}';
+  html+='.sv-pb-viewer iframe{width:100%;height:100%;border:none}';
+  html+='.sv-pb-dl{display:inline-block;margin-top:10px;font-family:"JetBrains Mono",monospace;font-size:10px;color:'+pc+';text-decoration:none;letter-spacing:.05em;padding:6px 16px;border:1px solid rgba(26,60,43,.2);border-radius:2px;text-transform:uppercase;font-weight:600}';
+  html+='.sv-pb-dl:hover{background:rgba(26,60,43,.04)}';
   // Footer
   html+='.sv-foot{text-align:center;padding:28px 0;font-family:"JetBrains Mono",monospace;color:rgba(58,58,56,.3);font-size:9px;letter-spacing:.1em;text-transform:uppercase}';
   // Lightbox overlay
@@ -3023,6 +3114,16 @@ function renderShareViewer(data){
   html+='<p>Tap a card to enlarge · Click Watch Film for Hudl</p>';
   html+='</div>';
 
+  // Tabs (only if playbooks exist)
+  if(hasPb){
+    html+='<div class="sv-tabs">';
+    html+='<button class="sv-tab active" data-tab="cards">Scout Cards</button>';
+    html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';
+    html+='</div>';
+  }
+
+  // === SCOUT CARDS SECTION ===
+  html+='<div class="sv-section active" id="svCardsSection">';
   html+='<div class="sv-grid">';
   for(var i=0;i<shareCards.length;i++){
     var sc=shareCards[i];
@@ -3038,6 +3139,30 @@ function renderShareViewer(data){
     html+='</div></div>';
   }
   html+='</div>';
+  html+='</div>';
+
+  // === PLAYBOOK SECTION ===
+  if(hasPb){
+    var firstPdfUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(playbooks[0].path);
+    html+='<div class="sv-section" id="svPlaybookSection">';
+    html+='<div class="sv-pb-wrap">';
+    if(playbooks.length>1){
+      html+='<select class="sv-pb-sel" id="svPbSelect">';
+      for(var pi=0;pi<playbooks.length;pi++){
+        html+='<option value="'+pi+'">'+esc(playbooks[pi].name)+'</option>';
+      }
+      html+='</select>';
+    }else{
+      html+='<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#3A3A38;margin-bottom:14px">'+esc(playbooks[0].name)+'</div>';
+    }
+    html+='<div class="sv-pb-viewer"><iframe id="svPbFrame" src="'+firstPdfUrl+'"></iframe></div>';
+    html+='<div style="margin-top:10px;text-align:center">';
+    html+='<a class="sv-pb-dl" id="svPbDownload" href="'+firstPdfUrl+'" target="_blank" rel="noopener">Open PDF in New Tab</a>';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+  }
+
   html+='<div class="sv-foot">Scout Cards · Game Prep System</div>';
   html+='</div>';
 
@@ -3054,7 +3179,37 @@ function renderShareViewer(data){
 
   document.body.innerHTML=html;
 
-  // Lightbox logic
+  // === TAB SWITCHING ===
+  if(hasPb){
+    var tabs=document.querySelectorAll('.sv-tab');
+    var cardsSection=document.getElementById('svCardsSection');
+    var pbSection=document.getElementById('svPlaybookSection');
+    for(var tbi=0;tbi<tabs.length;tbi++){
+      (function(tab){
+        tab.addEventListener('click',function(){
+          for(var j=0;j<tabs.length;j++)tabs[j].classList.remove('active');
+          tab.classList.add('active');
+          var which=tab.getAttribute('data-tab');
+          cardsSection.classList.toggle('active',which==='cards');
+          pbSection.classList.toggle('active',which==='playbook');
+        });
+      })(tabs[tbi]);
+    }
+    // PDF dropdown switcher
+    var pbSelect=document.getElementById('svPbSelect');
+    var pbFrame=document.getElementById('svPbFrame');
+    var pbDl=document.getElementById('svPbDownload');
+    if(pbSelect){
+      pbSelect.addEventListener('change',function(){
+        var idx=parseInt(this.value);
+        var url=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(playbooks[idx].path);
+        pbFrame.src=url;
+        pbDl.href=url;
+      });
+    }
+  }
+
+  // === LIGHTBOX ===
   var overlay=document.getElementById('svOverlay');
   var lbImg=document.getElementById('svLbImg');
   var lbPlay=document.getElementById('svLbPlay');
@@ -3077,7 +3232,6 @@ function renderShareViewer(data){
   }
   function closeLightbox(){overlay.classList.remove('open');}
 
-  // Card clicks
   var cardEls=document.querySelectorAll('.sv-card');
   for(var ci=0;ci<cardEls.length;ci++){
     (function(el){el.addEventListener('click',function(){openLightbox(parseInt(el.getAttribute('data-idx')))})})(cardEls[ci]);
