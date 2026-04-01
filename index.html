@@ -1284,16 +1284,16 @@ function render(){
   h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
   h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
   h+='<div class="right"><span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
-  h+='<button class="btn btn-sec" id="btnSv">&#x1F4BE; Save</button>';
-  h+='<button class="btn btn-sec" id="btnLd">&#x1F4C2; Load</button>';
-  h+='<button class="btn btn-pri" id="btnExportPDF">&#x1F4C4; Export PDF</button>';
-  h+='<button class="btn btn-pri" id="btnExportPNG">&#x1F5BC; Export PNG</button>';
+  h+='<button class="btn btn-sec" id="btnSv" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Save</button>';
+  h+='<button class="btn btn-sec" id="btnLd" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Load</button>';
+  h+='<button class="btn btn-pri" id="btnExportPDF">PDF</button>';
+  h+='<button class="btn btn-pri" id="btnExportPNG">PNG</button>';
   h+='<select id="gridSel" class="sel">';
-  h+='<option value="">Grid Export</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
+  h+='<option value="">Grid</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
   h+='</select>';
-  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">&#x1F517; Share</button>';
-  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">&#x2699; Team</button>';
-  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">&#x1F4DA; Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">Share</button>';
+  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Team</button>';
+  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
 
