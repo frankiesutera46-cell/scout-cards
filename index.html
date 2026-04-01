@@ -1547,10 +1547,18 @@ function bind(){
           e.preventDefault();bindDrag();return;
         }
       }
-      // Click line to select it (via invisible hit area)
+      // Click line/shape to select or drag-move it
       var lineSelAttr=e.target.getAttribute&&e.target.getAttribute('data-linesel');
-      if(lineSelAttr!==null&&lineSelAttr!==undefined&&!drawMode&&!eraserMode){
-        selLine=parseInt(lineSelAttr);selPlayer=null;selTextBox=null;
+      if(lineSelAttr!==null&&lineSelAttr!==undefined&&!drawMode&&!eraserMode&&!shapeMode){
+        var clickedIdx=parseInt(lineSelAttr);
+        var pt=svgPoint(svg,e);
+        if(selLine===clickedIdx){
+          // Already selected — start drag to move
+          pushUndo();
+          dragInfo={isLineDrag:true,lineIdx:clickedIdx,startX:pt.x,startY:pt.y,moved:false};
+          e.preventDefault();bindDrag();return;
+        }
+        selLine=clickedIdx;selPlayer=null;selTextBox=null;
         render();e.preventDefault();return;
       }
       // Drawing/eraser mode
@@ -2211,6 +2219,22 @@ function bindDrag(){
         card.lsz[dragInfo.key]=newSz;
       }
       render();bindDrag();
+      return;
+    }
+
+    // Line/shape drag-to-move
+    if(dragInfo.isLineDrag){
+      var dx4=pt.x-dragInfo.startX,dy4=pt.y-dragInfo.startY;
+      var ln=card.lines[dragInfo.lineIdx];
+      if(ln){
+        if(ln.shape){
+          ln.x1+=dx4;ln.y1+=dy4;ln.x2+=dx4;ln.y2+=dy4;
+        }else if(ln.pts){
+          for(var lpi=0;lpi<ln.pts.length;lpi++){ln.pts[lpi].x+=dx4;ln.pts[lpi].y+=dy4}
+        }
+        dragInfo.startX=pt.x;dragInfo.startY=pt.y;
+        render();bindDrag();
+      }
       return;
     }
 
