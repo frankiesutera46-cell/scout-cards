@@ -729,6 +729,11 @@ function loadPlaybooks(){try{var r=localStorage.getItem('scoutPlaybooks');if(r)u
 function savePlaybooks(){try{localStorage.setItem('scoutPlaybooks',JSON.stringify(userPlaybooks))}catch(e){}}
 loadPlaybooks();
 
+var glossaryPdf=null; // {name, path, thumb}
+function loadGlossary(){try{var r=localStorage.getItem('scoutGlossary');if(r)glossaryPdf=JSON.parse(r)}catch(e){}}
+function saveGlossary(){try{if(glossaryPdf)localStorage.setItem('scoutGlossary',JSON.stringify(glossaryPdf));else localStorage.removeItem('scoutGlossary')}catch(e){}}
+loadGlossary();
+
 // Generate PDF thumbnail using PDF.js
 async function pdfThumbnail(file){
   try{
@@ -1342,6 +1347,28 @@ function render(){
     }
   }
   h+='</div>';
+
+  // Glossary section
+  h+='<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(58,58,56,.12)">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:14px;color:#1A3C2B">Defensive Glossary</span></div>';
+  h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-bottom:12px;letter-spacing:.05em">Upload a terminology PDF your players can reference anytime.</div>';
+  if(glossaryPdf){
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid rgba(58,58,56,.1);border-radius:2px">';
+    if(glossaryPdf.thumb){h+='<img src="'+glossaryPdf.thumb+'" style="width:48px;height:62px;object-fit:cover;border-radius:2px;border:1px solid rgba(58,58,56,.1);flex-shrink:0"/>';}
+    else{h+='<div style="width:48px;height:62px;background:rgba(58,58,56,.06);border-radius:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">&#x1F4D6;</div>';}
+    h+='<div style="flex:1;min-width:0"><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:13px;color:#3A3A38;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(glossaryPdf.name)+'</div>';
+    h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.35);margin-top:2px">Glossary PDF</div></div>';
+    h+='<button id="glossaryDel" style="background:none;border:1px solid rgba(255,140,105,.3);color:#FF8C69;font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:500;letter-spacing:.05em;text-transform:uppercase;flex-shrink:0">Remove</button>';
+    h+='</div>';
+  }else{
+    h+='<div style="padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px;text-align:center">';
+    h+='<input type="file" id="glossaryFile" accept=".pdf" style="display:none"/>';
+    h+='<button id="glossaryUploadBtn" style="padding:8px 20px;background:#B8A88A;color:#fff;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">+ Upload Glossary PDF</button>';
+    h+='<div id="glossaryStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-top:6px;min-height:16px"></div>';
+    h+='</div>';
+  }
+  h+='</div>';
+
   h+='</div></div>';
 
   // Help Modal
@@ -2099,6 +2126,45 @@ function bind(){
           render();
         });
       })(delBtns[di]);
+    }
+
+    // Glossary upload
+    var glossaryUploadBtn=document.getElementById('glossaryUploadBtn');
+    var glossaryFile=document.getElementById('glossaryFile');
+    if(glossaryUploadBtn&&glossaryFile){
+      glossaryUploadBtn.addEventListener('click',function(){glossaryFile.click()});
+      glossaryFile.addEventListener('change',async function(){
+        if(!this.files.length)return;
+        if(!supabase||!currentUser){document.getElementById('glossaryStatus').textContent='Sign in to upload';return}
+        var file=this.files[0];
+        var status=document.getElementById('glossaryStatus');
+        status.textContent='Uploading glossary...';
+        var thumb=await pdfThumbnail(file);
+        var storagePath=currentUser.id+'/glossary/'+Date.now()+'_'+file.name;
+        var upRes=await supabase.storage.from('playbooks').upload(storagePath,file,{contentType:'application/pdf',upsert:true});
+        if(!upRes.error){
+          glossaryPdf={name:file.name.replace(/\.pdf$/i,''),path:storagePath,thumb:thumb};
+          saveGlossary();
+          playbooksModal.style.display='none';
+          render();
+        }else{
+          status.textContent='Upload failed: '+upRes.error.message;
+        }
+      });
+    }
+    // Glossary delete
+    var glossaryDel=document.getElementById('glossaryDel');
+    if(glossaryDel){
+      glossaryDel.addEventListener('click',async function(){
+        if(!confirm('Remove glossary?'))return;
+        if(supabase&&currentUser&&glossaryPdf&&glossaryPdf.path){
+          await supabase.storage.from('playbooks').remove([glossaryPdf.path]);
+        }
+        glossaryPdf=null;
+        saveGlossary();
+        playbooksModal.style.display='none';
+        render();
+      });
     }
   }
 
@@ -3147,6 +3213,14 @@ function shareToPlayers(){
     mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">These will be included in the share. Manage in &#x1F4DA; Playbooks.</div>';
     mh+='</div>';
   }
+  // Glossary info
+  if(glossaryPdf){
+    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(184,168,138,.25);border-radius:2px">';
+    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#B8A88A;display:block;margin-bottom:6px;font-weight:600">Defensive Glossary</label>';
+    mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4D6; '+esc(glossaryPdf.name)+'</div>';
+    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">Players will see a Glossary tab to reference terminology.</div>';
+    mh+='</div>';
+  }
   // Status area
   mh+='<div id="shareStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.5);margin-bottom:12px;min-height:18px"></div>';
   mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Create Share Link</button>';
@@ -3183,7 +3257,8 @@ function shareToPlayers(){
         playbookMeta.push({name:userPlaybooks[pbi].name,path:userPlaybooks[pbi].path,thumb:userPlaybooks[pbi].thumb||''});
       }
 
-      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta};
+      var glossaryMeta=glossaryPdf?{name:glossaryPdf.name,path:glossaryPdf.path,thumb:glossaryPdf.thumb||''}:null;
+      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta};
 
       status.textContent='Saving to cloud...';
       var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
@@ -3214,7 +3289,10 @@ function renderShareViewer(data){
   var tn=brand.teamName||'';
   var logo=brand.logoUrl||'';
   var playbooks=data.playbooks||[];
+  var glossary=data.glossary||null;
   var hasPb=playbooks.length>0;
+  var hasGlossary=!!glossary;
+  var hasTabs=hasPb||hasGlossary;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Juice Box Football';
   // Ensure viewport meta exists for mobile
@@ -3341,11 +3419,12 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   html+='<p>Tap a card to enlarge · Click Watch Film for Hudl</p>';
   html+='</div>';
 
-  // Tabs (only if playbooks exist)
-  if(hasPb){
+  // Tabs (if playbooks or glossary exist)
+  if(hasTabs){
     html+='<div class="sv-tabs">';
     html+='<button class="sv-tab active" data-tab="cards">Scout Cards</button>';
-    html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';
+    if(hasPb){html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';}
+    if(hasGlossary){html+='<button class="sv-tab" data-tab="glossary">Glossary</button>';}
     html+='</div>';
   }
 
@@ -3390,6 +3469,21 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
     html+='</div>';
   }
 
+  // === GLOSSARY SECTION ===
+  if(hasGlossary){
+    var glossaryUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(glossary.path);
+    html+='<div class="sv-section" id="svGlossarySection">';
+    html+='<div style="text-align:center;padding:20px 0 16px">';
+    html+='<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:18px;color:#1A3C2B;margin-bottom:4px">Defensive Terminology</div>';
+    html+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);letter-spacing:.06em">Reference guide for defensive calls and assignments</div>';
+    html+='</div>';
+    html+='<div style="max-width:800px;margin:0 auto">';
+    html+='<iframe src="'+esc(glossaryUrl)+'" style="width:100%;height:75vh;border:1px solid rgba(58,58,56,.12);border-radius:2px;background:#fff"></iframe>';
+    html+='<a href="'+esc(glossaryUrl)+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:'+pc+';text-decoration:none;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Open in New Tab &rarr;</a>';
+    html+='</div>';
+    html+='</div>';
+  }
+
   html+='<div class="sv-foot">Juice Box Football</div>';
   html+='</div>';
 
@@ -3407,10 +3501,11 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   document.body.innerHTML=html;
 
   // === TAB SWITCHING ===
-  if(hasPb){
+  if(hasTabs){
     var tabs=document.querySelectorAll('.sv-tab');
     var cardsSection=document.getElementById('svCardsSection');
     var pbSection=document.getElementById('svPlaybookSection');
+    var glossarySection=document.getElementById('svGlossarySection');
     for(var tbi=0;tbi<tabs.length;tbi++){
       (function(tab){
         tab.addEventListener('click',function(){
@@ -3418,7 +3513,8 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
           tab.classList.add('active');
           var which=tab.getAttribute('data-tab');
           cardsSection.classList.toggle('active',which==='cards');
-          pbSection.classList.toggle('active',which==='playbook');
+          if(pbSection)pbSection.classList.toggle('active',which==='playbook');
+          if(glossarySection)glossarySection.classList.toggle('active',which==='glossary');
         });
       })(tabs[tbi]);
     }
