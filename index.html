@@ -3140,17 +3140,26 @@ function renderShareViewer(data){
   var hasPb=playbooks.length>0;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Film Review';
+  // Ensure viewport meta exists for mobile
+  if(!document.querySelector('meta[name="viewport"]')){
+    var vp=document.createElement('meta');vp.name='viewport';vp.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    document.head.appendChild(vp);
+  }
+  // Load fonts via link tag (more reliable than @import in innerHTML)
+  if(!document.querySelector('link[href*="Space+Grotesk"]')){
+    var fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap';
+    document.head.appendChild(fl);
+  }
   document.body.innerHTML='';
-  document.body.style.cssText='margin:0;font-family:Arial,sans-serif;background:#EEEEEC;color:#3A3A38';
+  document.body.style.cssText='margin:0;font-family:"Space Grotesk",Arial,sans-serif;background:#EEEEEC;color:#3A3A38;-webkit-text-size-adjust:100%';
 
   var html='<style>';
-  html+='@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");';
   html+='*{box-sizing:border-box;margin:0;padding:0}';
   // Topbar
   html+='.sv-topbar{background:'+pc+';padding:0 24px;display:flex;align-items:center;gap:14px;height:56px}';
   html+='.sv-topbar .sv-logo{height:36px;width:36px;object-fit:contain;border-radius:2px}';
-  html+='.sv-topbar .sv-brand{display:flex;flex-direction:column;gap:1px}';
-  html+='.sv-topbar .sv-team{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#F7F7F5}';
+  html+='.sv-topbar .sv-brand{display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden}';
+  html+='.sv-topbar .sv-team{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#F7F7F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
   html+='.sv-topbar .sv-sub{font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(247,247,245,.5);letter-spacing:.1em;font-weight:400}';
   html+='.sv-topbar .sv-right{margin-left:auto;display:flex;align-items:center;gap:10px}';
   html+='.sv-topbar .sv-count{font-family:"JetBrains Mono",monospace;color:rgba(247,247,245,.5);font-size:10px;letter-spacing:.1em}';
@@ -3207,6 +3216,34 @@ function renderShareViewer(data){
   html+='.sv-overlay .sv-film{display:inline-block;margin-top:14px;padding:12px 36px;font-size:12px;border-radius:2px}';
   html+='.sv-close{position:absolute;top:16px;right:24px;font-size:28px;color:#F7F7F5;cursor:pointer;opacity:.5;transition:opacity .15s;background:none;border:none;font-family:"JetBrains Mono",monospace}';
   html+='.sv-close:hover{opacity:1}';
+  // Mobile-specific styles
+  html+='@media(max-width:600px){';
+  html+='.sv-topbar{padding:0 12px;height:48px;gap:10px}';
+  html+='.sv-topbar .sv-logo{height:28px;width:28px}';
+  html+='.sv-topbar .sv-team{font-size:11px;letter-spacing:.06em}';
+  html+='.sv-topbar .sv-sub{font-size:8px}';
+  html+='.sv-topbar .sv-count{font-size:9px}';
+  html+='.sv-wrap{padding:12px 10px}';
+  html+='.sv-hdr{padding:14px 0 16px}';
+  html+='.sv-hdr h1{font-size:20px}';
+  html+='.sv-hdr p{font-size:10px}';
+  html+='.sv-tabs{margin-bottom:2px}';
+  html+='.sv-tab{padding:8px 18px;font-size:10px}';
+  html+='.sv-play{font-size:12px}';
+  html+='.sv-dd{font-size:9px}';
+  html+='.sv-film{padding:8px 0;font-size:9px}';
+  html+='.sv-info{padding:8px 10px}';
+  html+='.sv-pb-info{padding:8px 10px}';
+  html+='.sv-pb-name{font-size:12px}';
+  html+='.sv-pb-open{padding:8px 0;font-size:9px}';
+  html+='.sv-overlay{padding:12px}';
+  html+='.sv-overlay img{max-width:96%;max-height:55vh}';
+  html+='.sv-lb-play{font-size:16px}';
+  html+='.sv-lb-dd{font-size:10px}';
+  html+='.sv-overlay .sv-film{padding:10px 28px;font-size:10px}';
+  html+='.sv-close{top:10px;right:14px;font-size:32px}';
+  html+='.sv-foot{padding:20px 0;font-size:8px}';
+  html+='}';
   html+='</style>';
 
   // Topbar
