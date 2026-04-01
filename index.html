@@ -785,11 +785,16 @@ var HASH_OFFSETS = {
   'RM': MID_R - CX    // shift to right-middle (~+194)
 };
 
+var HDR_H=26; // header band height at top of card
 function buildField(){
   var s='';
 
   // White field background
   s+='<rect x="0" y="0" width="'+FW+'" height="'+FH+'" fill="#ffffff"/>';
+
+  // Clip field content below header
+  s+='<defs><clipPath id="fieldClip"><rect x="0" y="'+HDR_H+'" width="'+FW+'" height="'+(FH-HDR_H)+'"/></clipPath></defs>';
+  s+='<g clip-path="url(#fieldClip)">';
 
   // Yard lines every 5 yards
   for(var i=0;i<=TOTAL_YARDS/5;i++){
@@ -804,7 +809,7 @@ function buildField(){
   var Y1 = YPX; // 1 yard in pixels
   for(var yd=0;yd<=TOTAL_YARDS;yd++){
     var hy = MARGIN_TOP + yd * Y1;
-    if(hy < 2 || hy > FH - 2) continue;
+    if(hy < HDR_H || hy > FH - 2) continue;
     var is5 = (yd % 5 === 0);
     var tickW = is5 ? 5 : 3;
     var sw = is5 ? 1.2 : 0.7;
@@ -823,7 +828,7 @@ function buildField(){
   // Yard numbers - only 10 and 20 above LOS (defensive side)
   for(var i=0;i<=TOTAL_YARDS/5;i++){
     var yy = MARGIN_TOP + i * Y5;
-    if(yy < MARGIN_TOP || yy > FH - MARGIN_BOT) continue;
+    if(yy < HDR_H || yy > FH - MARGIN_BOT) continue;
     var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
     // Only show 10 and 20 on the defensive side (positive = upfield)
     if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
@@ -834,18 +839,23 @@ function buildField(){
     s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
   }
 
-  // Sidelines
-  s+='<line x1="'+SL+'" y1="0" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
-  s+='<line x1="'+SR+'" y1="0" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+  // Sidelines (start from header line, not top)
+  s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+  s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
   // LOS - bold black
   s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#222" stroke-width="2.5"/>';
+
+  s+='</g>'; // end fieldClip
+
+  // Header border line (thick black at top of field)
+  s+='<line x1="0" y1="'+HDR_H+'" x2="'+FW+'" y2="'+HDR_H+'" stroke="#222" stroke-width="2.5"/>';
 
   return s;
 }
 
 // Build draggable text labels for play name, D&D, notes on the field
-var LABEL_DEF_SZ={fmhash:12,play:15,dd:13,notes:11};
+var LABEL_DEF_SZ={fmhash:14,play:14,dd:14,notes:11};
 function labelSz(card,key){if(!card.lsz)card.lsz={};return card.lsz[key]||(LABEL_DEF_SZ[key]||9)}
 function buildLabelBox(key,x,y,w,h,isSel){
   var s='';
@@ -859,55 +869,51 @@ function buildLabelBox(key,x,y,w,h,isSel){
 var HASH_LABELS={M:'Middle',L:'Lt Hash',R:'Rt Hash',LM:'Lt Mid',RM:'Rt Mid'};
 function buildTextLabels(card){
   var s='';
-  var defaults={fmhash:{x:10,y:16},play:{x:10,y:32},dd:{x:FW-60,y:16},notes:{x:CX,y:LOS_Y*0.5}};
+  var hdrY=HDR_H-7; // text baseline inside header band
   if(!card.lpos)card.lpos={};
   if(!card.lsz)card.lsz={};
-  var lp={
-    fmhash: card.lpos.fmhash || defaults.fmhash,
-    play: card.lpos.play || defaults.play,
-    dd: card.lpos.dd || defaults.dd,
-    notes: card.lpos.notes || defaults.notes
-  };
 
-  // Formation + Hash (always shown, top-left, left-aligned)
+  // === HEADER BAND (fixed in top band, above field) ===
+  // Formation + Hash — always shown
   var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
   var hashName=HASH_LABELS[card.hash]||card.hash;
   var fmhashText=fmName+' — '+hashName;
   var fsz=labelSz(card,'fmhash');
-  var fw2=Math.max(120,fmhashText.length*(fsz*0.58));
-  var fh=fsz+6;
-  s+='<rect x="'+lp.fmhash.x+'" y="'+(lp.fmhash.y-fsz+2)+'" width="'+fw2+'" height="'+fh+'" fill="transparent" data-dp="t_fmhash" style="cursor:move"/>';
-  s+='<text x="'+(lp.fmhash.x+2)+'" y="'+(lp.fmhash.y+2)+'" text-anchor="start" fill="#444" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="600" pointer-events="none">'+esc(fmhashText)+'</text>';
-  s+=buildLabelBox('fmhash',lp.fmhash.x,lp.fmhash.y-fsz+2,fw2,fh,selLabel==='fmhash');
+  // Play name follows with pipe separator
+  var playText=card.play||'';
+  var hdrLeft=playText ? fmhashText+' | '+playText : fmhashText;
+  var hlw=Math.max(200,hdrLeft.length*(fsz*0.58));
+  var hlh=fsz+6;
+  s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_play" style="cursor:pointer"/>';
+  s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">';
+  s+=esc(fmhashText);
+  if(playText){s+='<tspan fill="#666"> | </tspan><tspan fill="#222">'+esc(playText)+'</tspan>';}
+  s+='</text>';
 
-  // Play Name (below formation, left-aligned)
-  if(card.play){
-    var psz=labelSz(card,'play');
-    var pw=Math.max(100,card.play.length*(psz*0.6));
-    var ph=psz+6;
-    s+='<rect x="'+lp.play.x+'" y="'+(lp.play.y-psz+2)+'" width="'+pw+'" height="'+ph+'" fill="transparent" data-dp="t_play" style="cursor:move"/>';
-    s+='<text x="'+(lp.play.x+2)+'" y="'+(lp.play.y+2)+'" text-anchor="start" fill="#222" font-size="'+psz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
-    s+=buildLabelBox('play',lp.play.x,lp.play.y-psz+2,pw,ph,selLabel==='play');
+  // D&D / Tag on right side of header
+  var ddText=card.dd||'';
+  var tagText=(card.tags&&card.tags.length)?card.tags[0]:'';
+  var rightText=ddText&&tagText?ddText+' · '+tagText:(ddText||tagText);
+  if(rightText){
+    var rsz=labelSz(card,'dd');
+    var rw=Math.max(40,rightText.length*(rsz*0.65));
+    var rh=rsz+6;
+    s+='<rect x="'+(FW-rw-6)+'" y="'+(hdrY-rsz)+'" width="'+rw+'" height="'+rh+'" fill="transparent" data-dp="t_dd" style="cursor:pointer"/>';
+    s+='<text x="'+(FW-6)+'" y="'+hdrY+'" text-anchor="end" fill="#222" font-size="'+rsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(rightText)+'</text>';
   }
 
-  // Down & Distance (top-right)
-  if(card.dd){
-    var dsz=labelSz(card,'dd');
-    var dw=Math.max(60,card.dd.length*(dsz*0.65));
-    var dh=dsz+6;
-    s+='<rect x="'+(lp.dd.x-dw)+'" y="'+(lp.dd.y-dsz+2)+'" width="'+dw+'" height="'+dh+'" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
-    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="end" fill="#444" font-size="'+dsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
-    s+=buildLabelBox('dd',lp.dd.x-dw,lp.dd.y-dsz+2,dw,dh,selLabel==='dd');
-  }
+  // === FIELD LABELS (draggable, below header) ===
+  var defaults={notes:{x:CX,y:HDR_H+30}};
+  var notesPos=card.lpos.notes||defaults.notes;
 
   // Notes
   if(card.notes){
     var nsz=labelSz(card,'notes');
     var nw=Math.max(100,card.notes.length*(nsz*0.55));
     var nh=nsz+6;
-    s+='<rect x="'+(lp.notes.x-nw/2)+'" y="'+(lp.notes.y-nsz+4)+'" width="'+nw+'" height="'+nh+'" fill="transparent" data-dp="t_notes" style="cursor:move"/>';
-    s+='<text x="'+lp.notes.x+'" y="'+(lp.notes.y+3)+'" text-anchor="middle" fill="#666" font-size="'+nsz+'" font-family="Arial,sans-serif" font-style="italic" pointer-events="none">'+esc(card.notes)+'</text>';
-    s+=buildLabelBox('notes',lp.notes.x-nw/2,lp.notes.y-nsz+4,nw,nh,selLabel==='notes');
+    s+='<rect x="'+(notesPos.x-nw/2)+'" y="'+(notesPos.y-nsz+4)+'" width="'+nw+'" height="'+nh+'" fill="transparent" data-dp="t_notes" style="cursor:move"/>';
+    s+='<text x="'+notesPos.x+'" y="'+(notesPos.y+3)+'" text-anchor="middle" fill="#666" font-size="'+nsz+'" font-family="Arial,sans-serif" font-style="italic" pointer-events="none">'+esc(card.notes)+'</text>';
+    s+=buildLabelBox('notes',notesPos.x-nw/2,notesPos.y-nsz+4,nw,nh,selLabel==='notes');
   }
 
   // Player-specific notes
@@ -1550,14 +1556,25 @@ function bind(){
           e.preventDefault();bindDrag();return;
         }
 
-        // Text label drag (play name, D&D, notes, player notes)
+        // Text label click/drag (notes, player notes are draggable; play, dd are header-only)
         if(dp.indexOf('t_')===0){
           var labelKey=dp.substring(2);
           selLabel=labelKey;selPlayer=null;
+          // Header labels (play, dd) are not draggable — click to edit
+          if(labelKey==='play'){
+            var nv=prompt('Play name:',cards[activeIdx].play||'');
+            if(nv!==null){cards[activeIdx].play=nv;var pEl=document.getElementById('pI');if(pEl)pEl.value=nv;}
+            selLabel=null;e.preventDefault();render();bindDrag();return;
+          }
+          if(labelKey==='dd'){
+            var nv2=prompt('Down & Distance:',cards[activeIdx].dd||'');
+            if(nv2!==null){cards[activeIdx].dd=nv2;var dEl=document.getElementById('dI');if(dEl)dEl.value=nv2;}
+            selLabel=null;e.preventDefault();render();bindDrag();return;
+          }
           var pt2=svgPoint(svg,e);
           var curCard2=cards[activeIdx];
           if(!curCard2.lpos)curCard2.lpos={};
-          var defaults={fmhash:{x:10,y:16},play:{x:10,y:32},dd:{x:FW-60,y:16},notes:{x:CX,y:LOS_Y*0.5}};
+          var defaults={notes:{x:CX,y:HDR_H+30}};
           var curPos=curCard2.lpos[labelKey]||defaults[labelKey]||{x:pt2.x,y:pt2.y};
           pushUndo();dragInfo={key:labelKey,isLabel:true,offX:pt2.x-curPos.x,offY:pt2.y-curPos.y,moved:false};
           e.preventDefault();
