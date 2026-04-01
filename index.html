@@ -3117,7 +3117,7 @@ function shareToPlayers(){
         btn.disabled=false;btn.textContent='CREATE SHARE LINK';return;
       }
 
-      var shareUrl=window.location.origin+window.location.pathname+'?share='+res.data.id;
+      var shareUrl='https://juiceboxfootball.cc?share='+res.data.id;
       try{navigator.clipboard.writeText(shareUrl)}catch(e){}
       m.remove();
       prompt('Share link copied! Send this to your players:',shareUrl);
