@@ -108,6 +108,7 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:3px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
 .field-wrap svg.drawing{cursor:crosshair}
 .field-wrap svg.drawing [data-dp]{pointer-events:none}
+.field-wrap svg [data-dp^="rsz_"]{cursor:nwse-resize}
 
 /* ---- PRESETS ---- */
 .preset-section{margin-top:12px;padding-top:12px;border-top:1px solid rgba(58,58,56,.1)}
@@ -597,10 +598,11 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},cl:{},routePts:{},textBoxes:[],tags:[]}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[]}}
 var cards=[mkCard()];
 var activeIdx=0;
 var selPlayer=null;
+var selLabel=null;
 var selSide='off';
 var gameTitle='Week 1 Scout Cards';
 var dragInfo=null;
@@ -617,7 +619,7 @@ function popUndo(){
   var snap=JSON.parse(undoStack.pop());
   cards=snap;
   if(activeIdx>=cards.length)activeIdx=cards.length-1;
-  selPlayer=null;selLine=null;selTextBox=null;
+  selPlayer=null;selLine=null;selTextBox=null;selLabel=null;
   return true;
 }
 
@@ -788,38 +790,56 @@ function buildField(){
 }
 
 // Build draggable text labels for play name, D&D, notes on the field
+var LABEL_DEF_SZ={play:15,dd:13,notes:11};
+function labelSz(card,key){if(!card.lsz)card.lsz={};return card.lsz[key]||(LABEL_DEF_SZ[key]||9)}
+function buildLabelBox(key,x,y,w,h,isSel){
+  var s='';
+  if(isSel){
+    s+='<rect x="'+(x-2)+'" y="'+(y-2)+'" width="'+(w+4)+'" height="'+(h+4)+'" fill="none" stroke="#1A3C2B" stroke-width="1" stroke-dasharray="3,2" rx="2" pointer-events="none"/>';
+    var hx=x+w+2,hy=y+h+2;
+    s+='<rect x="'+(hx-4)+'" y="'+(hy-4)+'" width="8" height="8" fill="#1A3C2B" rx="1" data-dp="rsz_'+key+'" style="cursor:nwse-resize"/>';
+  }
+  return s;
+}
 function buildTextLabels(card){
   var s='';
-  // Default positions: play=top left, dd=top right, notes=center field
   var defaults={play:{x:100,y:18},dd:{x:FW-100,y:18},notes:{x:CX,y:LOS_Y*0.5}};
   if(!card.lpos)card.lpos={};
+  if(!card.lsz)card.lsz={};
   var lp={
     play: card.lpos.play || defaults.play,
     dd: card.lpos.dd || defaults.dd,
     notes: card.lpos.notes || defaults.notes
   };
 
-  // Play Name - top left, bold title
+  // Play Name
   if(card.play){
-    var pw=Math.max(100,card.play.length*9);
-    s+='<rect x="'+(lp.play.x-pw/2)+'" y="'+(lp.play.y-14)+'" width="'+pw+'" height="22" fill="transparent" data-dp="t_play" style="cursor:move"/>';
-    s+='<text x="'+lp.play.x+'" y="'+(lp.play.y+2)+'" text-anchor="middle" fill="#222" font-size="15" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
+    var psz=labelSz(card,'play');
+    var pw=Math.max(100,card.play.length*(psz*0.6));
+    var ph=psz+6;
+    s+='<rect x="'+(lp.play.x-pw/2)+'" y="'+(lp.play.y-psz+2)+'" width="'+pw+'" height="'+ph+'" fill="transparent" data-dp="t_play" style="cursor:move"/>';
+    s+='<text x="'+lp.play.x+'" y="'+(lp.play.y+2)+'" text-anchor="middle" fill="#222" font-size="'+psz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
+    s+=buildLabelBox('play',lp.play.x-pw/2,lp.play.y-psz+2,pw,ph,selLabel==='play');
   }
 
-  // Down & Distance - top right
+  // Down & Distance
   if(card.dd){
-    var dw=Math.max(60,card.dd.length*9);
-    s+='<rect x="'+(lp.dd.x-dw/2)+'" y="'+(lp.dd.y-12)+'" width="'+dw+'" height="20" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
-    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="middle" fill="#444" font-size="13" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
+    var dsz=labelSz(card,'dd');
+    var dw=Math.max(60,card.dd.length*(dsz*0.65));
+    var dh=dsz+6;
+    s+='<rect x="'+(lp.dd.x-dw/2)+'" y="'+(lp.dd.y-dsz+2)+'" width="'+dw+'" height="'+dh+'" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
+    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="middle" fill="#444" font-size="'+dsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
+    s+=buildLabelBox('dd',lp.dd.x-dw/2,lp.dd.y-dsz+2,dw,dh,selLabel==='dd');
   }
 
-  // Hash indicator removed - dropdown is sufficient
-
-  // Notes - center of field, moveable
+  // Notes
   if(card.notes){
-    var nw=Math.max(100,card.notes.length*6.5);
-    s+='<rect x="'+(lp.notes.x-nw/2)+'" y="'+(lp.notes.y-10)+'" width="'+nw+'" height="18" fill="transparent" data-dp="t_notes" style="cursor:move"/>';
-    s+='<text x="'+lp.notes.x+'" y="'+(lp.notes.y+3)+'" text-anchor="middle" fill="#666" font-size="11" font-family="Arial,sans-serif" font-style="italic" pointer-events="none">'+esc(card.notes)+'</text>';
+    var nsz=labelSz(card,'notes');
+    var nw=Math.max(100,card.notes.length*(nsz*0.55));
+    var nh=nsz+6;
+    s+='<rect x="'+(lp.notes.x-nw/2)+'" y="'+(lp.notes.y-nsz+4)+'" width="'+nw+'" height="'+nh+'" fill="transparent" data-dp="t_notes" style="cursor:move"/>';
+    s+='<text x="'+lp.notes.x+'" y="'+(lp.notes.y+3)+'" text-anchor="middle" fill="#666" font-size="'+nsz+'" font-family="Arial,sans-serif" font-style="italic" pointer-events="none">'+esc(card.notes)+'</text>';
+    s+=buildLabelBox('notes',lp.notes.x-nw/2,lp.notes.y-nsz+4,nw,nh,selLabel==='notes');
   }
 
   // Player-specific notes
@@ -830,10 +850,13 @@ function buildTextLabels(card){
       var pnk=pnKeys[pi], pnText=card.pn[pnk];
       if(!pnText)continue;
       var pnKey='pn_'+pnk;
+      var pnsz=labelSz(card,pnKey);
       var pnPos=card.lpos[pnKey]||{x:100+pnIdx*140, y:LOS_Y*0.5+20};
-      var pnw=Math.max(80,(pnk.length+pnText.length+2)*6);
-      s+='<rect x="'+(pnPos.x-pnw/2)+'" y="'+(pnPos.y-8)+'" width="'+pnw+'" height="14" fill="transparent" data-dp="t_'+pnKey+'" style="cursor:move"/>';
-      s+='<text x="'+pnPos.x+'" y="'+(pnPos.y+3)+'" text-anchor="middle" fill="#555" font-size="9" font-family="Arial,sans-serif" pointer-events="none">'+pnk+': '+esc(pnText)+'</text>';
+      var pnw=Math.max(80,(pnk.length+pnText.length+2)*(pnsz*0.6));
+      var pnh=pnsz+4;
+      s+='<rect x="'+(pnPos.x-pnw/2)+'" y="'+(pnPos.y-pnsz+4)+'" width="'+pnw+'" height="'+pnh+'" fill="transparent" data-dp="t_'+pnKey+'" style="cursor:move"/>';
+      s+='<text x="'+pnPos.x+'" y="'+(pnPos.y+3)+'" text-anchor="middle" fill="#555" font-size="'+pnsz+'" font-family="Arial,sans-serif" pointer-events="none">'+pnk+': '+esc(pnText)+'</text>';
+      s+=buildLabelBox(pnKey,pnPos.x-pnw/2,pnPos.y-pnsz+4,pnw,pnh,selLabel===pnKey);
       pnIdx++;
     }
   }
@@ -1026,9 +1049,14 @@ function buildTextBoxes(card){
     var col=tb.color||'#222';
     var sz=tb.size||12;
     var tw=Math.max(40,tb.text.length*(sz*0.6));
+    var bx=tb.x-tw/2-4,by=tb.y-sz-2,bw=tw+8,bh=sz+8;
     // Background rect for drag target
-    s+='<rect x="'+(tb.x-tw/2-4)+'" y="'+(tb.y-sz-2)+'" width="'+(tw+8)+'" height="'+(sz+8)+'" fill="'+(isSel?'rgba(26,60,43,0.08)':'transparent')+'" stroke="'+(isSel?'#1A3C2B':'none')+'" stroke-width="'+(isSel?'1':'0')+'" stroke-dasharray="'+(isSel?'3,2':'')+'" rx="3" data-tb="'+i+'" style="cursor:move"/>';
+    s+='<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" fill="'+(isSel?'rgba(26,60,43,0.08)':'transparent')+'" stroke="'+(isSel?'#1A3C2B':'none')+'" stroke-width="'+(isSel?'1':'0')+'" stroke-dasharray="'+(isSel?'3,2':'')+'" rx="3" data-tb="'+i+'" style="cursor:move"/>';
     s+='<text x="'+tb.x+'" y="'+(tb.y)+'" text-anchor="middle" fill="'+col+'" font-size="'+sz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(tb.text)+'</text>';
+    if(isSel){
+      var hx=bx+bw+2,hy=by+bh+2;
+      s+='<rect x="'+(hx-4)+'" y="'+(hy-4)+'" width="8" height="8" fill="#1A3C2B" rx="1" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize"/>';
+    }
   }
   return s;
 }
@@ -1415,7 +1443,7 @@ function bind(){
       // Check for text box click
       var tbAttr2=tgt2.getAttribute&&tgt2.getAttribute('data-tb');
       if(tbAttr2!==null&&tbAttr2!==undefined){
-        selTextBox=parseInt(tbAttr2);selPlayer=null;
+        selTextBox=parseInt(tbAttr2);selPlayer=null;selLabel=null;
         var pt3=svgPoint(svg,e);
         var tb2=card.textBoxes[selTextBox];
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false};
@@ -1430,9 +1458,27 @@ function bind(){
       if(el){
         var dp=el.getAttribute('data-dp');
 
+        // Resize handle drag (labels)
+        if(dp.indexOf('rsz_')===0){
+          var rszKey=dp.substring(4);
+          var pt4=svgPoint(svg,e);
+          var curCard3=cards[activeIdx];
+          pushUndo();
+          if(rszKey.indexOf('tb_')===0){
+            var tbIdx=parseInt(rszKey.substring(3));
+            var tbSz=curCard3.textBoxes[tbIdx]?curCard3.textBoxes[tbIdx].size||12:12;
+            dragInfo={isResize:true,isTbResize:true,idx:tbIdx,startY:pt4.y,startSize:tbSz};
+          }else{
+            var curSz=labelSz(curCard3,rszKey);
+            dragInfo={isResize:true,key:rszKey,startY:pt4.y,startSize:curSz};
+          }
+          e.preventDefault();bindDrag();return;
+        }
+
         // Text label drag (play name, D&D, notes, player notes)
         if(dp.indexOf('t_')===0){
-          var labelKey=dp.substring(2); // 'play', 'dd', 'notes', 'pn_X', etc
+          var labelKey=dp.substring(2);
+          selLabel=labelKey;selPlayer=null;
           var pt2=svgPoint(svg,e);
           var curCard2=cards[activeIdx];
           if(!curCard2.lpos)curCard2.lpos={};
@@ -1440,13 +1486,13 @@ function bind(){
           var curPos=curCard2.lpos[labelKey]||defaults[labelKey]||{x:pt2.x,y:pt2.y};
           pushUndo();dragInfo={key:labelKey,isLabel:true,offX:pt2.x-curPos.x,offY:pt2.y-curPos.y,moved:false};
           e.preventDefault();
-          bindDrag();
+          render();bindDrag();
           return;
         }
 
         var isDef=dp.indexOf('d_')===0;
         var pk=dp.replace(/^[od]_/,'');
-        selPlayer=pk;
+        selPlayer=pk;selLabel=null;
         selSide=isDef?'def':'off';
 
         // Start drag
@@ -1461,6 +1507,9 @@ function bind(){
         // Rebind after render
         bindDrag();
         e.preventDefault();
+      }else{
+        // Clicked empty area — deselect label
+        if(selLabel){selLabel=null;render()}
       }
     });
   }
@@ -1879,9 +1928,24 @@ function bindDrag(){
     if(!dragInfo)return;
     dragInfo.moved=true;
     var pt=svgPoint(svg,e);
+    var card=cards[activeIdx];
+
+    // Resize drag
+    if(dragInfo.isResize){
+      var dy=pt.y-dragInfo.startY;
+      var newSz=Math.round(Math.max(6,Math.min(40,dragInfo.startSize+dy*0.15)));
+      if(dragInfo.isTbResize){
+        if(card.textBoxes[dragInfo.idx])card.textBoxes[dragInfo.idx].size=newSz;
+      }else{
+        if(!card.lsz)card.lsz={};
+        card.lsz[dragInfo.key]=newSz;
+      }
+      render();bindDrag();
+      return;
+    }
+
     var nx=Math.max(20,Math.min(FW-20,pt.x-dragInfo.offX));
     var ny=Math.max(5,Math.min(FH-5,pt.y-dragInfo.offY));
-    var card=cards[activeIdx];
 
     // Waypoint drag
     if(dragInfo.isWaypoint){
@@ -2544,8 +2608,8 @@ document.addEventListener('keydown',function(e){
       drawMode=false;eraserMode=false;textMode=false;currentLine=null;
       render();e.preventDefault();return;
     }
-    if(selLine!==null||selTextBox!==null||selPlayer){
-      selLine=null;selTextBox=null;selPlayer=null;
+    if(selLine!==null||selTextBox!==null||selPlayer||selLabel){
+      selLine=null;selTextBox=null;selPlayer=null;selLabel=null;
       render();e.preventDefault();return;
     }
   }
