@@ -628,7 +628,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[]}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:''}}
 
 // Multi-week game system
 function mkGame(name){return{name:name||'Week 1',cards:[mkCard()]}}
@@ -1236,6 +1236,7 @@ function render(){
   h+='<select id="gridSel" class="sel">';
   h+='<option value="">Grid Export</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
   h+='</select>';
+  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">&#x1F517; Share</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
 
@@ -1429,6 +1430,8 @@ function render(){
 
   h+='<div class="ns"><label>Card Notes</label>';
   h+='<textarea id="nI" placeholder="Tendency notes...">'+esc(card.notes)+'</textarea></div>';
+  h+='<div class="ns"><label>&#x1F3A5; Hudl Link</label>';
+  h+='<input type="url" id="hudlI" placeholder="Paste Hudl clip URL..." value="'+esc(card.hudlUrl||'')+'" style="width:100%;font-size:11px;padding:5px 6px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit"/></div>';
 
   // Defensive front selector
   h+='<div class="front-sel"><label>Defensive Front</label>';
@@ -1766,6 +1769,7 @@ function bind(){
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
   var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){card.hash=this.value;card.opos=null;card.dpos=null;card.routePts={};upSB();render()});
   var nI=document.getElementById('nI');if(nI)nI.addEventListener('input',function(){card.notes=this.value});
+  var hudlI=document.getElementById('hudlI');if(hudlI)hudlI.addEventListener('input',function(){card.hudlUrl=this.value});
   var pnI=document.getElementById('pnI');if(pnI)pnI.addEventListener('input',function(){if(!selPlayer)return;var v=this.value;if(v){card.pn[selPlayer]=v}else{delete card.pn[selPlayer]}});
   var clI=document.getElementById('clI');if(clI)clI.addEventListener('input',function(){
     if(selPlayer){
@@ -1851,6 +1855,9 @@ function bind(){
 
   var btnPNG=document.getElementById('btnExportPNG');
   if(btnPNG)btnPNG.addEventListener('click',function(){exportPNG()});
+
+  var btnShare=document.getElementById('btnShare');
+  if(btnShare)btnShare.addEventListener('click',function(){shareToPlayers()});
 
   var btnSignOut=document.getElementById('btnSignOut');
   if(btnSignOut)btnSignOut.addEventListener('click',function(){signOut()});
@@ -2864,6 +2871,93 @@ async function exportPlayGrid(perPage){
   win.document.write(html);win.document.close();
 }
 
+// ===== SHARE TO PLAYERS =====
+async function shareToPlayers(){
+  if(!supabase){alert('Supabase not loaded');return}
+  if(!currentUser){alert('Sign in first');return}
+  // Build share payload — current game's cards with SVG images
+  games[activeGameIdx].cards=cards;
+  games[activeGameIdx].name=gameTitle;
+  var shareCards=[];
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i];
+    if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
+    var svgStr=buildFullSVG(c);
+    var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
+    var img=canvas?canvas.toDataURL('image/png'):'';
+    shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
+  }
+  if(shareCards.length===0){alert('No cards to share');return}
+  var payload={game:gameTitle,cards:shareCards};
+  var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
+  if(res.error){
+    if(res.error.message&&res.error.message.indexOf('does not exist')>=0){
+      alert('Share table not set up yet. Run this SQL in your Supabase SQL Editor:\n\ncreate table shares (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users, game_name text, data jsonb not null, created_at timestamptz default now());\nalter table shares enable row level security;\ncreate policy \"Anyone can read shares\" on shares for select using (true);\ncreate policy \"Auth users can create shares\" on shares for insert with check (auth.uid() = user_id);');
+    } else {
+      alert('Share failed: '+res.error.message);
+    }
+    return;
+  }
+  var shareUrl=window.location.origin+window.location.pathname+'?share='+res.data.id;
+  try{navigator.clipboard.writeText(shareUrl)}catch(e){}
+  prompt('Share link copied! Send this to your players:',shareUrl);
+}
+
+// ===== SHARE VIEWER (read-only) =====
+function renderShareViewer(data){
+  var game=data.game||'Scout Cards';
+  var shareCards=data.cards||[];
+  document.title=game+' — Film Review';
+  document.body.innerHTML='';
+  document.body.style.cssText='margin:0;font-family:Arial,sans-serif;background:#111;color:#fff';
+
+  var html='<style>';
+  html+='@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");';
+  html+='.sv-wrap{max-width:1200px;margin:0 auto;padding:16px;font-family:"Space Grotesk",Arial,sans-serif}';
+  html+='.sv-hdr{text-align:center;padding:16px 0 24px}';
+  html+='.sv-hdr h1{margin:0;font-size:28px;font-weight:700}';
+  html+='.sv-hdr p{margin:6px 0 0;color:#aaa;font-size:14px}';
+  html+='.sv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}';
+  html+='@media(max-width:900px){.sv-grid{grid-template-columns:repeat(2,1fr)}}';
+  html+='@media(max-width:520px){.sv-grid{grid-template-columns:1fr}}';
+  html+='.sv-card{background:#1a1a1a;border-radius:8px;overflow:hidden;border:1px solid #333}';
+  html+='.sv-card img{width:100%;display:block;border-bottom:1px solid #333}';
+  html+='.sv-info{padding:10px 12px}';
+  html+='.sv-play{font-weight:700;font-size:14px}';
+  html+='.sv-dd{font-size:12px;color:#aaa;margin-top:2px}';
+  html+='.sv-tags{margin-top:4px}';
+  html+='.sv-tag{display:inline-block;background:#333;color:#ccc;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px}';
+  html+='.sv-film{display:block;margin-top:8px;background:#e11d48;color:#fff;text-align:center;padding:10px 0;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;transition:background .15s}';
+  html+='.sv-film:hover{background:#c01640}';
+  html+='.sv-foot{text-align:center;padding:24px 0;color:#555;font-size:11px}';
+  html+='</style>';
+
+  html+='<div class="sv-wrap">';
+  html+='<div class="sv-hdr">';
+  html+='<h1>🏈 '+esc(game)+'</h1>';
+  html+='<p>'+shareCards.length+' play'+(shareCards.length!==1?'s':'')+' · Tap a card to watch film</p>';
+  html+='</div>';
+
+  html+='<div class="sv-grid">';
+  for(var i=0;i<shareCards.length;i++){
+    var sc=shareCards[i];
+    html+='<div class="sv-card">';
+    if(sc.img){html+='<img src="'+sc.img+'"/>';}
+    html+='<div class="sv-info">';
+    html+='<div class="sv-play">'+(sc.play||'Unnamed')+'</div>';
+    if(sc.dd){html+='<div class="sv-dd">'+esc(sc.dd)+'</div>';}
+    if(sc.tags&&sc.tags.length){html+='<div class="sv-tags">';for(var ti=0;ti<sc.tags.length;ti++){html+='<span class="sv-tag">'+esc(sc.tags[ti])+'</span>';}html+='</div>';}
+    if(sc.hudlUrl){
+      html+='<a href="'+esc(sc.hudlUrl)+'" target="_blank" rel="noopener" class="sv-film">▶ Watch Film</a>';
+    }
+    html+='</div></div>';
+  }
+  html+='</div>';
+  html+='<div class="sv-foot">Scout Cards · Game Prep System</div>';
+  html+='</div>';
+  document.body.innerHTML=html;
+}
+
 // ===== PRACTICE SCRIPT EXPORT =====
 async function exportScript(){
   if(practiceScript.length===0){alert('No cards in script');return}
@@ -3010,8 +3104,20 @@ document.addEventListener('keydown',function(e){
   }
 });
 
-initAuth();
-render();
+// Check for ?share= URL parameter — render share viewer instead of normal app
+var shareParam=new URLSearchParams(window.location.search).get('share');
+if(shareParam&&supabase){
+  supabase.from('shares').select('data').eq('id',shareParam).single().then(function(res){
+    if(res.error||!res.data){
+      document.body.innerHTML='<div style="text-align:center;padding:80px 20px;font-family:Arial,sans-serif;color:#333"><h2>Share not found</h2><p style="color:#888;margin-top:8px">This link may have expired or been removed.</p><a href="'+window.location.pathname+'" style="display:inline-block;margin-top:16px;color:#1A3C2B;font-weight:600">← Back to Scout Cards</a></div>';
+      return;
+    }
+    renderShareViewer(res.data.data);
+  });
+}else{
+  initAuth();
+  render();
+}
 })();
 </script>
 </body>
