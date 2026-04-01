@@ -182,6 +182,11 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .topbar .user-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(247,247,245,.5);letter-spacing:0.05em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .sign-out{background:transparent;border:1px solid rgba(247,247,245,.2);color:rgba(247,247,245,.6);font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;letter-spacing:0.05em;transition:.15s}
 .topbar .sign-out:hover{border-color:rgba(247,247,245,.5);color:#F7F7F5}
+.topbar .week-sel{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:6px 10px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:border .15s;max-width:180px}
+.topbar .week-sel:focus{outline:none;border-color:rgba(247,247,245,.5)}
+.topbar .week-sel option{background:#1A3C2B;color:#F7F7F5}
+.topbar .week-btn{background:transparent;border:1px solid rgba(247,247,245,.2);color:rgba(247,247,245,.6);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;border-radius:2px;cursor:pointer;letter-spacing:0.05em;transition:.15s}
+.topbar .week-btn:hover{border-color:rgba(247,247,245,.5);color:#F7F7F5}
 </style>
 </head>
 <body>
@@ -289,31 +294,55 @@ function showApp(){
   document.getElementById('auth-screen').classList.add('hidden');
 }
 
+function loadGamesFromData(d){
+  if(d&&d.games&&Array.isArray(d.games)){
+    // New multi-game format
+    games=d.games;
+    activeGameIdx=d.activeGame||0;
+    if(activeGameIdx>=games.length)activeGameIdx=0;
+  }else if(d&&d.t!==undefined){
+    // Old single-game format — migrate
+    games=[{name:d.t||'Week 1',cards:d.c||[mkCard()]}];
+    activeGameIdx=0;
+  }else if(Array.isArray(d)){
+    games=[{name:'Week 1',cards:d}];
+    activeGameIdx=0;
+  }else{
+    games=[mkGame('Week 1')];
+    activeGameIdx=0;
+  }
+  cards=games[activeGameIdx].cards;
+  gameTitle=games[activeGameIdx].name;
+  activeIdx=0;selPlayer=null;selLabel=null;
+}
+
 function loadFromCloud(){
   if(!supabase||!currentUser)return;
   supabase.from('cards').select('*').eq('user_id',currentUser.id).limit(1).then(function(res){
     if(res.data&&res.data.length>0){
-      var d=res.data[0].cards_data;
-      if(d&&d.t!==undefined){
-        gameTitle=d.t||'';cards=d.c||[mkCard()];
-      }else if(Array.isArray(d)){
-        cards=d;
-      }
-      activeIdx=0;selPlayer=null;render();
+      loadGamesFromData(res.data[0].cards_data);
+      render();
     }else{
       // No cloud data — try loading from localStorage as migration
       try{
         var r=localStorage.getItem('scoutCards2');
-        if(r){var ld=JSON.parse(r);gameTitle=ld.t||'';cards=ld.c||[mkCard()];activeIdx=0;selPlayer=null;render();saveToCloud()}
+        if(r){loadGamesFromData(JSON.parse(r));render();saveToCloud()}
       }catch(e){}
     }
   });
 }
 
+function buildSavePayload(){
+  // Sync current state back to games array
+  games[activeGameIdx].cards=cards;
+  games[activeGameIdx].name=gameTitle;
+  return{games:games,activeGame:activeGameIdx};
+}
+
 function saveToCloud(){
   if(!supabase||!currentUser||savingToCloud)return;
   savingToCloud=true;
-  var payload={t:gameTitle,c:cards};
+  var payload=buildSavePayload();
   supabase.from('cards').select('id').eq('user_id',currentUser.id).limit(1).then(function(res){
     if(res.data&&res.data.length>0){
       supabase.from('cards').update({cards_data:payload,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id).then(function(){savingToCloud=false});
@@ -327,7 +356,7 @@ function saveToCloud(){
 
 function autoSave(){
   if(autoSaveTimer)clearTimeout(autoSaveTimer);
-  autoSaveTimer=setTimeout(function(){saveToCloud()},2000);
+  autoSaveTimer=setTimeout(function(){games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;saveToCloud()},2000);
 }
 
 function signOut(){
@@ -599,13 +628,39 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 // ===== STATE =====
 var nid=1;
 function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[]}}
-var cards=[mkCard()];
+
+// Multi-week game system
+function mkGame(name){return{name:name||'Week 1',cards:[mkCard()]}}
+var games=[mkGame('Week 1')];
+var activeGameIdx=0;
+var cards=games[0].cards;
 var activeIdx=0;
 var selPlayer=null;
 var selLabel=null;
 var selSide='off';
-var gameTitle='Week 1 Scout Cards';
+var gameTitle='Week 1';
 var dragInfo=null;
+
+function switchGame(idx){
+  if(idx<0||idx>=games.length)return;
+  activeGameIdx=idx;
+  cards=games[idx].cards;
+  gameTitle=games[idx].name;
+  activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
+  undoStack=[];
+  render();
+}
+function addGame(name){
+  var g=mkGame(name||'Week '+(games.length+1));
+  games.push(g);
+  switchGame(games.length-1);
+}
+function deleteGame(idx){
+  if(games.length<=1)return;
+  games.splice(idx,1);
+  if(activeGameIdx>=games.length)activeGameIdx=games.length-1;
+  switchGame(activeGameIdx);
+}
 
 // Undo stack
 var undoStack=[];
@@ -1074,6 +1129,13 @@ function render(){
   h+='<div class="topbar"><div class="brand">';
   h+='<div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#F7F7F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>';
   h+='<div><span>Scout Cards</span><div class="sub">Game Prep System</div></div></div>';
+  h+='<select class="week-sel" id="weekSel">';
+  for(var gi=0;gi<games.length;gi++){
+    h+='<option value="'+gi+'"'+(gi===activeGameIdx?' selected':'')+'>'+esc(games[gi].name)+'</option>';
+  }
+  h+='</select>';
+  h+='<button class="week-btn" id="weekAdd" title="New Week">+</button>';
+  h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
   h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
   h+='<div class="right"><span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
   h+='<button class="btn btn-sec" id="btnSv">&#x1F4BE; Save</button>';
@@ -1582,7 +1644,22 @@ function bind(){
       var ni=document.getElementById('clI');if(ni){ni.focus();ni.selectionStart=ni.selectionEnd=ni.value.length}
     }
   });
-  var gtI=document.getElementById('gtI');if(gtI)gtI.addEventListener('input',function(){gameTitle=this.value});
+  var gtI=document.getElementById('gtI');if(gtI)gtI.addEventListener('input',function(){gameTitle=this.value;games[activeGameIdx].name=gameTitle});
+  var weekSel=document.getElementById('weekSel');
+  if(weekSel)weekSel.addEventListener('change',function(){
+    games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
+    switchGame(parseInt(this.value));
+  });
+  var weekAdd=document.getElementById('weekAdd');
+  if(weekAdd)weekAdd.addEventListener('click',function(){
+    games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
+    addGame();
+  });
+  var weekDel=document.getElementById('weekDel');
+  if(weekDel)weekDel.addEventListener('click',function(){
+    if(games.length<=1)return;
+    if(confirm('Delete "'+gameTitle+'" and all its cards?')){deleteGame(activeGameIdx)}
+  });
 
   var fSel=document.getElementById('fSel');
   if(fSel)fSel.addEventListener('change',function(){card.fk=this.value;card.asgn={};card.routePts={};card.opos=null;selPlayer=null;render()});
@@ -1623,8 +1700,9 @@ function bind(){
 
   var btnSv=document.getElementById('btnSv');
   if(btnSv)btnSv.addEventListener('click',function(){
+    games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
     saveToCloud();
-    try{localStorage.setItem('scoutCards2',JSON.stringify({t:gameTitle,c:cards}))}catch(e){}
+    try{localStorage.setItem('scoutCards2',JSON.stringify(buildSavePayload()))}catch(e){}
     alert('Saved!');
   });
 
@@ -1633,7 +1711,7 @@ function bind(){
     if(currentUser&&supabase){
       loadFromCloud();
     }else{
-      try{var r=localStorage.getItem('scoutCards2');if(r){var d=JSON.parse(r);gameTitle=d.t||'';cards=d.c||[mkCard()];activeIdx=0;selPlayer=null;render()}else alert('No saved data')}catch(e){alert('Load failed')}
+      try{var r=localStorage.getItem('scoutCards2');if(r){loadGamesFromData(JSON.parse(r));render()}else alert('No saved data')}catch(e){alert('Load failed')}
     }
   });
 
@@ -2295,6 +2373,9 @@ function upSB(){
       var cm=cis[i].querySelector('.cm');if(cm)cm.innerHTML=(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+cc.dd:'');
     }
   }
+  // Update week dropdown label
+  var ws=document.getElementById('weekSel');
+  if(ws&&ws.options[activeGameIdx])ws.options[activeGameIdx].text=gameTitle;
 }
 
 // ===== EXPORT FUNCTIONS =====
