@@ -1489,13 +1489,20 @@ function bind(){
           render();bindDrag();
           e.preventDefault();return;
         }
-        var txt=prompt('Enter text:');
-        if(txt){
-          if(!card.textBoxes)card.textBoxes=[];
-          card.textBoxes.push({id:tbNid++,x:pt.x,y:pt.y,text:txt,color:'#222',size:12});
-          selTextBox=card.textBoxes.length-1;selPlayer=null;
-          render();
-        }
+        // Create text box at click point and immediately inline edit
+        if(!card.textBoxes)card.textBoxes=[];
+        card.textBoxes.push({id:tbNid++,x:pt.x,y:pt.y,text:'Text',color:'#222',size:12});
+        var newIdx=card.textBoxes.length-1;
+        selTextBox=newIdx;selPlayer=null;
+        render();bindDrag();
+        // Defer inline edit so the element renders first
+        setTimeout(function(){
+          startInlineEdit('tb_'+newIdx,'' ,function(nv){
+            if(!nv||nv===''){card.textBoxes.splice(newIdx,1);selTextBox=null}
+            else{card.textBoxes[newIdx].text=nv}
+            render();bindDrag();
+          });
+        },50);
         e.preventDefault();return;
       }
       // Line endpoint drag handle
