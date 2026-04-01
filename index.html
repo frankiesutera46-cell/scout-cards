@@ -2921,7 +2921,7 @@ document.addEventListener('keydown',function(e){
 
   // Escape: exit draw/eraser mode or deselect
   if(e.key==='Escape'){
-    if(drawMode||eraserMode||textMode){
+    if(drawMode||eraserMode||textMode||shapeMode){
       drawMode=false;eraserMode=false;textMode=false;shapeMode=false;currentLine=null;currentShape=null;
       render();e.preventDefault();return;
     }
