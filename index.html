@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Scout Card Generator</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -715,6 +716,49 @@ function loadBranding(){try{var r=localStorage.getItem('scoutBranding');if(r)tea
 function saveBranding(){try{localStorage.setItem('scoutBranding',JSON.stringify(teamBranding))}catch(e){}}
 loadBranding();
 
+// ===== PERSISTENT PLAYBOOKS =====
+// Stored in localStorage: [{name, path, thumb}]
+// path = Supabase Storage path, thumb = data URL of first page
+var userPlaybooks=[];
+function loadPlaybooks(){try{var r=localStorage.getItem('scoutPlaybooks');if(r)userPlaybooks=JSON.parse(r)}catch(e){}}
+function savePlaybooks(){try{localStorage.setItem('scoutPlaybooks',JSON.stringify(userPlaybooks))}catch(e){}}
+loadPlaybooks();
+
+// Generate PDF thumbnail using PDF.js
+async function pdfThumbnail(file){
+  try{
+    if(!window.pdfjsLib)return'';
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    var buf=await file.arrayBuffer();
+    var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    var page=await pdf.getPage(1);
+    var vp=page.getViewport({scale:1});
+    var scale=Math.min(400/vp.width,520/vp.height);
+    var svp=page.getViewport({scale:scale});
+    var c=document.createElement('canvas');c.width=svp.width;c.height=svp.height;
+    var ctx=c.getContext('2d');
+    await page.render({canvasContext:ctx,viewport:svp}).promise;
+    return c.toDataURL('image/jpeg',0.7);
+  }catch(e){console.warn('PDF thumb failed:',e);return''}
+}
+
+// Generate thumbnail from URL (for share viewer)
+async function pdfThumbnailFromUrl(url){
+  try{
+    if(!window.pdfjsLib)return'';
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    var pdf=await pdfjsLib.getDocument(url).promise;
+    var page=await pdf.getPage(1);
+    var vp=page.getViewport({scale:1});
+    var scale=Math.min(400/vp.width,520/vp.height);
+    var svp=page.getViewport({scale:scale});
+    var c=document.createElement('canvas');c.width=svp.width;c.height=svp.height;
+    var ctx=c.getContext('2d');
+    await page.render({canvasContext:ctx,viewport:svp}).promise;
+    return c.toDataURL('image/jpeg',0.7);
+  }catch(e){console.warn('PDF thumb from URL failed:',e);return''}
+}
+
 // ===== PRESETS (saved to localStorage) =====
 // Each preset: {name:string, data:object}
 // offPresets: saves current offensive player positions {fk, opos}
@@ -1244,6 +1288,7 @@ function render(){
   h+='</select>';
   h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">&#x1F517; Share</button>';
   h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">&#x2699; Team</button>';
+  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">&#x1F4DA; Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
 
@@ -1261,6 +1306,36 @@ function render(){
   h+='<span id="brandColorHex" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:#3A3A38">'+esc(teamBranding.primaryColor)+'</span></div></div>';
   if(teamBranding.logoUrl){h+='<div style="margin-bottom:14px;text-align:center"><img src="'+esc(teamBranding.logoUrl)+'" style="max-height:60px;max-width:200px;object-fit:contain" onerror="this.style.display=\'none\'"/></div>';}
   h+='<button id="brandingSave" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Save Branding</button>';
+  h+='</div></div>';
+
+  // Playbooks Modal
+  h+='<div id="playbooksModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
+  h+='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Playbook Library</span><button id="playbooksClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-bottom:16px;letter-spacing:.05em">PDFs persist across weeks and are included when you share.</div>';
+  // Upload area
+  h+='<div style="margin-bottom:16px;padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px;text-align:center">';
+  h+='<input type="file" id="pbUploadFile" accept=".pdf" multiple style="display:none"/>';
+  h+='<button id="pbUploadBtn" style="padding:8px 20px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">+ Upload PDF</button>';
+  h+='<div id="pbUploadStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-top:6px;min-height:16px"></div>';
+  h+='</div>';
+  // Playbook list
+  h+='<div id="pbList">';
+  if(userPlaybooks.length===0){
+    h+='<div style="text-align:center;padding:20px;color:rgba(58,58,56,.35);font-family:\'JetBrains Mono\',monospace;font-size:11px">No playbooks uploaded yet</div>';
+  }else{
+    for(var pbi=0;pbi<userPlaybooks.length;pbi++){
+      var pb=userPlaybooks[pbi];
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid rgba(58,58,56,.1);border-radius:2px;margin-bottom:6px">';
+      if(pb.thumb){h+='<img src="'+pb.thumb+'" style="width:48px;height:62px;object-fit:cover;border-radius:2px;border:1px solid rgba(58,58,56,.1);flex-shrink:0"/>';}
+      else{h+='<div style="width:48px;height:62px;background:rgba(58,58,56,.06);border-radius:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">&#x1F4C4;</div>';}
+      h+='<div style="flex:1;min-width:0"><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:13px;color:#3A3A38;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(pb.name)+'</div>';
+      h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.35);margin-top:2px">PDF</div></div>';
+      h+='<button class="pb-del-btn" data-pbidx="'+pbi+'" style="background:none;border:1px solid rgba(255,140,105,.3);color:#FF8C69;font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:500;letter-spacing:.05em;text-transform:uppercase;flex-shrink:0">Delete</button>';
+      h+='</div>';
+    }
+  }
+  h+='</div>';
   h+='</div></div>';
 
   h+='<div class="layout">';
@@ -1900,6 +1975,63 @@ function bind(){
       brandingModal.style.display='none';
       render();
     });
+  }
+
+  // Playbooks modal
+  var btnPlaybooks=document.getElementById('btnPlaybooks');
+  var playbooksModal=document.getElementById('playbooksModal');
+  if(btnPlaybooks&&playbooksModal){
+    btnPlaybooks.addEventListener('click',function(){playbooksModal.style.display='flex'});
+    document.getElementById('playbooksClose').addEventListener('click',function(){playbooksModal.style.display='none'});
+    playbooksModal.addEventListener('click',function(e){if(e.target===playbooksModal)playbooksModal.style.display='none'});
+    // Upload button
+    var pbUploadBtn=document.getElementById('pbUploadBtn');
+    var pbUploadFile=document.getElementById('pbUploadFile');
+    pbUploadBtn.addEventListener('click',function(){pbUploadFile.click()});
+    pbUploadFile.addEventListener('change',async function(){
+      if(!this.files.length)return;
+      if(!supabase||!currentUser){document.getElementById('pbUploadStatus').textContent='Sign in to upload';return}
+      var status=document.getElementById('pbUploadStatus');
+      pbUploadBtn.disabled=true;
+      for(var fi=0;fi<this.files.length;fi++){
+        var file=this.files[fi];
+        status.textContent='Generating thumbnail '+(fi+1)+'/'+this.files.length+'...';
+        var thumb=await pdfThumbnail(file);
+        status.textContent='Uploading '+(fi+1)+'/'+this.files.length+': '+file.name+'...';
+        var storagePath=currentUser.id+'/playbooks/'+Date.now()+'_'+file.name;
+        var upRes=await supabase.storage.from('playbooks').upload(storagePath,file,{contentType:'application/pdf',upsert:true});
+        if(!upRes.error){
+          userPlaybooks.push({name:file.name.replace(/\.pdf$/i,''),path:storagePath,thumb:thumb});
+          savePlaybooks();
+        }else{
+          status.textContent='Upload failed: '+upRes.error.message;
+        }
+      }
+      status.textContent='Done!';
+      pbUploadFile.value='';
+      playbooksModal.style.display='none';
+      render();
+    });
+    // Delete buttons
+    var delBtns=document.querySelectorAll('.pb-del-btn');
+    for(var di=0;di<delBtns.length;di++){
+      (function(btn){
+        btn.addEventListener('click',async function(){
+          var idx=parseInt(btn.getAttribute('data-pbidx'));
+          var pb=userPlaybooks[idx];
+          if(!pb)return;
+          if(!confirm('Delete "'+pb.name+'"?'))return;
+          // Delete from Supabase storage
+          if(supabase&&currentUser&&pb.path){
+            await supabase.storage.from('playbooks').remove([pb.path]);
+          }
+          userPlaybooks.splice(idx,1);
+          savePlaybooks();
+          playbooksModal.style.display='none';
+          render();
+        });
+      })(delBtns[di]);
+    }
   }
 
   var btnSignOut=document.getElementById('btnSignOut');
@@ -2928,30 +3060,22 @@ function shareToPlayers(){
   var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:460px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
   mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Share to Players</span><button id="shareModalClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
   mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">'+cardCount+' scout card'+(cardCount!==1?'s':'')+' from <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
-  // Playbook PDFs section
-  mh+='<div style="margin-bottom:16px;padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
-  mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:8px;font-weight:500">Attach Playbook PDFs (optional)</label>';
-  mh+='<input type="file" id="sharePdfFiles" accept=".pdf" multiple style="font-family:\'JetBrains Mono\',monospace;font-size:11px;width:100%"/>';
-  mh+='<div id="sharePdfList" style="margin-top:8px"></div>';
-  mh+='</div>';
+  // Playbook library info
+  if(userPlaybooks.length>0){
+    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
+    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:6px;font-weight:500">Playbook Library ('+userPlaybooks.length+' PDF'+(userPlaybooks.length!==1?'s':'')+')</label>';
+    for(var pi=0;pi<userPlaybooks.length;pi++){
+      mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4C4; '+esc(userPlaybooks[pi].name)+'</div>';
+    }
+    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">These will be included in the share. Manage in &#x1F4DA; Playbooks.</div>';
+    mh+='</div>';
+  }
   // Status area
   mh+='<div id="shareStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.5);margin-bottom:12px;min-height:18px"></div>';
   mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Create Share Link</button>';
   mh+='</div>';
   m.innerHTML=mh;
   document.body.appendChild(m);
-
-  // File input preview
-  var pdfInput=document.getElementById('sharePdfFiles');
-  var pdfList=document.getElementById('sharePdfList');
-  pdfInput.addEventListener('change',function(){
-    pdfList.innerHTML='';
-    for(var i=0;i<pdfInput.files.length;i++){
-      var f=pdfInput.files[i];
-      var sz=f.size<1048576?(Math.round(f.size/1024)+'KB'):(Math.round(f.size/1048576*10)/10+'MB');
-      pdfList.innerHTML+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:3px 0">&#x1F4C4; '+esc(f.name)+' <span style="color:rgba(58,58,56,.4)">'+sz+'</span></div>';
-    }
-  });
 
   // Close modal
   document.getElementById('shareModalClose').addEventListener('click',function(){m.remove()});
@@ -2975,7 +3099,14 @@ function shareToPlayers(){
         status.textContent='Building card images... '+(i+1)+'/'+cards.length;
       }
       if(shareCards.length===0){alert('No cards to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
-      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:[]};
+
+      // Include persistent playbooks
+      var playbookMeta=[];
+      for(var pbi=0;pbi<userPlaybooks.length;pbi++){
+        playbookMeta.push({name:userPlaybooks[pbi].name,path:userPlaybooks[pbi].path,thumb:userPlaybooks[pbi].thumb||''});
+      }
+
+      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta};
 
       status.textContent='Saving to cloud...';
       var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
@@ -2985,31 +3116,8 @@ function shareToPlayers(){
         }else{alert('Share failed: '+res.error.message)}
         btn.disabled=false;btn.textContent='CREATE SHARE LINK';return;
       }
-      var shareId=res.data.id;
 
-      // Upload PDFs if any
-      var files=pdfInput.files;
-      var playbookMeta=[];
-      if(files.length>0){
-        for(var fi=0;fi<files.length;fi++){
-          var file=files[fi];
-          status.textContent='Uploading PDF '+(fi+1)+'/'+files.length+': '+file.name;
-          var storagePath=currentUser.id+'/'+shareId+'/'+Date.now()+'_'+file.name;
-          var upRes=await supabase.storage.from('playbooks').upload(storagePath,file,{contentType:'application/pdf',upsert:true});
-          if(!upRes.error){
-            playbookMeta.push({name:file.name.replace(/\.pdf$/i,''),path:storagePath});
-          }else{
-            console.warn('PDF upload failed:',upRes.error.message);
-          }
-        }
-        if(playbookMeta.length>0){
-          payload.playbooks=playbookMeta;
-          status.textContent='Saving playbook data...';
-          await supabase.from('shares').update({data:payload}).eq('id',shareId);
-        }
-      }
-
-      var shareUrl=window.location.origin+window.location.pathname+'?share='+shareId;
+      var shareUrl=window.location.origin+window.location.pathname+'?share='+res.data.id;
       try{navigator.clipboard.writeText(shareUrl)}catch(e){}
       m.remove();
       prompt('Share link copied! Send this to your players:',shareUrl);
@@ -3074,13 +3182,17 @@ function renderShareViewer(data){
   html+='.sv-tag{display:inline-block;background:rgba(26,60,43,.06);color:'+pc+';font-family:"JetBrains Mono",monospace;font-size:9px;padding:2px 7px;border-radius:2px;margin-right:3px;font-weight:500;letter-spacing:.03em;border:1px solid rgba(26,60,43,.12)}';
   html+='.sv-film{display:block;margin-top:8px;background:'+pc+';color:#F7F7F5;text-align:center;padding:9px 0;border-radius:2px;text-decoration:none;font-family:"JetBrains Mono",monospace;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;transition:opacity .15s}';
   html+='.sv-film:hover{opacity:.85}';
-  // Playbook section
-  html+='.sv-pb-wrap{max-width:900px;margin:0 auto}';
-  html+='.sv-pb-sel{width:100%;padding:10px 14px;background:#F7F7F5;border:1px solid rgba(58,58,56,.15);border-radius:2px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#3A3A38;cursor:pointer;margin-bottom:14px;appearance:auto}';
-  html+='.sv-pb-viewer{width:100%;height:80vh;border:1px solid rgba(58,58,56,.12);border-radius:2px;background:#fff;overflow:hidden}';
-  html+='.sv-pb-viewer iframe{width:100%;height:100%;border:none}';
-  html+='.sv-pb-dl{display:inline-block;margin-top:10px;font-family:"JetBrains Mono",monospace;font-size:10px;color:'+pc+';text-decoration:none;letter-spacing:.05em;padding:6px 16px;border:1px solid rgba(26,60,43,.2);border-radius:2px;text-transform:uppercase;font-weight:600}';
-  html+='.sv-pb-dl:hover{background:rgba(26,60,43,.04)}';
+  // Playbook cards
+  html+='.sv-pb-card{background:#F7F7F5;border-radius:2px;overflow:hidden;border:1px solid rgba(58,58,56,.12);cursor:pointer;transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}';
+  html+='.sv-pb-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08)}';
+  html+='.sv-pb-thumb{width:100%;aspect-ratio:4/5;background:rgba(58,58,56,.04);display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(58,58,56,.1);overflow:hidden}';
+  html+='.sv-pb-thumb img{width:100%;height:100%;object-fit:cover}';
+  html+='.sv-pb-icon{font-size:48px;color:rgba(58,58,56,.15)}';
+  html+='.sv-pb-info{padding:10px 12px}';
+  html+='.sv-pb-name{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;color:#3A3A38;letter-spacing:.02em}';
+  html+='.sv-pb-meta{font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(58,58,56,.4);margin-top:3px;letter-spacing:.05em;text-transform:uppercase}';
+  html+='.sv-pb-open{display:block;margin-top:8px;background:'+pc+';color:#F7F7F5;text-align:center;padding:9px 0;border-radius:2px;font-family:"JetBrains Mono",monospace;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;transition:opacity .15s}';
+  html+='.sv-pb-open:hover{opacity:.85}';
   // Footer
   html+='.sv-foot{text-align:center;padding:28px 0;font-family:"JetBrains Mono",monospace;color:rgba(58,58,56,.3);font-size:9px;letter-spacing:.1em;text-transform:uppercase}';
   // Lightbox overlay
@@ -3143,22 +3255,22 @@ function renderShareViewer(data){
 
   // === PLAYBOOK SECTION ===
   if(hasPb){
-    var firstPdfUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(playbooks[0].path);
     html+='<div class="sv-section" id="svPlaybookSection">';
-    html+='<div class="sv-pb-wrap">';
-    if(playbooks.length>1){
-      html+='<select class="sv-pb-sel" id="svPbSelect">';
-      for(var pi=0;pi<playbooks.length;pi++){
-        html+='<option value="'+pi+'">'+esc(playbooks[pi].name)+'</option>';
-      }
-      html+='</select>';
-    }else{
-      html+='<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#3A3A38;margin-bottom:14px">'+esc(playbooks[0].name)+'</div>';
+    html+='<div class="sv-grid">';
+    for(var pi=0;pi<playbooks.length;pi++){
+      var pb=playbooks[pi];
+      var pdfUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(pb.path);
+      html+='<a class="sv-pb-card" href="'+esc(pdfUrl)+'" target="_blank" rel="noopener">';
+      html+='<div class="sv-pb-thumb">';
+      if(pb.thumb){html+='<img src="'+pb.thumb+'"/>';}
+      else{html+='<div class="sv-pb-icon">&#x1F4C4;</div>';}
+      html+='</div>';
+      html+='<div class="sv-pb-info">';
+      html+='<div class="sv-pb-name">'+esc(pb.name)+'</div>';
+      html+='<div class="sv-pb-meta">PDF Playbook</div>';
+      html+='<div class="sv-pb-open">Open Playbook</div>';
+      html+='</div></a>';
     }
-    html+='<div class="sv-pb-viewer"><iframe id="svPbFrame" src="'+firstPdfUrl+'"></iframe></div>';
-    html+='<div style="margin-top:10px;text-align:center">';
-    html+='<a class="sv-pb-dl" id="svPbDownload" href="'+firstPdfUrl+'" target="_blank" rel="noopener">Open PDF in New Tab</a>';
-    html+='</div>';
     html+='</div>';
     html+='</div>';
   }
@@ -3194,18 +3306,6 @@ function renderShareViewer(data){
           pbSection.classList.toggle('active',which==='playbook');
         });
       })(tabs[tbi]);
-    }
-    // PDF dropdown switcher
-    var pbSelect=document.getElementById('svPbSelect');
-    var pbFrame=document.getElementById('svPbFrame');
-    var pbDl=document.getElementById('svPbDownload');
-    if(pbSelect){
-      pbSelect.addEventListener('change',function(){
-        var idx=parseInt(this.value);
-        var url=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(playbooks[idx].path);
-        pbFrame.src=url;
-        pbDl.href=url;
-      });
     }
   }
 
