@@ -2614,8 +2614,17 @@ document.addEventListener('keydown',function(e){
     }
   }
 
-  // Delete/Backspace: delete selected line, text box, or player route
+  // Delete/Backspace: delete selected line, text box, label, or player route
   if(e.key==='Delete'||e.key==='Backspace'){
+    if(selLabel){
+      pushUndo();
+      if(selLabel==='play'){card.play=''}
+      else if(selLabel==='dd'){card.dd=''}
+      else if(selLabel==='notes'){card.notes=''}
+      else if(selLabel.indexOf('pn_')===0){var pnk=selLabel.substring(3);delete card.pn[pnk];delete card.lpos[selLabel];if(card.lsz)delete card.lsz[selLabel]}
+      selLabel=null;
+      render();e.preventDefault();return;
+    }
     if(selLine!==null&&card.lines&&card.lines[selLine]!==undefined){
       pushUndo();
       card.lines.splice(selLine,1);
