@@ -845,7 +845,7 @@ function buildField(){
 }
 
 // Build draggable text labels for play name, D&D, notes on the field
-var LABEL_DEF_SZ={play:15,dd:13,notes:11};
+var LABEL_DEF_SZ={fmhash:12,play:15,dd:13,notes:11};
 function labelSz(card,key){if(!card.lsz)card.lsz={};return card.lsz[key]||(LABEL_DEF_SZ[key]||9)}
 function buildLabelBox(key,x,y,w,h,isSel){
   var s='';
@@ -856,35 +856,48 @@ function buildLabelBox(key,x,y,w,h,isSel){
   }
   return s;
 }
+var HASH_LABELS={M:'Middle',L:'Lt Hash',R:'Rt Hash',LM:'Lt Mid',RM:'Rt Mid'};
 function buildTextLabels(card){
   var s='';
-  var defaults={play:{x:100,y:18},dd:{x:FW-100,y:18},notes:{x:CX,y:LOS_Y*0.5}};
+  var defaults={fmhash:{x:10,y:16},play:{x:10,y:32},dd:{x:FW-60,y:16},notes:{x:CX,y:LOS_Y*0.5}};
   if(!card.lpos)card.lpos={};
   if(!card.lsz)card.lsz={};
   var lp={
+    fmhash: card.lpos.fmhash || defaults.fmhash,
     play: card.lpos.play || defaults.play,
     dd: card.lpos.dd || defaults.dd,
     notes: card.lpos.notes || defaults.notes
   };
 
-  // Play Name
+  // Formation + Hash (always shown, top-left, left-aligned)
+  var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
+  var hashName=HASH_LABELS[card.hash]||card.hash;
+  var fmhashText=fmName+' — '+hashName;
+  var fsz=labelSz(card,'fmhash');
+  var fw2=Math.max(120,fmhashText.length*(fsz*0.58));
+  var fh=fsz+6;
+  s+='<rect x="'+lp.fmhash.x+'" y="'+(lp.fmhash.y-fsz+2)+'" width="'+fw2+'" height="'+fh+'" fill="transparent" data-dp="t_fmhash" style="cursor:move"/>';
+  s+='<text x="'+(lp.fmhash.x+2)+'" y="'+(lp.fmhash.y+2)+'" text-anchor="start" fill="#444" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="600" pointer-events="none">'+esc(fmhashText)+'</text>';
+  s+=buildLabelBox('fmhash',lp.fmhash.x,lp.fmhash.y-fsz+2,fw2,fh,selLabel==='fmhash');
+
+  // Play Name (below formation, left-aligned)
   if(card.play){
     var psz=labelSz(card,'play');
     var pw=Math.max(100,card.play.length*(psz*0.6));
     var ph=psz+6;
-    s+='<rect x="'+(lp.play.x-pw/2)+'" y="'+(lp.play.y-psz+2)+'" width="'+pw+'" height="'+ph+'" fill="transparent" data-dp="t_play" style="cursor:move"/>';
-    s+='<text x="'+lp.play.x+'" y="'+(lp.play.y+2)+'" text-anchor="middle" fill="#222" font-size="'+psz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
-    s+=buildLabelBox('play',lp.play.x-pw/2,lp.play.y-psz+2,pw,ph,selLabel==='play');
+    s+='<rect x="'+lp.play.x+'" y="'+(lp.play.y-psz+2)+'" width="'+pw+'" height="'+ph+'" fill="transparent" data-dp="t_play" style="cursor:move"/>';
+    s+='<text x="'+(lp.play.x+2)+'" y="'+(lp.play.y+2)+'" text-anchor="start" fill="#222" font-size="'+psz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
+    s+=buildLabelBox('play',lp.play.x,lp.play.y-psz+2,pw,ph,selLabel==='play');
   }
 
-  // Down & Distance
+  // Down & Distance (top-right)
   if(card.dd){
     var dsz=labelSz(card,'dd');
     var dw=Math.max(60,card.dd.length*(dsz*0.65));
     var dh=dsz+6;
-    s+='<rect x="'+(lp.dd.x-dw/2)+'" y="'+(lp.dd.y-dsz+2)+'" width="'+dw+'" height="'+dh+'" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
-    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="middle" fill="#444" font-size="'+dsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
-    s+=buildLabelBox('dd',lp.dd.x-dw/2,lp.dd.y-dsz+2,dw,dh,selLabel==='dd');
+    s+='<rect x="'+(lp.dd.x-dw)+'" y="'+(lp.dd.y-dsz+2)+'" width="'+dw+'" height="'+dh+'" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
+    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="end" fill="#444" font-size="'+dsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
+    s+=buildLabelBox('dd',lp.dd.x-dw,lp.dd.y-dsz+2,dw,dh,selLabel==='dd');
   }
 
   // Notes
@@ -1544,7 +1557,7 @@ function bind(){
           var pt2=svgPoint(svg,e);
           var curCard2=cards[activeIdx];
           if(!curCard2.lpos)curCard2.lpos={};
-          var defaults={play:{x:100,y:18},dd:{x:FW-100,y:18},notes:{x:CX,y:LOS_Y*0.5}};
+          var defaults={fmhash:{x:10,y:16},play:{x:10,y:32},dd:{x:FW-60,y:16},notes:{x:CX,y:LOS_Y*0.5}};
           var curPos=curCard2.lpos[labelKey]||defaults[labelKey]||{x:pt2.x,y:pt2.y};
           pushUndo();dragInfo={key:labelKey,isLabel:true,offX:pt2.x-curPos.x,offY:pt2.y-curPos.y,moved:false};
           e.preventDefault();
@@ -1848,6 +1861,34 @@ function bind(){
       var wpPts=card.routePts[wpPlayer];
       if(wpPts&&wpPts.length>2&&wpIdx>0){
         wpPts.splice(wpIdx,1);render();
+      }
+      e.preventDefault();return;
+    }
+    // Label editing on double-click
+    var dpAttr=tgt.getAttribute&&tgt.getAttribute('data-dp');
+    if(dpAttr&&dpAttr.indexOf('t_')===0){
+      var lk=dpAttr.substring(2);
+      pushUndo();
+      if(lk==='play'){
+        var nv=prompt('Play name:',card.play||'');
+        if(nv!==null){card.play=nv;document.getElementById('pI').value=nv;render()}
+      }else if(lk==='dd'){
+        var nv2=prompt('Down & Distance:',card.dd||'');
+        if(nv2!==null){card.dd=nv2;document.getElementById('dI').value=nv2;render()}
+      }else if(lk==='notes'){
+        var nv3=prompt('Card notes:',card.notes||'');
+        if(nv3!==null){card.notes=nv3;document.getElementById('nI').value=nv3;render()}
+      }else if(lk==='fmhash'){
+        // fmhash is auto-generated, not directly editable — select it for resize/move
+        selLabel='fmhash';render();
+      }else if(lk.indexOf('pn_')===0){
+        var pnk2=lk.substring(3);
+        var nv4=prompt('Note for '+pnk2+':',card.pn[pnk2]||'');
+        if(nv4!==null){
+          if(nv4===''){delete card.pn[pnk2];delete card.lpos[lk];if(card.lsz)delete card.lsz[lk]}
+          else{card.pn[pnk2]=nv4}
+          render();
+        }
       }
       e.preventDefault();return;
     }
@@ -2698,6 +2739,7 @@ document.addEventListener('keydown',function(e){
   // Delete/Backspace: delete selected line, text box, label, or player route
   if(e.key==='Delete'||e.key==='Backspace'){
     if(selLabel){
+      if(selLabel==='fmhash'){selLabel=null;render();e.preventDefault();return;}
       pushUndo();
       if(selLabel==='play'){card.play=''}
       else if(selLabel==='dd'){card.dd=''}
