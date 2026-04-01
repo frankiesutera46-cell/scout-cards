@@ -958,8 +958,10 @@ function buildTextLabels(card){
     s+=buildLabelBox('notes',notesPos.x-nw/2,notesPos.y-nsz+4,nw,nh,selLabel==='notes');
   }
 
-  // Player-specific notes
+  // Player-specific notes (clean up stale empty entries first)
   if(card.pn){
+    var pnClean=Object.keys(card.pn);
+    for(var pci=0;pci<pnClean.length;pci++){if(!card.pn[pnClean[pci]])delete card.pn[pnClean[pci]]}
     var pnKeys=Object.keys(card.pn);
     var pnIdx=0;
     for(var pi=0;pi<pnKeys.length;pi++){
@@ -1729,7 +1731,7 @@ function bind(){
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
   var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){card.hash=this.value;card.opos=null;card.dpos=null;card.routePts={};upSB();render()});
   var nI=document.getElementById('nI');if(nI)nI.addEventListener('input',function(){card.notes=this.value});
-  var pnI=document.getElementById('pnI');if(pnI)pnI.addEventListener('input',function(){if(selPlayer)card.pn[selPlayer]=this.value});
+  var pnI=document.getElementById('pnI');if(pnI)pnI.addEventListener('input',function(){if(!selPlayer)return;var v=this.value;if(v){card.pn[selPlayer]=v}else{delete card.pn[selPlayer]}});
   var clI=document.getElementById('clI');if(clI)clI.addEventListener('input',function(){
     if(selPlayer){
       if(this.value){card.cl[selPlayer]=this.value}else{delete card.cl[selPlayer]}
