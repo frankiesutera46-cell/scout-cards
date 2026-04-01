@@ -2296,10 +2296,15 @@ function bindDrag(){
         els[i].setAttribute('x',nx-w/2);els[i].setAttribute('y',ny-h2/2);
       }
     }
-    // Move text label too
-    var texts=svg.querySelectorAll('text');
-    // This is expensive but necessary for real-time feedback
-    // We'll just re-render on mouseup
+    // Move associated text label (defense letters, custom OL labels)
+    var txtOff=dragInfo.isDef?5:3;
+    for(var ei=0;ei<els.length;ei++){
+      var nxt=els[ei].nextElementSibling;
+      if(nxt&&nxt.tagName==='text'&&nxt.getAttribute('pointer-events')==='none'){
+        nxt.setAttribute('x',nx);
+        nxt.setAttribute('y',ny+txtOff);
+      }
+    }
   };
 
   svg.onmouseup=function(){
