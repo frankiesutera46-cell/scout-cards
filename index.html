@@ -3480,13 +3480,17 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   if(hasGlossary){
     var glossaryUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(glossary.path);
     html+='<div class="sv-section" id="svGlossarySection">';
-    html+='<div style="text-align:center;padding:20px 0 16px">';
-    html+='<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:18px;color:#1A3C2B;margin-bottom:4px">Defensive Terminology</div>';
-    html+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);letter-spacing:.06em">Reference guide for defensive calls and assignments</div>';
+    html+='<div class="sv-grid">';
+    html+='<a class="sv-pb-card" href="'+esc(glossaryUrl)+'" target="_blank" rel="noopener">';
+    html+='<div class="sv-pb-thumb">';
+    if(glossary.thumb){html+='<img src="'+glossary.thumb+'"/>';}
+    else{html+='<div class="sv-pb-icon">&#x1F4D6;</div>';}
     html+='</div>';
-    html+='<div style="max-width:800px;margin:0 auto">';
-    html+='<iframe src="'+esc(glossaryUrl)+'" style="width:100%;height:75vh;border:1px solid rgba(58,58,56,.12);border-radius:2px;background:#fff"></iframe>';
-    html+='<a href="'+esc(glossaryUrl)+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:'+pc+';text-decoration:none;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Open in New Tab &rarr;</a>';
+    html+='<div class="sv-pb-info">';
+    html+='<div class="sv-pb-name">'+esc(glossary.name)+'</div>';
+    html+='<div class="sv-pb-meta">Defensive Terminology</div>';
+    html+='<div class="sv-pb-open">Open Glossary</div>';
+    html+='</div></a>';
     html+='</div>';
     html+='</div>';
   }
