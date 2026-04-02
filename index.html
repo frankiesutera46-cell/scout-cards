@@ -1103,16 +1103,17 @@ function buildTextLabels(card){
       s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(playText)+'</text>';
     }
   } else {
-    // Scout mode: Formation + Hash + Play name
+    // Scout mode: Formation + Hash + Play name (editable header override)
     var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
     var hashName=HASH_LABELS[card.hash]||card.hash;
-    var fmhashText=fmName+' — '+hashName;
+    var autoHeader=fmName+' — '+hashName;
+    var fmhashText=card.headerText||autoHeader;
     var fsz=labelSz(card,'fmhash');
     var playText=card.play||'';
     var hdrLeft=playText ? fmhashText+' | '+playText : fmhashText;
     var hlw=Math.max(200,hdrLeft.length*(fsz*0.58));
     var hlh=fsz+6;
-    s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_play" style="cursor:pointer"/>';
+    s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_header" style="cursor:pointer"/>';
     s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">';
     s+=esc(fmhashText);
     if(playText){s+='<tspan fill="#666"> | </tspan><tspan fill="#222">'+esc(playText)+'</tspan>';}
@@ -2145,7 +2146,16 @@ function bind(){
         if(dp.indexOf('t_')===0){
           var labelKey=dp.substring(2);
           selLabel=labelKey;selPlayer=null;
-          // Header labels (play, dd) are not draggable — inline edit
+          // Header labels (play, dd, header) are not draggable — inline edit
+          if(labelKey==='header'){
+            selLabel=null;e.preventDefault();
+            var c=cards[activeIdx];
+            var autoH=((FORMATIONS[c.fk]||{}).name||c.fk)+' \u2014 '+(HASH_LABELS[c.hash]||c.hash);
+            startInlineEdit('header',c.headerText||autoH,function(nv){
+              c.headerText=nv;render();bindDrag();
+            });
+            return;
+          }
           if(labelKey==='play'){
             selLabel=null;e.preventDefault();
             startInlineEdit('play',cards[activeIdx].play||'',function(nv){
