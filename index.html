@@ -1734,9 +1734,9 @@ function render(){
   // Play Designer notes section
   if(appMode==='playdesign'){
     h+='<div class="pd-notes">';
-    h+='<div class="pd-notes-col"><div class="pd-notes-title">FRONTS: ADJUSTMENTS / STUNTS</div>';
+    h+='<div class="pd-notes-col"><div class="pd-notes-title" contenteditable="true" id="pdFrontTitle">'+(card.frontTitle||'FRONTS: ADJUSTMENTS / STUNTS')+'</div>';
     h+='<textarea id="pdFrontNotes" placeholder="Front calls, adjustments, stunts...">'+(card.frontNotes||'')+'</textarea></div>';
-    h+='<div class="pd-notes-col"><div class="pd-notes-title">COVERAGE DETAILS</div>';
+    h+='<div class="pd-notes-col"><div class="pd-notes-title" contenteditable="true" id="pdCovTitle">'+(card.covTitle||'COVERAGE DETAILS')+'</div>';
     h+='<textarea id="pdCoverageNotes" placeholder="Coverage assignments, rules...">'+(card.coverageNotes||'')+'</textarea></div>';
     h+='</div>';
   }
@@ -2424,6 +2424,10 @@ function bind(){
   if(pdFN)pdFN.addEventListener('input',function(){card.frontNotes=this.value});
   var pdCN=document.getElementById('pdCoverageNotes');
   if(pdCN)pdCN.addEventListener('input',function(){card.coverageNotes=this.value});
+  var pdFT=document.getElementById('pdFrontTitle');
+  if(pdFT)pdFT.addEventListener('blur',function(){card.frontTitle=this.textContent.trim()||'FRONTS: ADJUSTMENTS / STUNTS'});
+  var pdCT=document.getElementById('pdCovTitle');
+  if(pdCT)pdCT.addEventListener('blur',function(){card.covTitle=this.textContent.trim()||'COVERAGE DETAILS'});
     document.getElementById('playbooksClose').addEventListener('click',function(){playbooksModal.style.display='none'});
     playbooksModal.addEventListener('click',function(e){if(e.target===playbooksModal)playbooksModal.style.display='none'});
     // Upload button
@@ -3462,9 +3466,9 @@ function buildFullSVG(card,forPlayDesign){
     svg += '<rect x="0" y="'+FH+'" width="'+FW+'" height="180" fill="#fff"/>';
     svg += '<line x1="'+FW/2+'" y1="'+ny+'" x2="'+FW/2+'" y2="'+(FH+175)+'" stroke="#ccc" stroke-width="1"/>';
     svg += '<rect x="10" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
-    svg += '<text x="'+(FW/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">FRONTS: ADJUSTMENTS / STUNTS</text>';
+    svg += '<text x="'+(FW/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+(card.frontTitle||'FRONTS: ADJUSTMENTS / STUNTS')+'</text>';
     svg += '<rect x="'+(FW/2+10)+'" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
-    svg += '<text x="'+(FW*3/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">COVERAGE DETAILS</text>';
+    svg += '<text x="'+(FW*3/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+(card.covTitle||'COVERAGE DETAILS')+'</text>';
     // Render note text
     var fnLines=(card.frontNotes||'').split('\n');
     for(var fi=0;fi<fnLines.length&&fi<10;fi++){
