@@ -618,6 +618,7 @@ var selLabel=null;
 var selSide='off';
 var gameTitle='Week 1';
 var dragInfo=null;
+var viewPerspective='def'; // 'def' or 'off'
 
 function getPlayDesigns(){return games[activeGameIdx].playDesigns||(games[activeGameIdx].playDesigns=[])}
 
@@ -870,6 +871,53 @@ function getPDDefPlayers(card){
     for(var i=0;i<ks.length;i++){if(flipped[ks[i]]){flipped[ks[i]].x=card.pdDpos[ks[i]].x;flipped[ks[i]].y=card.pdDpos[ks[i]].y}}
   }
   return flipped;
+}
+
+// Offensive perspective: flip scout players around LOS_Y
+function getScoutFlippedOff(card){
+  var fm=FORMATIONS[card.fk];if(!fm)return{};
+  var p=fm.p();if(card.mir)p=mirrorPlayers(p);
+  var ho=getHashOffset(card);
+  if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
+  var out={};var ks=Object.keys(p);
+  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:2*LOS_Y-b.y,l:b.l,side:b.side}}
+  if(card.oposOff){var cks=Object.keys(card.oposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.oposOff[cks[j]].x;out[cks[j]].y=card.oposOff[cks[j]].y}}}
+  return out;
+}
+function getScoutFlippedDef(card){
+  var df=DEF_FRONTS[card.dfk];if(!df)return{};
+  var p=df.p();
+  var ho=getHashOffset(card);
+  if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
+  var out={};var ks=Object.keys(p);
+  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:2*LOS_Y-b.y,l:b.l,side:b.side}}
+  if(card.dposOff){var cks=Object.keys(card.dposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.dposOff[cks[j]].x;out[cks[j]].y=card.dposOff[cks[j]].y}}}
+  return out;
+}
+// PD offensive perspective: offense at bottom (normal positions), defense at top (normal)
+function getPDOffPlayersOffView(card){
+  var base=getOffPlayers(card);
+  if(card.pdOposOff){var ks=Object.keys(card.pdOposOff);for(var i=0;i<ks.length;i++){if(base[ks[i]]){base[ks[i]].x=card.pdOposOff[ks[i]].x;base[ks[i]].y=card.pdOposOff[ks[i]].y}}}
+  return base;
+}
+function getPDDefPlayersOffView(card){
+  var base=getDefPlayers(card);
+  if(card.pdDposOff){var ks=Object.keys(card.pdDposOff);for(var i=0;i<ks.length;i++){if(base[ks[i]]){base[ks[i]].x=card.pdDposOff[ks[i]].x;base[ks[i]].y=card.pdDposOff[ks[i]].y}}}
+  return base;
+}
+// Unified helper: get the right players for current mode+perspective
+function getCurOffPlayers(card){
+  if(appMode==='playdesign') return viewPerspective==='off'?getPDOffPlayersOffView(card):getPDOffPlayers(card);
+  return viewPerspective==='off'?getScoutFlippedOff(card):getOffPlayers(card);
+}
+function getCurDefPlayers(card){
+  if(appMode==='playdesign') return viewPerspective==='off'?getPDDefPlayersOffView(card):getPDDefPlayers(card);
+  return viewPerspective==='off'?getScoutFlippedDef(card):getDefPlayers(card);
+}
+// Unified helper: get the right position store key
+function getCurPosStore(isDef){
+  if(appMode==='playdesign') return isDef?(viewPerspective==='off'?'pdDposOff':'pdDpos'):(viewPerspective==='off'?'pdOposOff':'pdOpos');
+  return isDef?(viewPerspective==='off'?'dposOff':'dpos'):(viewPerspective==='off'?'oposOff':'opos');
 }
 
 // ===== SVG FIELD =====
@@ -1327,7 +1375,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
 // ===== WAYPOINT HANDLES =====
 function buildWaypointHandles(card,players){
   if(!selPlayer)return '';
-  if(selSide!=='off'&&!(selSide==='def'&&appMode==='playdesign'))return '';
+  if(selSide!=='off'&&!(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'))return '';
   var ra=card.asgn[selPlayer];
   if(!ra||!ROUTES[ra])return '';
   var pts=card.routePts[selPlayer];
@@ -1402,6 +1450,10 @@ function render(){
   h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
   h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Team</button>';
   h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<div style="display:inline-flex;border:1px solid rgba(247,247,245,.3);border-radius:4px;overflow:hidden;margin-right:4px">';
+  h+='<button class="btn btn-sec" id="btnViewDef" style="border:none;border-radius:0;font-size:10px;padding:4px 10px;'+(viewPerspective==='def'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">DEF</button>';
+  h+='<button class="btn btn-sec" id="btnViewOff" style="border:none;border-radius:0;font-size:10px;padding:4px 10px;'+(viewPerspective==='off'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">OFF</button>';
+  h+='</div>';
   h+='<button class="btn btn-sec" id="btnPlayDesign" style="color:'+(appMode==='playdesign'?'#1A3C2B;background:#C6A355;border-color:#C6A355':'#C6A355;border-color:rgba(198,163,85,.4)')+';font-weight:700">'+(appMode==='playdesign'?'Scout Cards':'Play Designer')+'</button>';
   h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700">?</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
@@ -1712,22 +1764,36 @@ function render(){
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
   h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField();
-  if(appMode==='playdesign'){
-    var fOff=getPDOffPlayers(card);
-    var fDef=getPDDefPlayers(card);
-    h+=buildPlayers(fOff,{},selSide==='off'?selPlayer:null,'o_',false,card.cl,null,false);
-    h+=buildPlayers(fDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true,card.pn);
+  var rOff=getCurOffPlayers(card);
+  var rDef=getCurDefPlayers(card);
+  if(appMode==='playdesign'&&viewPerspective==='def'){
+    // PD defensive: offense top (no routes), defense bottom (routes down)
+    h+=buildPlayers(rOff,{},selSide==='off'?selPlayer:null,'o_',false,card.cl,null,false);
+    h+=buildPlayers(rDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true,card.pn);
     h+=buildDrawnLines(card.lines||[]);
-    h+=buildTextLabels(card);
-    h+=buildTextBoxes(card);
-    h+=buildWaypointHandles(card,fDef);
+    h+=buildTextLabels(card);h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,rDef);
+  } else if(appMode==='playdesign'&&viewPerspective==='off'){
+    // PD offensive: defense top (no routes), offense bottom (routes up)
+    h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl,null,false);
+    h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts,true,false,card.pn);
+    h+=buildDrawnLines(card.lines||[]);
+    h+=buildTextLabels(card);h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,rOff);
+  } else if(viewPerspective==='off'){
+    // Scout offensive: offense top (routes down), defense bottom (no routes)
+    h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts,true,true);
+    h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+    h+=buildDrawnLines(card.lines||[]);
+    h+=buildTextLabels(card);h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,rOff);
   } else {
-    h+=buildPlayers(dPlayers,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
-    h+=buildPlayers(oPlayers,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
+    // Scout defensive (default): defense top (no routes), offense bottom (routes up)
+    h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+    h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
     h+=buildDrawnLines(card.lines||[]);
-    h+=buildTextLabels(card);
-    h+=buildTextBoxes(card);
-    h+=buildWaypointHandles(card,oPlayers);
+    h+=buildTextLabels(card);h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,rOff);
   }
   h+='</svg></div>';
 
@@ -1787,7 +1853,7 @@ function render(){
     }
     h+='<div class="ns"><label>Note for '+(pl?pl.l:'')+'</label>';
     h+='<input type="text" id="pnI" placeholder="e.g. #4 - burns corner" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
-  } else if(selSide==='def'&&appMode==='playdesign'){
+  } else if(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'){
     // Play Designer: defense gets route palette
     var dpl=dPlayers[selPlayer];
     var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
@@ -2158,12 +2224,7 @@ function bind(){
         // Start drag
         var pt=svgPoint(svg,e);
         var curCard=cards[activeIdx];
-        var players;
-        if(appMode==='playdesign'){
-          players=isDef?getPDDefPlayers(curCard):getPDOffPlayers(curCard);
-        } else {
-          players=isDef?getDefPlayers(curCard):getOffPlayers(curCard);
-        }
+        var players=isDef?getCurDefPlayers(curCard):getCurOffPlayers(curCard);
         var pp=players[pk];
         if(pp){
           pushUndo();dragInfo={key:pk,isDef:isDef,offX:pt.x-pp.x,offY:pt.y-pp.y,moved:false};
@@ -2234,9 +2295,9 @@ function bind(){
         var oP=getOffPlayers(card);var pp=oP[selPlayer];
         if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight)}
         render();
-      } else if(selPlayer&&selSide==='def'&&appMode==='playdesign'){
+      } else if(selPlayer&&selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'){
         pushUndo();card.asgn[selPlayer]=rk;
-        var dP=getPDDefPlayers(card);var pp=dP[selPlayer];
+        var dP=getCurDefPlayers(card);var pp=dP[selPlayer];
         if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight,true)}
         render();
       }
@@ -2415,6 +2476,11 @@ function bind(){
   if(btnPlaybooks&&playbooksModal){
     btnPlaybooks.addEventListener('click',function(){playbooksModal.style.display='flex'});
 
+  // Perspective toggle
+  var btnVD=document.getElementById('btnViewDef');
+  if(btnVD)btnVD.addEventListener('click',function(){if(viewPerspective!=='def'){viewPerspective='def';selPlayer=null;render()}});
+  var btnVO=document.getElementById('btnViewOff');
+  if(btnVO)btnVO.addEventListener('click',function(){if(viewPerspective!=='off'){viewPerspective='off';selPlayer=null;render()}});
   // Play Designer button
   var btnPD=document.getElementById('btnPlayDesign');
   if(btnPD)btnPD.addEventListener('click',function(){switchMode(appMode==='playdesign'?'scout':'playdesign')});
@@ -3147,15 +3213,9 @@ function bindDrag(){
 
     var anchorKey=(dragInfo.isDef?'d_':'o_')+dragInfo.key;
 
-    // Play Designer uses separate position stores (pdOpos/pdDpos) in screen space
-    var posStore,playerPool;
-    if(appMode==='playdesign'){
-      posStore=dragInfo.isDef?'pdDpos':'pdOpos';
-      playerPool=dragInfo.isDef?getPDDefPlayers(card):getPDOffPlayers(card);
-    } else {
-      posStore=dragInfo.isDef?'dpos':'opos';
-      playerPool=dragInfo.isDef?getDefPlayers(card):getOffPlayers(card);
-    }
+    // Use correct position store for current mode + perspective
+    var posStore=getCurPosStore(dragInfo.isDef);
+    var playerPool=dragInfo.isDef?getCurDefPlayers(card):getCurOffPlayers(card);
     if(!card[posStore])card[posStore]={};
     var oldPos=card[posStore][dragInfo.key]||playerPool[dragInfo.key]||{x:nx,y:ny};
     var dx2=nx-oldPos.x,dy2=ny-oldPos.y;
