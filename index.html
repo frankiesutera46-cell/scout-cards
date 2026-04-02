@@ -147,6 +147,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .tag-btn{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 7px;border-radius:2px;cursor:pointer;border:1px solid rgba(58,58,56,.12);background:transparent;color:rgba(58,58,56,.5);font-weight:500;transition:.12s;letter-spacing:0.05em;text-transform:uppercase}
 .tag-btn:hover{border-color:rgba(26,60,43,.3);color:#1A3C2B}
 .tag-btn.tag-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.color-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:0;line-height:24px;text-align:center;padding:0;transition:.12s}
+.color-dot:hover{transform:scale(1.15)}
+.color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
 .tag-filter{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(58,58,56,.1)}
 .tf-btn{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer;border:1px solid transparent;background:none;color:rgba(58,58,56,.4);font-weight:500;transition:.12s;letter-spacing:0.05em;text-transform:uppercase}
 .tf-btn:hover{color:#1A3C2B}
@@ -1277,7 +1280,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
 
     if(isDef){
       // Defense: text only - just the letter, no shapes
-      var defCol=isSel?'#1A3C2B':'#222222';
+      var customDefCol=customLabels&&customLabels._dc&&customLabels._dc[pk];
+      var defCol=isSel?'#1A3C2B':(customDefCol||'#222222');
       var dfs=lbl.length>2?14:18;
       s+='<rect x="'+(pp.x-14)+'" y="'+(pp.y-10)+'" width="28" height="20" fill="transparent" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+5)+'" text-anchor="middle" fill="'+defCol+'" font-size="'+dfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
@@ -1302,17 +1306,18 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var qfs=qlbl.length>2?8:qlbl.length>1?10:12;
       s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
-    } else if(pp.side==='wr'){
-      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#cc0000')+'" stroke="'+(isSel?'#1A3C2B':'#990000')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
-      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
-    } else if(pp.side==='rb'){
-      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#22862a')+'" stroke="'+(isSel?'#1A3C2B':'#1a6b21')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
-      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
-    } else if(pp.side==='te'){
-      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#d4a017')+'" stroke="'+(isSel?'#1A3C2B':'#b8860b')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+    } else if(pp.side==='wr'||pp.side==='rb'||pp.side==='te'){
+      var defFills={'wr':['#cc0000','#990000'],'rb':['#22862a','#1a6b21'],'te':['#d4a017','#b8860b']};
+      var customPc=cl._pc&&cl._pc[pk];
+      var pFill=isSel?'#1A3C2B':(customPc||defFills[pp.side][0]);
+      var pStroke=isSel?'#1A3C2B':(customPc||defFills[pp.side][1]);
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
     } else {
-      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#888')+'" stroke="'+(isSel?'#1A3C2B':'#666')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+      var customPc2=cl._pc&&cl._pc[pk];
+      var oFill=isSel?'#1A3C2B':(customPc2||'#888');
+      var oStroke=isSel?'#1A3C2B':(customPc2||'#666');
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+oFill+'" stroke="'+oStroke+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
     }
   }
@@ -1762,6 +1767,13 @@ function render(){
     h+='</div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 7, WR1, etc" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    // Circle color picker
+    var pcColors=[['#ffffff','W'],['#22862a','G'],['#cc0000','R'],['#d4a017','Y'],['#0055cc','B'],['#9333ea','P']];
+    var curPc=(card.cl._pc&&card.cl._pc[selPlayer])||'';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Circle Color</label><div style="display:flex;gap:4px;margin-top:4px">';
+    for(var pci=0;pci<pcColors.length;pci++){var pcv=pcColors[pci][0],pcn=pcColors[pci][1];h+='<button class="color-dot'+(curPc===pcv?' color-dot-on':'')+'" data-pc="'+pcv+'" style="background:'+pcv+';'+(pcv==='#ffffff'?'border:2px solid #999':'border:2px solid '+pcv)+'">'+pcn+'</button>'}
+    if(curPc)h+='<button class="color-dot" data-pc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
+    h+='</div></div>';
     var gk=Object.keys(RGROUPS);
     for(var gi=0;gi<gk.length;gi++){
       h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
@@ -1783,6 +1795,13 @@ function render(){
     h+='</div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    // Defender text color picker
+    var dcColors2=[['#222222','Blk'],['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#9333ea','P'],['#d4a017','Y']];
+    var curDc2=(card.cl._dc&&card.cl._dc[selPlayer])||'';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Letter Color</label><div style="display:flex;gap:4px;margin-top:4px">';
+    for(var dci2=0;dci2<dcColors2.length;dci2++){var dcv2=dcColors2[dci2][0],dcn2=dcColors2[dci2][1];h+='<button class="color-dot'+(curDc2===dcv2?' color-dot-on':'')+'" data-dc="'+dcv2+'" style="background:'+dcv2+';border:2px solid '+dcv2+'">'+dcn2+'</button>'}
+    if(curDc2)h+='<button class="color-dot" data-dc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
+    h+='</div></div>';
     var gk=Object.keys(RGROUPS);
     for(var gi=0;gi<gk.length;gi++){
       h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
@@ -1801,6 +1820,13 @@ function render(){
     h+='<div class="sel-hdr"><span style="color:#3b82f6">'+curDLabel+' — Defense</span></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    // Defender text color picker
+    var dcColors3=[['#222222','Blk'],['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#9333ea','P'],['#d4a017','Y']];
+    var curDc3=(card.cl._dc&&card.cl._dc[selPlayer])||'';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Letter Color</label><div style="display:flex;gap:4px;margin-top:4px">';
+    for(var dci3=0;dci3<dcColors3.length;dci3++){var dcv3=dcColors3[dci3][0],dcn3=dcColors3[dci3][1];h+='<button class="color-dot'+(curDc3===dcv3?' color-dot-on':'')+'" data-dc="'+dcv3+'" style="background:'+dcv3+';border:2px solid '+dcv3+'">'+dcn3+'</button>'}
+    if(curDc3)h+='<button class="color-dot" data-dc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
+    h+='</div></div>';
     h+='<div class="np" style="padding:12px 0;font-size:11px">Drag to reposition defender</div>';
   }
 
@@ -2771,6 +2797,28 @@ function bind(){
       e.preventDefault();return;
     }
   });
+
+  // === PLAYER COLOR BUTTONS ===
+  var pcBtns=document.querySelectorAll('[data-pc]');
+  for(var pcbi=0;pcbi<pcBtns.length;pcbi++){
+    pcBtns[pcbi].addEventListener('click',(function(col){return function(){
+      if(!selPlayer)return;
+      if(!card.cl._pc)card.cl._pc={};
+      if(col)card.cl._pc[selPlayer]=col;
+      else delete card.cl._pc[selPlayer];
+      render();
+    }})(pcBtns[pcbi].getAttribute('data-pc')));
+  }
+  var dcBtns=document.querySelectorAll('[data-dc]');
+  for(var dcbi=0;dcbi<dcBtns.length;dcbi++){
+    dcBtns[dcbi].addEventListener('click',(function(col){return function(){
+      if(!selPlayer)return;
+      if(!card.cl._dc)card.cl._dc={};
+      if(col)card.cl._dc[selPlayer]=col;
+      else delete card.cl._dc[selPlayer];
+      render();
+    }})(dcBtns[dcbi].getAttribute('data-dc')));
+  }
 
   // === TAG TOGGLE BUTTONS ===
   var tagBtns=document.querySelectorAll('.tag-btn');
