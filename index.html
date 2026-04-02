@@ -1696,9 +1696,16 @@ function render(){
     h+='<button class="tag-btn'+(tgOn?' tag-on':'')+'" data-tag="'+tg+'">'+tg+'</button>';
   }
   h+='</div>';
-  h+='<select id="fSel">';
-  var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
-  h+='</select>';
+  if(appMode==='playdesign'){
+    // Play Designer: formation dropdown from saved presets only
+    h+='<select id="fSel"><option value="">— Formation —</option>';
+    for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}
+    h+='</select>';
+  } else {
+    h+='<select id="fSel">';
+    var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
+    h+='</select>';
+  }
   h+='<select id="dfSel">';
   var dks=Object.keys(DEF_FRONTS);for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
   h+='</select>';
@@ -2294,7 +2301,21 @@ function bind(){
   });
 
   var fSel=document.getElementById('fSel');
-  if(fSel)fSel.addEventListener('change',function(){card.fk=this.value;card.asgn={};card.routePts={};card.opos=null;selPlayer=null;render()});
+  if(fSel)fSel.addEventListener('change',function(){
+    if(appMode==='playdesign'){
+      // Load offensive preset into PD card
+      var v=this.value;
+      if(!v||v.indexOf('offp_')!==0)return;
+      var idx=parseInt(v.substring(5));
+      var p=offPresets[idx];if(!p)return;
+      card.fk=p.data.fk;
+      card.pdOpos=JSON.parse(JSON.stringify(p.data.opos));
+      card._offPreset=idx;
+      selPlayer=null;render();
+    } else {
+      card.fk=this.value;card.asgn={};card.routePts={};card.opos=null;selPlayer=null;render();
+    }
+  });
 
   var dfSel=document.getElementById('dfSel');
   if(dfSel)dfSel.addEventListener('change',function(){card.dfk=this.value;card.dpos=null;render()});
@@ -2574,7 +2595,12 @@ function bind(){
       var p=offPresets[idx];if(!p)return;
       var card=cards[activeIdx];
       card.fk=p.data.fk;
-      card.opos=JSON.parse(JSON.stringify(p.data.opos));
+      if(appMode==='playdesign'){
+        card.pdOpos=JSON.parse(JSON.stringify(p.data.opos));
+        card._offPreset=idx;
+      } else {
+        card.opos=JSON.parse(JSON.stringify(p.data.opos));
+      }
       card.mir=false;
       selPlayer=null;render();
     }})(parseInt(loadOffs[loi].getAttribute('data-loadoff'))));
