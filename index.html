@@ -956,8 +956,9 @@ function buildField(){
     if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
     var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
     var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
-    if(appMode==='playdesign'){ if(i===pdLosIdx) continue; }
-    else { if(isLOS) continue; }
+    // Skip the yard line where the dashed LOS is drawn
+    var skipIdx=(appMode==='playdesign'&&viewPerspective==='def')?pdLosIdx:losIdx;
+    if(i===skipIdx) continue;
     s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
   }
 
@@ -982,7 +983,7 @@ function buildField(){
   }
 
   // Yard numbers
-  if(appMode==='playdesign'){
+  if(appMode==='playdesign'&&viewPerspective==='def'){
     // Play Designer: 40, 50, 40, 30 from top to bottom (every 10 yards)
     var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
     for(var ni=0;ni<pdNums.length;ni++){
@@ -1011,12 +1012,9 @@ function buildField(){
   s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
   s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
-  // LOS - dashed line in both modes
-  if(appMode==='playdesign'){
-    s+='<line x1="'+SL+'" y1="'+PD_LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+PD_LOS_Y.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
-  } else {
-    s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
-  }
+  // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
+  var losLineY=(appMode==='playdesign'&&viewPerspective==='def')?PD_LOS_Y:LOS_Y;
+  s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
 
   s+='</g>'; // end fieldClip
 
