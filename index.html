@@ -2322,14 +2322,16 @@ function bind(){
   });
   var tbUndo=document.getElementById('tbUndo');
   if(tbUndo)tbUndo.addEventListener('click',function(){
-    var card=cards[activeIdx];
-    var clines=getCurLines(card);if(clines.length>0){pushUndo();clines.pop();render()}
+    if(popUndo()){render()}
   });
   var tbClear=document.getElementById('tbClear');
   if(tbClear)tbClear.addEventListener('click',function(){
     var card=cards[activeIdx];
-    var clines2=getCurLines(card);if(clines2.length>0){
-      if(confirm('Clear all drawn lines on this card?')){pushUndo();card[getCurLinesKey()]=[];render()}
+    var clines2=getCurLines(card);
+    var hasLines=clines2.length>0;
+    var hasTextBoxes=card.textBoxes&&card.textBoxes.length>0;
+    if(hasLines||hasTextBoxes){
+      if(confirm('Clear all drawings and text boxes on this card?')){pushUndo();card[getCurLinesKey()]=[];card.textBoxes=[];render()}
     }
   });
   var dStyleSel=document.getElementById('dStyle');
