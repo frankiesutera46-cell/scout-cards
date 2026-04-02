@@ -920,6 +920,13 @@ function getCurPosStore(isDef){
   return isDef?(viewPerspective==='off'?'dposOff':'dpos'):(viewPerspective==='off'?'oposOff':'opos');
 }
 
+// Unified helper: get the correct lines array key for current perspective
+function getCurLinesKey(){
+  if(appMode==='playdesign') return viewPerspective==='off'?'linesOffPd':'lines';
+  return viewPerspective==='off'?'linesOff':'lines';
+}
+function getCurLines(card){var k=getCurLinesKey();return card[k]||(card[k]=[])}
+
 // ===== SVG FIELD =====
 // Hash positions (stored globally for use in formation offsets)
 var SL=12, SR=FW-12;
@@ -1778,28 +1785,28 @@ function render(){
     // PD defensive: offense top (no routes), defense bottom (routes down)
     h+=buildPlayers(rOff,{},selSide==='off'?selPlayer:null,'o_',false,card.cl,null,false);
     h+=buildPlayers(rDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true,card.pn);
-    h+=buildDrawnLines(card.lines||[]);
+    h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,rDef);
   } else if(appMode==='playdesign'&&viewPerspective==='off'){
     // PD offensive: defense top (no routes), offense bottom (routes up)
     h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl,null,false);
     h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts,true,false,card.pn);
-    h+=buildDrawnLines(card.lines||[]);
+    h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,rOff);
   } else if(viewPerspective==='off'){
     // Scout offensive: offense top (routes down), defense bottom (no routes)
     h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts,true,true);
     h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
-    h+=buildDrawnLines(card.lines||[]);
+    h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,rOff);
   } else {
     // Scout defensive (default): defense top (no routes), offense bottom (routes up)
     h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
     h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
-    h+=buildDrawnLines(card.lines||[]);
+    h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,rOff);
   }
@@ -2057,7 +2064,7 @@ function bind(){
       if(lnmidAttr){
         var midParts=lnmidAttr.split('_');
         var midLineIdx=parseInt(midParts[0]),midSegIdx=parseInt(midParts[1]);
-        var midLn=card.lines[midLineIdx];
+        var midLn=getCurLines(card)[midLineIdx];
         if(midLn&&midLn.pts&&midSegIdx<midLn.pts.length-1){
           var ma=midLn.pts[midSegIdx],mb=midLn.pts[midSegIdx+1];
           pushUndo();
@@ -2073,7 +2080,7 @@ function bind(){
         var lnIdx=parseInt(lnParts[0]);
         var ptIdx=parseInt(lnParts[1]);
         var pt=svgPoint(svg,e);
-        var lnPts=card.lines[lnIdx].pts;
+        var lnPts=getCurLines(card)[lnIdx].pts;
         if(lnPts&&lnPts[ptIdx]){
           dragInfo={isLinePt:true,lineIdx:lnIdx,ptIdx:ptIdx,offX:pt.x-lnPts[ptIdx].x,offY:pt.y-lnPts[ptIdx].y,moved:false};
           e.preventDefault();bindDrag();return;
@@ -2265,13 +2272,13 @@ function bind(){
   var tbUndo=document.getElementById('tbUndo');
   if(tbUndo)tbUndo.addEventListener('click',function(){
     var card=cards[activeIdx];
-    if(card.lines&&card.lines.length>0){pushUndo();card.lines.pop();render()}
+    var clines=getCurLines(card);if(clines.length>0){pushUndo();clines.pop();render()}
   });
   var tbClear=document.getElementById('tbClear');
   if(tbClear)tbClear.addEventListener('click',function(){
     var card=cards[activeIdx];
-    if(card.lines&&card.lines.length>0){
-      if(confirm('Clear all drawn lines on this card?')){pushUndo();card.lines=[];render()}
+    var clines2=getCurLines(card);if(clines2.length>0){
+      if(confirm('Clear all drawn lines on this card?')){pushUndo();card[getCurLinesKey()]=[];render()}
     }
   });
   var dStyleSel=document.getElementById('dStyle');
@@ -2814,7 +2821,7 @@ function bind(){
     if(lnptDbl){
       var lnpParts=lnptDbl.split('_');
       var lnpLineIdx=parseInt(lnpParts[0]),lnpPtIdx=parseInt(lnpParts[1]);
-      var lnpLn=card.lines[lnpLineIdx];
+      var lnpLn=getCurLines(card)[lnpLineIdx];
       if(lnpLn&&lnpLn.pts&&lnpLn.pts.length>2){
         pushUndo();lnpLn.pts.splice(lnpPtIdx,1);render();
       }
@@ -3098,7 +3105,7 @@ function bindDrag(){
     // Line/shape drag-to-move
     if(dragInfo.isLineDrag){
       var dx4=pt.x-dragInfo.startX,dy4=pt.y-dragInfo.startY;
-      var ln=card.lines[dragInfo.lineIdx];
+      var ln=getCurLines(card)[dragInfo.lineIdx];
       if(ln){
         if(ln.shape){
           ln.x1+=dx4;ln.y1+=dy4;ln.x2+=dx4;ln.y2+=dy4;
@@ -3141,7 +3148,7 @@ function bindDrag(){
 
     // Drawn line endpoint drag
     if(dragInfo.isLinePt){
-      var ln=card.lines[dragInfo.lineIdx];
+      var ln=getCurLines(card)[dragInfo.lineIdx];
       if(ln&&ln.pts[dragInfo.ptIdx]){
         ln.pts[dragInfo.ptIdx].x=nx;
         ln.pts[dragInfo.ptIdx].y=ny;
@@ -3240,12 +3247,13 @@ function bindDrag(){
     }
 
     // Sync anchored drawn lines with player drag
-    if((dx2!==0||dy2!==0)&&card.lines){
-      for(var ali=0;ali<card.lines.length;ali++){
-        if(card.lines[ali].anchor===anchorKey){
-          for(var api=0;api<card.lines[ali].pts.length;api++){
-            card.lines[ali].pts[api].x+=dx2;
-            card.lines[ali].pts[api].y+=dy2;
+    var ancLines=getCurLines(card);
+    if((dx2!==0||dy2!==0)&&ancLines.length){
+      for(var ali=0;ali<ancLines.length;ali++){
+        if(ancLines[ali].anchor===anchorKey){
+          for(var api=0;api<ancLines[ali].pts.length;api++){
+            ancLines[ali].pts[api].x+=dx2;
+            ancLines[ali].pts[api].y+=dy2;
           }
         }
       }
@@ -3286,11 +3294,11 @@ function bindDrag(){
         currentLine.pts=simplified;
         var card=cards[activeIdx];
         pushUndo();
-        if(!card.lines)card.lines=[];
+        var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
         var newLine={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
         var anc=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc)newLine.anchor=anc.prefix+anc.key;
-        card.lines.push(newLine);
+        card[lk].push(newLine);
       }
       currentLine=null;
       render();
@@ -3302,8 +3310,8 @@ function bindDrag(){
       if(dx3>5||dy3>5){
         var card=cards[activeIdx];
         pushUndo();
-        if(!card.lines)card.lines=[];
-        card.lines.push({shape:currentShape.type,x1:currentShape.x1,y1:currentShape.y1,x2:currentShape.x2,y2:currentShape.y2,color:currentShape.color,width:currentShape.width});
+        var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
+        card[lk].push({shape:currentShape.type,x1:currentShape.x1,y1:currentShape.y1,x2:currentShape.x2,y2:currentShape.y2,color:currentShape.color,width:currentShape.width});
       }
       currentShape=null;
       var sp=document.getElementById('shapePreview');
@@ -3326,11 +3334,11 @@ function bindDrag(){
         currentLine.pts=simplified;
         var card=cards[activeIdx];
         pushUndo();
-        if(!card.lines)card.lines=[];
+        var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
         var newLine2={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
         var anc2=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc2)newLine2.anchor=anc2.prefix+anc2.key;
-        card.lines.push(newLine2);
+        card[lk].push(newLine2);
       }
       currentLine=null;
       render();
@@ -3387,11 +3395,11 @@ function bindDrag(){
       currentLine.pts=simplified;
       var card=cards[activeIdx];
       pushUndo();
-      if(!card.lines)card.lines=[];
+      var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
       var newLine3={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
       var anc3=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
       if(anc3)newLine3.anchor=anc3.prefix+anc3.key;
-      card.lines.push(newLine3);
+      card[lk].push(newLine3);
     }
     currentLine=null;
     render();
@@ -3445,12 +3453,12 @@ function commitStraightLine(){
   if(!currentStraightLine||currentStraightLine.pts.length<2)  {currentStraightLine=null;return}
   var card=cards[activeIdx];
   pushUndo();
-  if(!card.lines)card.lines=[];
+  var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
   var newLine={pts:currentStraightLine.pts,color:currentStraightLine.color,width:currentStraightLine.width,style:currentStraightLine.style};
   var anc=findNearestPlayer(card,currentStraightLine.pts[0].x,currentStraightLine.pts[0].y,18);
   if(anc)newLine.anchor=anc.prefix+anc.key;
-  card.lines.push(newLine);
-  selLine=card.lines.length-1;
+  card[lk].push(newLine);
+  selLine=card[lk].length-1;
   currentStraightLine=null;
   var el=document.getElementById('straightLinePreview');if(el)el.remove();
 }
@@ -3514,7 +3522,7 @@ function buildFullSVG(card,forPlayDesign){
   var totalH=isPD?FH+180:FH;
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+totalH+'" width="'+FW*2+'" height="'+totalH*2+'">';
   svg += buildField();
-  svg += buildDrawnLines(card.lines||[]);
+  svg += buildDrawnLines(getCurLines(card));
   if(isPD){
     var fOff=getPDOffPlayers(card);
     var fDef=getPDDefPlayers(card);
@@ -4329,9 +4337,10 @@ document.addEventListener('keydown',function(e){
       selLabel=null;
       render();e.preventDefault();return;
     }
-    if(selLine!==null&&card.lines&&card.lines[selLine]!==undefined){
+    var delLines=getCurLines(card);
+    if(selLine!==null&&delLines[selLine]!==undefined){
       pushUndo();
-      card.lines.splice(selLine,1);
+      delLines.splice(selLine,1);
       selLine=null;
       render();e.preventDefault();return;
     }
@@ -4351,8 +4360,9 @@ document.addEventListener('keydown',function(e){
 
   // Cmd/Ctrl+C: copy selected line, text box, or whole card
   if((e.metaKey||e.ctrlKey)&&e.key==='c'){
-    if(selLine!==null&&card.lines&&card.lines[selLine]){
-      clipboardLine=JSON.parse(JSON.stringify(card.lines[selLine]));
+    var cpLines=getCurLines(card);
+    if(selLine!==null&&cpLines[selLine]){
+      clipboardLine=JSON.parse(JSON.stringify(cpLines[selLine]));
       clipboardCard=null;clipboardTextBox=null;
     } else if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]){
       clipboardTextBox=JSON.parse(JSON.stringify(card.textBoxes[selTextBox]));
@@ -4371,9 +4381,9 @@ document.addEventListener('keydown',function(e){
       var nl=JSON.parse(JSON.stringify(clipboardLine));
       // Offset the pasted line slightly so it's visible
       for(var i=0;i<nl.pts.length;i++){nl.pts[i].x+=10;nl.pts[i].y+=10}
-      if(!card.lines)card.lines=[];
-      card.lines.push(nl);
-      selLine=card.lines.length-1;selPlayer=null;selTextBox=null;
+      var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
+      card[lk].push(nl);
+      selLine=card[lk].length-1;selPlayer=null;selTextBox=null;
       render();e.preventDefault();return;
     }
     if(clipboardTextBox){
