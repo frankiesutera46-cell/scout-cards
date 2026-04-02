@@ -1773,7 +1773,7 @@ function render(){
   h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
   h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
   h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
-  h+='<button class="flip-btn'+(card.mir?' on':'')+'" id="bFlip">&#x2194; Flip</button>';
+  h+='<button class="flip-btn" id="bFlip">&#x2194; Flip Play</button>';
   // Tag toggles
   h+='<div class="tag-row">';
   for(var tti=0;tti<TAG_OPTIONS.length;tti++){
@@ -2519,7 +2519,31 @@ function bind(){
   });
 
   var bFlip=document.getElementById('bFlip');
-  if(bFlip)bFlip.addEventListener('click',function(){card.mir=!card.mir;card.opos=null;card.routePts={};render()});
+  if(bFlip)bFlip.addEventListener('click',function(){
+    pushUndo();
+    // Get fully rendered positions before flip
+    var renderedOff=getOffPlayers(card);
+    var renderedDef=getDefPlayers(card);
+    // Toggle mirror and flip hash
+    card.mir=!card.mir;
+    var hashFlip={'L':'R','R':'L','LM':'RM','RM':'LM','M':'M'};
+    card.hash=hashFlip[card.hash]||card.hash;
+    // Mirror all rendered positions around CX
+    card.opos={};var oks=Object.keys(renderedOff);
+    for(var i=0;i<oks.length;i++){card.opos[oks[i]]={x:CX+(CX-renderedOff[oks[i]].x),y:renderedOff[oks[i]].y}}
+    card.dpos={};var dks=Object.keys(renderedDef);
+    for(var i=0;i<dks.length;i++){card.dpos[dks[i]]={x:CX+(CX-renderedDef[dks[i]].x),y:renderedDef[dks[i]].y}}
+    // Mirror route waypoints
+    if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x=CX+(CX-rp[rpi].x)}}}}
+    // Mirror drawings
+    var clines=getCurLines(card);
+    for(var li=0;li<clines.length;li++){var pts=clines[li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}
+    // Mirror text boxes
+    if(card.textBoxes){for(var ti=0;ti<card.textBoxes.length;ti++){card.textBoxes[ti].x=CX+(CX-card.textBoxes[ti].x)}}
+    // Mirror label positions
+    if(card.lpos){var lks=Object.keys(card.lpos);for(var lki=0;lki<lks.length;lki++){card.lpos[lks[lki]].x=CX+(CX-card.lpos[lks[lki]].x)}}
+    selPlayer=null;render();
+  });
 
   var bDel=document.getElementById('bDel');
   if(bDel)bDel.addEventListener('click',function(){
