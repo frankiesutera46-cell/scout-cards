@@ -59,7 +59,10 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .sidebar{width:220px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);display:flex;flex-direction:column;padding:14px 12px;gap:2px;overflow-y:auto;flex-shrink:0}
 .sidebar .btns{display:flex;gap:4px;margin-bottom:12px}
 .sidebar .btns .btn{flex:1;padding:7px 4px;font-size:9px}
-.ci{width:100%;text-align:left;padding:8px 10px;border-radius:0;font-size:11px;cursor:pointer;border:1px solid transparent;border-left:2px solid transparent;background:none;color:#3A3A38;font-family:'Space Grotesk',sans-serif;transition:.15s}
+.ci{width:100%;text-align:left;padding:8px 10px;border-radius:0;font-size:11px;cursor:pointer;border:1px solid transparent;border-left:2px solid transparent;background:none;color:#3A3A38;font-family:'Space Grotesk',sans-serif;transition:.15s;position:relative}
+.ci .ci-del{position:absolute;top:4px;right:4px;background:none;border:none;color:rgba(58,58,56,.25);font-size:13px;cursor:pointer;padding:2px 5px;line-height:1;border-radius:2px;display:none;font-family:Arial,sans-serif}
+.ci:hover .ci-del{display:block}
+.ci .ci-del:hover{color:#ef4444;background:rgba(239,68,68,.08)}
 .ci:hover{background:rgba(26,60,43,.03);border-left-color:rgba(26,60,43,.15)}
 .ci.act{background:rgba(26,60,43,.05);color:#1A3C2B;border-left-color:#1A3C2B}
 .ci .cn{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:0.05em}
@@ -1746,6 +1749,7 @@ function render(){
       // Filter by tag
       if(activeTagFilter && (!cc.tags || cc.tags.indexOf(activeTagFilter)<0)) continue;
       h+='<button class="ci'+(ci===activeIdx?' act':'')+'" data-ci="'+ci+'">';
+      h+='<span class="ci-del" data-cdel="'+ci+'" title="Delete card">&#x2715;</span>';
       h+='<span class="cn">#'+(ci+1)+'</span> ';
       h+='<span class="card-name">'+(esc(cc.play)||'Unnamed')+'</span>';
       h+='<span class="cm">'+(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+esc(cc.dd):'')+'</span>';
@@ -2046,6 +2050,17 @@ function bind(){
   var cis=document.querySelectorAll('.ci');
   for(var i=0;i<cis.length;i++){
     cis[i].addEventListener('click',(function(idx){return function(){activeIdx=idx;selPlayer=null;render()}})(parseInt(cis[i].getAttribute('data-ci'))));
+  }
+  var ciDels=document.querySelectorAll('.ci-del');
+  for(var di=0;di<ciDels.length;di++){
+    ciDels[di].addEventListener('click',(function(idx){return function(e){
+      e.stopPropagation();
+      if(confirm('Delete card #'+(idx+1)+'?')){
+        pushUndo();cards.splice(idx,1);
+        if(!cards.length)cards=[appMode==='playdesign'?mkPlayCard():mkCard()];
+        activeIdx=Math.min(activeIdx,cards.length-1);selPlayer=null;render();
+      }
+    }})(parseInt(ciDels[di].getAttribute('data-cdel'))));
   }
 
   // SVG interactions
