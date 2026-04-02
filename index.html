@@ -798,6 +798,17 @@ function savePresets(){
 }
 loadPresets();
 
+function applyPresetCl(card,presetCl){
+  if(!presetCl)return;
+  var ks=Object.keys(presetCl);
+  for(var i=0;i<ks.length;i++){
+    var k=ks[i];
+    if(k==='_pc'){if(!card.cl._pc)card.cl._pc={};var pks=Object.keys(presetCl._pc);for(var j=0;j<pks.length;j++){card.cl._pc[pks[j]]=presetCl._pc[pks[j]]}}
+    else if(k==='_dc'){if(!card.cl._dc)card.cl._dc={};var dks=Object.keys(presetCl._dc);for(var j=0;j<dks.length;j++){card.cl._dc[dks[j]]=presetCl._dc[dks[j]]}}
+    else{card.cl[k]=presetCl[k]}
+  }
+}
+
 function getHashOffset(card){
   return HASH_OFFSETS[card.hash] || 0;
 }
@@ -2404,6 +2415,7 @@ function bind(){
       card._offPreset=idx;
       if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
       else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
+      applyPresetCl(card,p.data.cl);
       card.mir=false;selPlayer=null;render();
     } else {
       // Built-in formation
@@ -2424,6 +2436,7 @@ function bind(){
       card._defPreset=idx;
       if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      applyPresetCl(card,p.data.cl);
       render();
     } else {
       card._defPreset=null;
@@ -2442,6 +2455,7 @@ function bind(){
       card._defPreset=idx;
       if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      applyPresetCl(card,p.data.cl);
       render();
     } else {
       card._defPreset=null;card.dfk=v;
@@ -2721,7 +2735,11 @@ function bind(){
     var posData={};
     var ks=Object.keys(oPlayers);
     for(var i=0;i<ks.length;i++){posData[ks[i]]={x:oPlayers[ks[i]].x,y:oPlayers[ks[i]].y}}
-    offPresets.push({name:name,data:{fk:card.fk,opos:posData}});
+    // Save custom labels and colors for offensive players
+    var clData={};
+    for(var i=0;i<ks.length;i++){if(card.cl[ks[i]])clData[ks[i]]=card.cl[ks[i]]}
+    if(card.cl._pc){var pcData={};for(var i=0;i<ks.length;i++){if(card.cl._pc[ks[i]])pcData[ks[i]]=card.cl._pc[ks[i]]}if(Object.keys(pcData).length)clData._pc=pcData}
+    offPresets.push({name:name,data:{fk:card.fk,opos:posData,cl:clData}});
     savePresets();render();
   });
 
@@ -2735,6 +2753,7 @@ function bind(){
       card._offPreset=idx;
       if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
       else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
+      applyPresetCl(card,p.data.cl);
       card.mir=false;
       selPlayer=null;render();
     }})(parseInt(loadOffs[loi].getAttribute('data-loadoff'))));
@@ -2759,7 +2778,11 @@ function bind(){
     var posData={};
     var ks=Object.keys(dPlayers);
     for(var i=0;i<ks.length;i++){posData[ks[i]]={x:dPlayers[ks[i]].x,y:dPlayers[ks[i]].y,l:dPlayers[ks[i]].l,side:dPlayers[ks[i]].side}}
-    defPresets.push({name:name,data:{dfk:card.dfk,dpos:posData}});
+    // Save custom labels and colors for defensive players
+    var clData={};
+    for(var i=0;i<ks.length;i++){if(card.cl[ks[i]])clData[ks[i]]=card.cl[ks[i]]}
+    if(card.cl._dc){var dcData={};for(var i=0;i<ks.length;i++){if(card.cl._dc[ks[i]])dcData[ks[i]]=card.cl._dc[ks[i]]}if(Object.keys(dcData).length)clData._dc=dcData}
+    defPresets.push({name:name,data:{dfk:card.dfk,dpos:posData,cl:clData}});
     savePresets();render();
   });
 
@@ -2773,6 +2796,7 @@ function bind(){
       card._defPreset=idx;
       if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      applyPresetCl(card,p.data.cl);
       selPlayer=null;render();
     }})(parseInt(loadDefs[ldi].getAttribute('data-loaddef'))));
   }
