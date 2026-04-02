@@ -121,23 +121,31 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .front-sel label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500}
 .front-sel select{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:5px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px}
 
-/* ---- DRAW TOOLBAR ---- */
-.draw-bar{display:flex;align-items:center;gap:6px;padding:6px 16px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12)}
-.draw-bar .sep{width:1px;height:20px;background:rgba(58,58,56,.12);margin:0 4px}
-.tb{padding:4px 10px;border-radius:2px;border:1px solid rgba(58,58,56,.15);background:transparent;color:#3A3A38;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:500;transition:.15s;letter-spacing:0.03em}
-.tb:hover{background:rgba(26,60,43,.04);color:#1A3C2B;border-color:rgba(26,60,43,.25)}
-.tb.on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
-.tb.eraser-on{background:#FF8C69;color:#fff;border-color:#FF8C69}
-.tb svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.draw-bar .color-btn{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.12);cursor:pointer;transition:.15s;padding:0}
-.draw-bar .color-btn.act{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.2);outline-offset:1px}
-.draw-bar .width-btn{width:26px;height:20px;border-radius:2px;border:1px solid rgba(58,58,56,.15);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
-.draw-bar .width-btn.act{border-color:#1A3C2B;background:rgba(26,60,43,.06)}
-.draw-bar .width-btn span{display:block;border-radius:1px;background:#3A3A38}
-.draw-bar .preset-btn{padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.03em;background:transparent;border:1px solid rgba(58,58,56,.12);border-radius:2px;cursor:pointer;color:#3A3A38;transition:.15s}
-.draw-bar .preset-btn.act{font-weight:700}
-.draw-bar .preset-btn:hover{background:rgba(58,58,56,.04)}
-.draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:3px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
+/* ---- DRAW TOOLBAR (Hudl-style) ---- */
+.draw-bar{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);flex-wrap:wrap}
+.draw-bar .tb-group{display:flex;align-items:center;gap:1px;background:rgba(58,58,56,.06);border-radius:5px;padding:2px}
+.draw-bar .sep{width:1px;height:20px;background:rgba(58,58,56,.12);margin:0 2px}
+.tb{width:32px;height:32px;border-radius:4px;border:none;background:transparent;color:#5a5a58;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0;position:relative}
+.tb:hover{background:rgba(26,60,43,.08);color:#1A3C2B}
+.tb.on{background:#4A90D9;color:#fff;box-shadow:0 1px 3px rgba(74,144,217,.3)}
+.tb.eraser-on{background:#FF8C69;color:#fff;box-shadow:0 1px 3px rgba(255,140,105,.3)}
+.tb.text-on{background:#FF8C69;color:#fff;box-shadow:0 1px 3px rgba(255,140,105,.3)}
+.tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb .tb-label{display:none}
+.draw-bar .color-btn{width:22px;height:22px;border-radius:50%;border:2px solid rgba(58,58,56,.08);cursor:pointer;transition:.15s;padding:0}
+.draw-bar .color-btn.act{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
+.draw-bar .width-btn{width:28px;height:28px;border-radius:4px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.draw-bar .width-btn:hover{background:rgba(58,58,56,.08)}
+.draw-bar .width-btn.act{background:rgba(26,60,43,.1);outline:2px solid rgba(26,60,43,.2);outline-offset:-1px}
+.draw-bar .width-btn span{display:block;border-radius:50%;background:#3A3A38}
+.draw-bar .preset-btn{padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.03em;background:transparent;border:none;border-radius:4px;cursor:pointer;color:#5a5a58;transition:.15s;font-weight:600}
+.draw-bar .preset-btn.act{color:#fff}
+.draw-bar .preset-btn:hover{background:rgba(58,58,56,.06)}
+.draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.12);padding:3px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px}
+.draw-bar .tb-action{width:32px;height:32px;border-radius:4px;border:none;background:transparent;color:#5a5a58;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
+.draw-bar .tb-action:hover{background:rgba(58,58,56,.08);color:#3A3A38}
+.draw-bar .tb-action.danger:hover{background:rgba(239,68,68,.08);color:#ef4444}
+.draw-bar .tb-action svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .field-wrap svg.drawing{cursor:crosshair}
 .field-wrap svg.drawing [data-dp]{pointer-events:none}
 .field-wrap svg [data-dp^="rsz_"]{cursor:nwse-resize}
@@ -182,7 +190,6 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .script-add select{flex:1;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:4px 6px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
 
 /* ---- TEXT TOOL ---- */
-.tb.text-on{background:#FF8C69;color:#fff;border-color:#FF8C69}
 .field-wrap svg.text-mode{cursor:text}
 
 /* Scrollbar */
@@ -705,7 +712,8 @@ var shapeMode=false; // 'circle' or 'rect' or false
 var lineMode=false; // straight line click-to-place mode
 var drawColor='#000000';
 var drawWidth=2;
-var drawStyle='solid'; // solid, dashed, arrow
+var drawStyle='curved'; // curved, curvedarrow, curvedblock, dot
+var drawDashed=false;
 var currentLine=null; // {pts:[], color, width, style}
 var currentShape=null; // {type, x1, y1, x2, y2, color, width}
 var currentStraightLine=null; // {pts:[], color, width, style} for click-to-place straight lines
@@ -1250,20 +1258,37 @@ function buildDrawnLines(lines){
     for(var pi=1;pi<ln.pts.length;pi++){
       dLine+=' L '+ln.pts[pi].x.toFixed(1)+' '+ln.pts[pi].y.toFixed(1);
     }
-    var d=isCurved?smoothPath(ln.pts):dLine;
+    var isArrow=(ln.style==='arrow'||ln.style==='curvedarrow');
+    // For arrow styles, shorten the path so it ends at the arrowhead base
+    var drawPts=ln.pts;
+    var arrowSz=0;
+    if(isArrow&&ln.pts.length>=2){
+      arrowSz=Math.max(10,ln.width*4);
+      var ep0=ln.pts[ln.pts.length-1];
+      var lp0=ln.pts[Math.max(0,ln.pts.length-2)];
+      var ang0=Math.atan2(ep0.y-lp0.y,ep0.x-lp0.x);
+      // Create shortened points array — pull last point back by arrow size
+      drawPts=[];
+      for(var ci=0;ci<ln.pts.length;ci++)drawPts.push({x:ln.pts[ci].x,y:ln.pts[ci].y});
+      drawPts[drawPts.length-1]={x:ep0.x-arrowSz*0.7*Math.cos(ang0),y:ep0.y-arrowSz*0.7*Math.sin(ang0)};
+    }
+    var dLineShort='M '+drawPts[0].x.toFixed(1)+' '+drawPts[0].y.toFixed(1);
+    for(var pi2=1;pi2<drawPts.length;pi2++){dLineShort+=' L '+drawPts[pi2].x.toFixed(1)+' '+drawPts[pi2].y.toFixed(1)}
+    var d=isArrow?(isCurved?smoothPath(drawPts):dLineShort):(isCurved?smoothPath(ln.pts):dLine);
     var isSel=(selLine===li);
-    var dash=ln.style==='dashed'?' stroke-dasharray="8,5"':'';
+    var dash=(ln.dashed||ln.style==='dashed')?' stroke-dasharray="8,5"':'';
     // Wider invisible hit area for clicking to select (always straight for hit testing)
     s+='<path d="'+dLine+'" fill="none" stroke="transparent" stroke-width="'+(Math.max(10,ln.width+8))+'" data-linesel="'+li+'" style="cursor:pointer"/>';
     s+='<path d="'+d+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-line="'+li+'"'+(isSel?' filter="url(#selGlow)"':'')+'/>';
     // Arrow endpoint
-    if((ln.style==='arrow'||ln.style==='curvedarrow')&&ln.pts.length>=2){
+    if(isArrow&&ln.pts.length>=2){
       var ep=ln.pts[ln.pts.length-1];
-      var lp=ln.pts[Math.max(0,ln.pts.length-3)];
+      var lp=ln.pts[Math.max(0,ln.pts.length-2)];
       var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
-      var sz=Math.max(6,ln.width*3);
-      var ax1=ep.x-sz*Math.cos(ang-0.4),ay1=ep.y-sz*Math.sin(ang-0.4);
-      var ax2=ep.x-sz*Math.cos(ang+0.4),ay2=ep.y-sz*Math.sin(ang+0.4);
+      var sz=arrowSz;
+      var spread=0.45;
+      var ax1=ep.x-sz*Math.cos(ang-spread),ay1=ep.y-sz*Math.sin(ang-spread);
+      var ax2=ep.x-sz*Math.cos(ang+spread),ay2=ep.y-sz*Math.sin(ang+spread);
       s+='<polygon points="'+ep.x.toFixed(1)+','+ep.y.toFixed(1)+' '+ax1.toFixed(1)+','+ay1.toFixed(1)+' '+ax2.toFixed(1)+','+ay2.toFixed(1)+'" fill="'+ln.color+'" data-line="'+li+'"/>';
     }
     // Block endpoint: flat perpendicular cap
@@ -1798,50 +1823,53 @@ function render(){
   // Body - draw toolbar first, then content
   // Draw toolbar
   h+='<div class="draw-bar">';
-  // Pen toggle
-  h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Pen</button>';
-  // Eraser toggle
-  h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg>Eraser</button>';
-  h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Text</button>';
-  h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>Circle</button>';
-  h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Rect</button>';
-  h+='<button class="tb'+(lineMode?' on':'')+'" id="tbLine"><svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="5" cy="19" r="2.5" fill="currentColor"/><circle cx="19" cy="5" r="2.5" fill="currentColor"/></svg>Line</button>';
-  h+='<div class="sep"></div>';
-  // Line style
-  h+='<select id="dStyle">';
-  h+='<option value="solid"'+(drawStyle==='solid'?' selected':'')+'>Solid</option>';
-  h+='<option value="dashed"'+(drawStyle==='dashed'?' selected':'')+'>Dashed</option>';
-  h+='<option value="arrow"'+(drawStyle==='arrow'?' selected':'')+'>Arrow</option>';
-  h+='<option value="curved"'+(drawStyle==='curved'?' selected':'')+'>Curved</option>';
-  h+='<option value="curvedarrow"'+(drawStyle==='curvedarrow'?' selected':'')+'>Curved Arrow</option>';
-  h+='<option value="block"'+(drawStyle==='block'?' selected':'')+'>Block</option>';
-  h+='<option value="curvedblock"'+(drawStyle==='curvedblock'?' selected':'')+'>Curved Block</option>';
-  h+='<option value="dot"'+(drawStyle==='dot'?' selected':'')+'>Dot</option>';
-  h+='<option value="curveddot"'+(drawStyle==='curveddot'?' selected':'')+'>Curved Dot</option>';
-  h+='</select>';
-  h+='<div class="sep"></div>';
-  // Colors
+  // Group 1: Drawing tools (Pen, Eraser)
+  h+='<div class="tb-group">';
+  h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
+  h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg></button>';
+  h+='</div>';
+  // Group 2: Shape tools (Circle, Rect, Text)
+  h+='<div class="tb-group">';
+  h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle" title="Circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
+  h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
+  h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText" title="Text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
+  h+='</div>';
+  // Group 3: Line styles (icons for each style)
+  h+='<div class="tb-group">';
+  var lineStyles=[
+    ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
+    ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
+    ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
+    ['dot','Dotted','<line x1="5" y1="19" x2="19" y2="5" stroke-dasharray="1.5,4" stroke-linecap="round"/>']
+  ];
+  for(var lsi=0;lsi<lineStyles.length;lsi++){
+    var ls=lineStyles[lsi];
+    h+='<button class="tb'+(drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
+  }
+  h+='</div>';
+  // Dashed toggle
+  h+='<div class="tb-group">';
+  h+='<button class="tb'+(drawDashed?' on':'')+'" id="tbDash" title="Dashed Line"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
+  h+='</div>';
+  // Group 5: Colors
+  h+='<div class="tb-group" style="gap:3px;padding:2px 4px">';
   for(var dci=0;dci<DRAW_COLORS.length;dci++){
     var dc=DRAW_COLORS[dci];
     h+='<button class="color-btn'+(drawColor===dc?' act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
   }
-  h+='<div class="sep"></div>';
-  // Widths
+  h+='</div>';
+  // Group 6: Widths
+  h+='<div class="tb-group" style="gap:2px;padding:2px 4px">';
   for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
     var dw=DRAW_WIDTHS[dwi];
-    h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*4)+'px;height:'+(2+dwi*2)+'px"></span></button>';
+    h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*3)+'px;height:'+(4+dwi*3)+'px;border-radius:50%"></span></button>';
   }
-  h+='<div class="sep"></div>';
-  // Assignment type presets
-  var presets=[['#cc0000','Rush'],['#0055cc','Cov'],['#9333ea','Stunt'],['#16a34a','Zone']];
-  for(var pri=0;pri<presets.length;pri++){
-    var pc2=presets[pri][0],pn2=presets[pri][1];
-    h+='<button class="preset-btn'+(drawColor===pc2?' act':'')+'" data-preset="'+pc2+'" style="border-left:3px solid '+pc2+';'+(drawColor===pc2?'background:'+pc2+'1a;font-weight:700':'')+'">'+pn2+'</button>';
-  }
-  h+='<div class="sep"></div>';
-  // Undo / Clear
-  h+='<button class="tb" id="tbUndo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Undo</button>';
-  h+='<button class="tb" id="tbClear" style="color:#ef4444"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Clear All</button>';
+  h+='</div>';
+  // Group 8: Undo / Clear
+  h+='<div class="tb-group">';
+  h+='<button class="tb-action" id="tbUndo" title="Undo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+  h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+  h+='</div>';
   h+='</div>';
 
   h+='<div class="eb">';
@@ -2201,7 +2229,7 @@ function bind(){
         if(drawMode&&!eraserMode){
           selLine=null;
           var pt=svgPoint(svg,e);
-          currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle};
+          currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
           e.preventDefault();
           return;
         } else if(eraserMode){
@@ -2381,6 +2409,15 @@ function bind(){
   });
   var dStyleSel=document.getElementById('dStyle');
   if(dStyleSel)dStyleSel.addEventListener('change',function(){drawStyle=this.value});
+  // Line style icon buttons
+  var lsBtns=document.querySelectorAll('[data-lstyle]');
+  for(var lsi=0;lsi<lsBtns.length;lsi++){
+    lsBtns[lsi].addEventListener('click',(function(s){return function(){drawStyle=s;drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;render()}})(lsBtns[lsi].getAttribute('data-lstyle')));
+  }
+
+  // Dashed toggle
+  var tbDash=document.getElementById('tbDash');
+  if(tbDash)tbDash.addEventListener('click',function(){drawDashed=!drawDashed;render()});
 
   // Color buttons
   var cbs=document.querySelectorAll('.color-btn');
@@ -2391,12 +2428,6 @@ function bind(){
   var wbs=document.querySelectorAll('.width-btn');
   for(var wbi=0;wbi<wbs.length;wbi++){
     wbs[wbi].addEventListener('click',(function(w){return function(){drawWidth=parseFloat(w);drawMode=true;eraserMode=false;shapeMode=false;render()}})(wbs[wbi].getAttribute('data-dw')));
-  }
-
-  // Preset buttons (Rush/Cov/Stunt/Zone)
-  var pbs=document.querySelectorAll('.preset-btn');
-  for(var pbi=0;pbi<pbs.length;pbi++){
-    pbs[pbi].addEventListener('click',(function(c){return function(){drawColor=c;drawMode=true;eraserMode=false;shapeMode=false;lineMode=false;render()}})(pbs[pbi].getAttribute('data-preset')));
   }
 
   // Route buttons
@@ -3204,37 +3235,41 @@ function bindDrag(){
     // Drawing
     if(currentLine&&drawMode&&!eraserMode){
       var pt=svgPoint(svg,e);
-      // Throttle: only add point if moved enough
-      var last=currentLine.pts[currentLine.pts.length-1];
-      var dx=pt.x-last.x,dy=pt.y-last.y;
-      if(dx*dx+dy*dy>4){
+      // Shift = constrain to straight line from start to cursor
+      if(e.shiftKey){
+        currentLine.pts=[currentLine.pts[0],{x:pt.x,y:pt.y}];
+      } else {
+        // Throttle: only add point if moved enough
+        var last=currentLine.pts[currentLine.pts.length-1];
+        var dx=pt.x-last.x,dy=pt.y-last.y;
+        if(dx*dx+dy*dy<=4){e.preventDefault();return}
         currentLine.pts.push({x:pt.x,y:pt.y});
-        // Live preview: render path directly
-        var el=document.getElementById('drawPreview');
-        if(!el){
-          el=document.createElementNS('http://www.w3.org/2000/svg','path');
-          el.id='drawPreview';
-          el.setAttribute('fill','none');
-          el.setAttribute('stroke-linecap','round');
-          el.setAttribute('stroke-linejoin','round');
-          svg.appendChild(el);
-        }
-        var isCurvedPreview=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock'||currentLine.style==='curveddot');
-        var d;
-        if(isCurvedPreview&&currentLine.pts.length>=3){
-          d=smoothPath(currentLine.pts);
-        } else {
-          d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
-          for(var i=1;i<currentLine.pts.length;i++){
-            d+=' L '+currentLine.pts[i].x.toFixed(1)+' '+currentLine.pts[i].y.toFixed(1);
-          }
-        }
-        el.setAttribute('d',d);
-        el.setAttribute('stroke',currentLine.color);
-        el.setAttribute('stroke-width',currentLine.width);
-        if(currentLine.style==='dashed')el.setAttribute('stroke-dasharray','8,5');
-        else el.removeAttribute('stroke-dasharray');
       }
+      // Live preview: render path directly
+      var el=document.getElementById('drawPreview');
+      if(!el){
+        el=document.createElementNS('http://www.w3.org/2000/svg','path');
+        el.id='drawPreview';
+        el.setAttribute('fill','none');
+        el.setAttribute('stroke-linecap','round');
+        el.setAttribute('stroke-linejoin','round');
+        svg.appendChild(el);
+      }
+      var isCurvedPreview=!e.shiftKey&&(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock'||currentLine.style==='curveddot');
+      var d;
+      if(isCurvedPreview&&currentLine.pts.length>=3){
+        d=smoothPath(currentLine.pts);
+      } else {
+        d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
+        for(var i=1;i<currentLine.pts.length;i++){
+          d+=' L '+currentLine.pts[i].x.toFixed(1)+' '+currentLine.pts[i].y.toFixed(1);
+        }
+      }
+      el.setAttribute('d',d);
+      el.setAttribute('stroke',currentLine.color);
+      el.setAttribute('stroke-width',currentLine.width);
+      if(currentLine.dashed||currentLine.style==='dashed')el.setAttribute('stroke-dasharray','8,5');
+      else el.removeAttribute('stroke-dasharray');
       e.preventDefault();
       return;
     }
@@ -3480,7 +3515,7 @@ function bindDrag(){
         var card=cards[activeIdx];
         pushUndo();
         var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
-        var newLine={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+        var newLine={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
         var anc=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc)newLine.anchor=anc.prefix+anc.key;
         card[lk].push(newLine);
@@ -3520,7 +3555,7 @@ function bindDrag(){
         var card=cards[activeIdx];
         pushUndo();
         var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
-        var newLine2={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+        var newLine2={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
         var anc2=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc2)newLine2.anchor=anc2.prefix+anc2.key;
         card[lk].push(newLine2);
@@ -3538,7 +3573,7 @@ function bindDrag(){
     e.preventDefault();
     var touch=e.touches[0];
     var pt=svgPoint(svg,touch);
-    currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle};
+    currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
   };
   svg.ontouchmove=function(e){
     if(!currentLine||!drawMode)return;
@@ -3581,7 +3616,7 @@ function bindDrag(){
       var card=cards[activeIdx];
       pushUndo();
       var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
-      var newLine3={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+      var newLine3={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
       var anc3=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
       if(anc3)newLine3.anchor=anc3.prefix+anc3.key;
       card[lk].push(newLine3);
