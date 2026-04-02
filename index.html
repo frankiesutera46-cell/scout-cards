@@ -3721,11 +3721,26 @@ function buildPDFFromImages(jpegDataUrls, imgW, imgH){
 async function exportPrintView(){
   var win = window.open('','_blank','width=900,height=700');
   if(!win){alert('Please allow popups for export');return}
-  var html = '<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - Scout Cards</title>';
-  html += '<style>@page{size:landscape;margin:0.3in}body{margin:0;font-family:Arial,sans-serif}';
-  html += '.card{page-break-after:always;padding:0;margin:0;text-align:center;display:flex;align-items:center;justify-content:center;height:100vh}';
-  html += '.card:last-child{page-break-after:auto}';
-  html += '.card img{width:100%;height:100%;object-fit:contain}';
+  var isPD=appMode==='playdesign';
+  var html = '<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - '+(isPD?'Play Designs':'Scout Cards')+'</title>';
+  if(isPD){
+    html += '<style>@page{size:portrait;margin:0.25in}body{margin:0;font-family:Arial,sans-serif}';
+    html += '.card{page-break-after:always;padding:0;margin:0;display:flex;flex-direction:column;height:100vh;box-sizing:border-box}';
+    html += '.card:last-child{page-break-after:auto}';
+    html += '.card-field{flex:0 0 55%;display:flex;align-items:center;justify-content:center;overflow:hidden}';
+    html += '.card-field img{width:100%;height:100%;object-fit:contain}';
+    html += '.card-notes{flex:1;display:flex;gap:0;min-height:0;border-top:2px solid #000}';
+    html += '.notes-col{flex:1;border:2px solid #000;border-top:none;display:flex;flex-direction:column;overflow:hidden}';
+    html += '.notes-col:first-child{border-right:1px solid #000}';
+    html += '.notes-col:last-child{border-left:1px solid #000}';
+    html += '.notes-title{font-weight:900;font-size:16px;padding:6px 10px;border-bottom:2px solid #000;text-decoration:underline;font-family:Arial,sans-serif}';
+    html += '.notes-body{padding:8px 10px;font-size:13px;line-height:1.5;font-family:Arial,sans-serif;white-space:pre-wrap;overflow:hidden;flex:1}';
+  } else {
+    html += '<style>@page{size:landscape;margin:0.3in}body{margin:0;font-family:Arial,sans-serif}';
+    html += '.card{page-break-after:always;padding:0;margin:0;text-align:center;display:flex;align-items:center;justify-content:center;height:100vh}';
+    html += '.card:last-child{page-break-after:auto}';
+    html += '.card img{width:100%;height:100%;object-fit:contain}';
+  }
   html += '.instructions{text-align:center;padding:16px;color:#666;font-size:13px;border-bottom:1px solid #ddd;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:16px}';
   html += '.save-btn{background:#1A3C2B;color:#fff;border:none;padding:10px 28px;font-size:14px;font-weight:700;border-radius:4px;cursor:pointer;font-family:Arial,sans-serif;letter-spacing:.05em}';
   html += '.save-btn:hover{background:#2a5c43}';
@@ -3733,17 +3748,39 @@ async function exportPrintView(){
   html += '</style></head><body>';
   html += '<div class="instructions"><button class="save-btn" onclick="window.print()">SAVE PDF</button><span>Opens print dialog — choose &ldquo;Save as PDF&rdquo; as the destination.</span></div>';
 
-  var isPD=appMode==='playdesign';
-  var eh=isPD?FH+180:FH;
   for(var ci=0;ci<cards.length;ci++){
     var card = cards[ci];
-    var svgStr = buildFullSVG(card,isPD);
-    var canvas = await svgToCanvas(svgStr, FW*2, eh*2);
-    if(!canvas) continue;
-    var dataUrl = canvas.toDataURL('image/png');
-    html += '<div class="card">';
-    html += '<img src="'+dataUrl+'"/>';
-    html += '</div>';
+    var svgStr = buildFullSVG(card,isPD?false:false);
+    if(isPD){
+      // For PD: render field-only SVG (no notes baked in)
+      var prevM=appMode;appMode='playdesign';
+      var pdSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+FH+'" width="'+FW*2+'" height="'+FH*2+'">';
+      pdSvg+=buildField();pdSvg+=buildDrawnLines(getCurLines(card));
+      var fOff=getPDOffPlayers(card);var fDef=getPDDefPlayers(card);
+      pdSvg+=buildPlayers(fOff,{},null,'o_',false,card.cl,null,false);
+      pdSvg+=buildPlayers(fDef,card.asgn,null,'d_',true,card.cl,card.routePts,true,true,card.pn);
+      pdSvg+=buildTextLabels(card);pdSvg+=buildTextBoxes(card);
+      pdSvg+='</svg>';
+      appMode=prevM;
+      var canvas=await svgToCanvas(pdSvg,FW*2,FH*2);
+      if(!canvas)continue;
+      var dataUrl=canvas.toDataURL('image/png');
+      html+='<div class="card">';
+      html+='<div class="card-field"><img src="'+dataUrl+'"/></div>';
+      html+='<div class="card-notes">';
+      html+='<div class="notes-col"><div class="notes-title">'+esc(card.frontTitle||'FRONTS: ADJUSTMENTS/STUNTS')+'</div>';
+      html+='<div class="notes-body">'+esc(card.frontNotes||'')+'</div></div>';
+      html+='<div class="notes-col"><div class="notes-title">'+esc(card.covTitle||'COVERAGE DETAILS:')+'</div>';
+      html+='<div class="notes-body">'+esc(card.coverageNotes||'')+'</div></div>';
+      html+='</div></div>';
+    } else {
+      var eh=FH;
+      svgStr = buildFullSVG(card,false);
+      var canvas=await svgToCanvas(svgStr,FW*2,eh*2);
+      if(!canvas)continue;
+      var dataUrl=canvas.toDataURL('image/png');
+      html+='<div class="card"><img src="'+dataUrl+'"/></div>';
+    }
   }
 
   html += '</body></html>';
