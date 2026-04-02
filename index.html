@@ -82,6 +82,10 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
 .field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15)}
 .inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
+.pd-notes{display:flex;gap:12px;padding:0 12px 12px;background:#EEEEEC}
+.pd-notes-col{flex:1}
+.pd-notes-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;border:2px solid #222;padding:4px 8px;text-align:center;background:#fff;letter-spacing:.05em;text-transform:uppercase}
+.pd-notes textarea{width:100%;min-height:120px;border:1px solid rgba(58,58,56,.2);border-top:none;padding:8px;font-family:'Space Grotesk',sans-serif;font-size:12px;resize:vertical;background:#fff;box-sizing:border-box}
 
 /* ---- RIGHT PANEL ---- */
 .rp{width:230px;border-left:1px solid rgba(58,58,56,.12);padding:14px;overflow-y:auto;flex-shrink:0;background:#F7F7F5}
@@ -119,6 +123,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .draw-bar .width-btn{width:26px;height:20px;border-radius:2px;border:1px solid rgba(58,58,56,.15);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .draw-bar .width-btn.act{border-color:#1A3C2B;background:rgba(26,60,43,.06)}
 .draw-bar .width-btn span{display:block;border-radius:1px;background:#3A3A38}
+.draw-bar .preset-btn{padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.03em;background:transparent;border:1px solid rgba(58,58,56,.12);border-radius:2px;cursor:pointer;color:#3A3A38;transition:.15s}
+.draw-bar .preset-btn.act{font-weight:700}
+.draw-bar .preset-btn:hover{background:rgba(58,58,56,.04)}
 .draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:3px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
 .field-wrap svg.drawing{cursor:crosshair}
 .field-wrap svg.drawing [data-dp]{pointer-events:none}
@@ -350,7 +357,8 @@ function getScoutReports(){return games[activeGameIdx].scoutReports||(games[acti
 
 function buildSavePayload(){
   // Sync current state back to games array
-  games[activeGameIdx].cards=cards;
+  if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+  else{games[activeGameIdx].cards=cards}
   games[activeGameIdx].name=gameTitle;
   return{games:games,activeGame:activeGameIdx};
 }
@@ -561,7 +569,7 @@ var RGROUPS={
 };
 
 // Route paths with NFL-accurate depths (Y = yards * YPX, upfield = negative Y)
-function routePath(rk,px,py,playerIsOnRight){
+function routePath(rk,px,py,playerIsOnRight,dirDown){
   var m = playerIsOnRight ? -1 : 1; // mirror for right-side players
   var Y = YPX; // ~14 pixels per yard vertical
   var X = YPX * 0.7; // horizontal scale
@@ -629,7 +637,8 @@ function routePath(rk,px,py,playerIsOnRight){
   var segs=P[rk]||[[0,-8*Y]];
   var pts=[{x:px,y:py}];
   var cx=px,cy=py;
-  for(var i=0;i<segs.length;i++){cx+=segs[i][0];cy+=segs[i][1];pts.push({x:cx,y:cy})}
+  var yd=dirDown?-1:1;
+  for(var i=0;i<segs.length;i++){cx+=segs[i][0];cy+=segs[i][1]*yd;pts.push({x:cx,y:cy})}
   return pts;
 }
 
@@ -644,9 +653,11 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 // ===== STATE =====
 var nid=1;
 function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:''}}
+function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
-function mkGame(name){return{name:name||'Week 1',cards:[mkCard()],scoutReports:[]}}
+function mkGame(name){return{name:name||'Week 1',cards:[mkCard()],scoutReports:[],playDesigns:[]}}
+var appMode='scout'; // 'scout' or 'playdesign'
 var games=[mkGame('Week 1')];
 var activeGameIdx=0;
 var cards=games[0].cards;
@@ -657,11 +668,40 @@ var selSide='off';
 var gameTitle='Week 1';
 var dragInfo=null;
 
+function getPlayDesigns(){return games[activeGameIdx].playDesigns||(games[activeGameIdx].playDesigns=[])}
+
+function switchMode(mode){
+  // Sync current cards back before switching
+  if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+  else{games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle}
+  appMode=mode;
+  if(mode==='playdesign'){
+    var pd=getPlayDesigns();
+    if(pd.length===0)pd.push(mkPlayCard());
+    cards=pd;
+  }else{
+    cards=games[activeGameIdx].cards;
+  }
+  activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
+  drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;currentLine=null;currentShape=null;currentStraightLine=null;
+  undoStack=[];
+  render();
+}
+
 function switchGame(idx){
   if(idx<0||idx>=games.length)return;
+  // Sync current mode's data before switching
+  if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+  else{games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle}
   activeGameIdx=idx;
-  cards=games[idx].cards;
   gameTitle=games[idx].name;
+  if(appMode==='playdesign'){
+    var pd=games[idx].playDesigns||(games[idx].playDesigns=[]);
+    if(pd.length===0)pd.push(mkPlayCard());
+    cards=pd;
+  }else{
+    cards=games[idx].cards;
+  }
   activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
   undoStack=[];
   render();
@@ -699,11 +739,13 @@ var drawMode=false;
 var eraserMode=false;
 var textMode=false;
 var shapeMode=false; // 'circle' or 'rect' or false
+var lineMode=false; // straight line click-to-place mode
 var drawColor='#000000';
 var drawWidth=2;
 var drawStyle='solid'; // solid, dashed, arrow
 var currentLine=null; // {pts:[], color, width, style}
 var currentShape=null; // {type, x1, y1, x2, y2, color, width}
+var currentStraightLine=null; // {pts:[], color, width, style} for click-to-place straight lines
 var DRAW_COLORS=['#cc0000','#0055cc','#000000','#888888','#9333ea','#16a34a','#1A3C2B'];
 var DRAW_WIDTHS=[1.5,2.5,4];
 
@@ -838,6 +880,47 @@ function getDefPlayers(card){
   return p;
 }
 
+// Play Designer: LOS at 15 yards from top instead of 25
+var PD_LOS_Y = MARGIN_TOP + 15 * YPX; // ~225
+
+// Compute flipped positions for play designer (returns new objects, never mutates card data)
+function getFlippedOffPlayers(card){
+  var base=getOffPlayers(card);
+  var out={};var ks=Object.keys(base);
+  for(var i=0;i<ks.length;i++){
+    var k=ks[i],b=base[k];
+    out[k]={x:b.x,y:PD_LOS_Y-(b.y-LOS_Y),l:b.l,side:b.side};
+  }
+  return out;
+}
+function getFlippedDefPlayers(card){
+  var base=getDefPlayers(card);
+  var out={};var ks=Object.keys(base);
+  for(var i=0;i<ks.length;i++){
+    var k=ks[i],b=base[k];
+    out[k]={x:b.x,y:PD_LOS_Y+(LOS_Y-b.y),l:b.l,side:b.side};
+  }
+  return out;
+}
+
+// Get play designer positions — uses pdOpos/pdDpos (screen-space) if available, otherwise computes from flip
+function getPDOffPlayers(card){
+  var flipped=getFlippedOffPlayers(card);
+  if(card.pdOpos){
+    var ks=Object.keys(card.pdOpos);
+    for(var i=0;i<ks.length;i++){if(flipped[ks[i]]){flipped[ks[i]].x=card.pdOpos[ks[i]].x;flipped[ks[i]].y=card.pdOpos[ks[i]].y}}
+  }
+  return flipped;
+}
+function getPDDefPlayers(card){
+  var flipped=getFlippedDefPlayers(card);
+  if(card.pdDpos){
+    var ks=Object.keys(card.pdDpos);
+    for(var i=0;i<ks.length;i++){if(flipped[ks[i]]){flipped[ks[i]].x=card.pdDpos[ks[i]].x;flipped[ks[i]].y=card.pdDpos[ks[i]].y}}
+  }
+  return flipped;
+}
+
 // ===== SVG FIELD =====
 // Hash positions (stored globally for use in formation offsets)
 var SL=12, SR=FW-12;
@@ -915,8 +998,10 @@ function buildField(){
   s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
   s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
-  // LOS - bold black
-  s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#222" stroke-width="2.5"/>';
+  // LOS - bold black (hidden in play designer mode)
+  if(appMode!=='playdesign'){
+    s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#222" stroke-width="2.5"/>';
+  }
 
   s+='</g>'; // end fieldClip
 
@@ -987,32 +1072,45 @@ function buildTextLabels(card){
   if(!card.lsz)card.lsz={};
 
   // === HEADER BAND (fixed in top band, above field) ===
-  // Formation + Hash — always shown
-  var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
-  var hashName=HASH_LABELS[card.hash]||card.hash;
-  var fmhashText=fmName+' — '+hashName;
-  var fsz=labelSz(card,'fmhash');
-  // Play name follows with pipe separator
-  var playText=card.play||'';
-  var hdrLeft=playText ? fmhashText+' | '+playText : fmhashText;
-  var hlw=Math.max(200,hdrLeft.length*(fsz*0.58));
-  var hlh=fsz+6;
-  s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_play" style="cursor:pointer"/>';
-  s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">';
-  s+=esc(fmhashText);
-  if(playText){s+='<tspan fill="#666"> | </tspan><tspan fill="#222">'+esc(playText)+'</tspan>';}
-  s+='</text>';
+  if(appMode==='playdesign'){
+    // Play Designer: only show play name
+    var playText=card.play||'';
+    var fsz=labelSz(card,'fmhash');
+    if(playText){
+      var hlw=Math.max(200,playText.length*(fsz*0.58));
+      var hlh=fsz+6;
+      s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_play" style="cursor:pointer"/>';
+      s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(playText)+'</text>';
+    }
+  } else {
+    // Scout mode: Formation + Hash + Play name
+    var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
+    var hashName=HASH_LABELS[card.hash]||card.hash;
+    var fmhashText=fmName+' — '+hashName;
+    var fsz=labelSz(card,'fmhash');
+    var playText=card.play||'';
+    var hdrLeft=playText ? fmhashText+' | '+playText : fmhashText;
+    var hlw=Math.max(200,hdrLeft.length*(fsz*0.58));
+    var hlh=fsz+6;
+    s+='<rect x="4" y="'+(hdrY-fsz)+'" width="'+hlw+'" height="'+hlh+'" fill="transparent" data-dp="t_play" style="cursor:pointer"/>';
+    s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">';
+    s+=esc(fmhashText);
+    if(playText){s+='<tspan fill="#666"> | </tspan><tspan fill="#222">'+esc(playText)+'</tspan>';}
+    s+='</text>';
+  }
 
-  // D&D / Tag on right side of header
-  var ddText=card.dd||'';
-  var tagText=(card.tags&&card.tags.length)?card.tags[0]:'';
-  var rightText=ddText&&tagText?ddText+' · '+tagText:(ddText||tagText);
-  if(rightText){
-    var rsz=labelSz(card,'dd');
-    var rw=Math.max(40,rightText.length*(rsz*0.65));
-    var rh=rsz+6;
-    s+='<rect x="'+(FW-rw-6)+'" y="'+(hdrY-rsz)+'" width="'+rw+'" height="'+rh+'" fill="transparent" data-dp="t_dd" style="cursor:pointer"/>';
-    s+='<text x="'+(FW-6)+'" y="'+hdrY+'" text-anchor="end" fill="#222" font-size="'+rsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(rightText)+'</text>';
+  // D&D / Tag on right side of header (scout mode only)
+  if(appMode!=='playdesign'){
+    var ddText=card.dd||'';
+    var tagText=(card.tags&&card.tags.length)?card.tags[0]:'';
+    var rightText=ddText&&tagText?ddText+' · '+tagText:(ddText||tagText);
+    if(rightText){
+      var rsz=labelSz(card,'dd');
+      var rw=Math.max(40,rightText.length*(rsz*0.65));
+      var rh=rsz+6;
+      s+='<rect x="'+(FW-rw-6)+'" y="'+(hdrY-rsz)+'" width="'+rw+'" height="'+rh+'" fill="transparent" data-dp="t_dd" style="cursor:pointer"/>';
+      s+='<text x="'+(FW-6)+'" y="'+hdrY+'" text-anchor="end" fill="#222" font-size="'+rsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(rightText)+'</text>';
+    }
   }
 
   // === FIELD LABELS (draggable, below header) ===
@@ -1034,10 +1132,14 @@ function buildTextLabels(card){
     var pnClean=Object.keys(card.pn);
     for(var pci=0;pci<pnClean.length;pci++){if(!card.pn[pnClean[pci]])delete card.pn[pnClean[pci]]}
     var pnKeys=Object.keys(card.pn);
+    // In play designer, skip defensive player notes (auto-rendered below player)
+    var pdDefKeys=null;
+    if(appMode==='playdesign'){var dpl=getPDDefPlayers(card);pdDefKeys=Object.keys(dpl)}
     var pnIdx=0;
     for(var pi=0;pi<pnKeys.length;pi++){
       var pnk=pnKeys[pi], pnText=card.pn[pnk];
       if(!pnText)continue;
+      if(pdDefKeys&&pdDefKeys.indexOf(pnk)>=0)continue;
       var pnKey='pn_'+pnk;
       var pnsz=labelSz(card,pnKey);
       var pnPos=card.lpos[pnKey]||{x:100+pnIdx*140, y:LOS_Y*0.5+20};
@@ -1075,7 +1177,7 @@ function buildDrawnLines(lines){
       continue;
     }
     if(!ln.pts||ln.pts.length<2)continue;
-    var isCurved=(ln.style==='curved'||ln.style==='curvedarrow'||ln.style==='curvedblock');
+    var isCurved=(ln.style==='curved'||ln.style==='curvedarrow'||ln.style==='curvedblock'||ln.style==='curveddot');
     var dLine='M '+ln.pts[0].x.toFixed(1)+' '+ln.pts[0].y.toFixed(1);
     for(var pi=1;pi<ln.pts.length;pi++){
       dLine+=' L '+ln.pts[pi].x.toFixed(1)+' '+ln.pts[pi].y.toFixed(1);
@@ -1106,12 +1208,24 @@ function buildDrawnLines(lines){
       var bx2=bep.x+bsz*Math.cos(bang-1.57),by2=bep.y+bsz*Math.sin(bang-1.57);
       s+='<line x1="'+bx1.toFixed(1)+'" y1="'+by1.toFixed(1)+'" x2="'+bx2.toFixed(1)+'" y2="'+by2.toFixed(1)+'" stroke="'+ln.color+'" stroke-width="2.5" stroke-linecap="round" data-line="'+li+'"/>';
     }
-    // Endpoint handles when selected
+    // Dot endpoint: filled circle
+    if((ln.style==='dot'||ln.style==='curveddot')&&ln.pts.length>=2){
+      var dep=ln.pts[ln.pts.length-1];
+      var dr=Math.max(4,ln.width*2);
+      s+='<circle cx="'+dep.x.toFixed(1)+'" cy="'+dep.y.toFixed(1)+'" r="'+dr+'" fill="'+ln.color+'" data-line="'+li+'"/>';
+    }
+    // Waypoint handles when selected (all points are draggable)
     if(isSel){
-      var sp=ln.pts[0];
-      var ep2=ln.pts[ln.pts.length-1];
-      s+='<circle cx="'+sp.x.toFixed(1)+'" cy="'+sp.y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-lnpt="'+li+'_0" style="cursor:grab" opacity="0.9"/>';
-      s+='<circle cx="'+ep2.x.toFixed(1)+'" cy="'+ep2.y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-lnpt="'+li+'_'+(ln.pts.length-1)+'" style="cursor:grab" opacity="0.9"/>';
+      for(var hi=0;hi<ln.pts.length;hi++){
+        var hp=ln.pts[hi];
+        s+='<circle cx="'+hp.x.toFixed(1)+'" cy="'+hp.y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-lnpt="'+li+'_'+hi+'" style="cursor:grab" opacity="0.9"/>';
+      }
+      // Midpoint circles for adding waypoints between existing points
+      for(var mj=0;mj<ln.pts.length-1;mj++){
+        var mp1=ln.pts[mj],mp2=ln.pts[mj+1];
+        var mmx=(mp1.x+mp2.x)/2,mmy=(mp1.y+mp2.y)/2;
+        s+='<circle cx="'+mmx.toFixed(1)+'" cy="'+mmy.toFixed(1)+'" r="4" fill="rgba(26,60,43,0.3)" stroke="#1A3C2B" stroke-width="1" data-lnmid="'+li+'_'+mj+'" style="cursor:copy" opacity="0.6"/>';
+      }
     }
   }
   return s;
@@ -1131,23 +1245,25 @@ function playerColor(side){
   return '#666';
 }
 
-function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
+function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,renderRoutes,dirDown,playerNotes){
   var s='';var keys=Object.keys(players);
   var cl=customLabels||{};
   var rpm=routePtsMap||{};
+  var showRoutes=(renderRoutes!==undefined)?renderRoutes:!isDef;
 
   // Routes first (underneath)
-  if(!isDef){
+  if(showRoutes){
     for(var ri=0;ri<keys.length;ri++){
       var rk2=keys[ri],rp=players[rk2],ra=asgn[rk2];
       if(!ra||!ROUTES[ra])continue;
       var rt=ROUTES[ra];
       var isRight=rp.x>CX;
-      var pts=(rpm[rk2]&&rpm[rk2].length>=2)?rpm[rk2]:routePath(ra,rp.x,rp.y,isRight);
+      var pts=(rpm[rk2]&&rpm[rk2].length>=2)?rpm[rk2]:routePath(ra,rp.x,rp.y,isRight,dirDown);
       if(pts.length<2)continue;
-      var d='M '+pts[0].x+' '+pts[0].y;
-      for(var j=1;j<pts.length;j++)d+=' L '+pts[j].x+' '+pts[j].y;
       var isMot=rt.t==='motion',isBlk=rt.t==='block';
+      var d;
+      if(!isBlk&&!isMot&&pts.length>=3){d=smoothPath(pts)}
+      else{d='M '+pts[0].x+' '+pts[0].y;for(var j=1;j<pts.length;j++)d+=' L '+pts[j].x+' '+pts[j].y}
       var isPassPro=(ra==='bpass');
       var dash=isMot?' stroke-dasharray="6,4"':'';
       var sw=isBlk?2.5:2;
@@ -1200,6 +1316,12 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
       var dfs=lbl.length>2?14:18;
       s+='<rect x="'+(pp.x-14)+'" y="'+(pp.y-10)+'" width="28" height="20" fill="transparent" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+5)+'" text-anchor="middle" fill="'+defCol+'" font-size="'+dfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+      // Auto-positioned assignment label below defender
+      var pnMap=playerNotes||{};
+      if(pnMap[pk]){
+        var noteCol=isSel?'#1A3C2B':'#cc0000';
+        s+='<text x="'+pp.x+'" y="'+(pp.y+20)+'" text-anchor="middle" fill="'+noteCol+'" font-size="9" font-family="Arial,sans-serif" font-weight="bold" font-style="italic" pointer-events="none">'+esc(pnMap[pk])+'</text>';
+      }
     } else if(pp.side==='c'){
       // CENTER: black outline square, no letter, white fill
       var sz=11;
@@ -1233,8 +1355,9 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
 }
 
 // ===== WAYPOINT HANDLES =====
-function buildWaypointHandles(card,oPlayers){
-  if(!selPlayer||selSide!=='off')return '';
+function buildWaypointHandles(card,players){
+  if(!selPlayer)return '';
+  if(selSide!=='off'&&!(selSide==='def'&&appMode==='playdesign'))return '';
   var ra=card.asgn[selPlayer];
   if(!ra||!ROUTES[ra])return '';
   var pts=card.routePts[selPlayer];
@@ -1309,6 +1432,7 @@ function render(){
   h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
   h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Team</button>';
   h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<button class="btn btn-sec" id="btnPlayDesign" style="color:'+(appMode==='playdesign'?'#1A3C2B;background:#C6A355;border-color:#C6A355':'#C6A355;border-color:rgba(198,163,85,.4)')+';font-weight:700">'+(appMode==='playdesign'?'Scout Cards':'Play Designer')+'</button>';
   h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700">?</button>';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
@@ -1571,6 +1695,7 @@ function render(){
   h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Text</button>';
   h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>Circle</button>';
   h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Rect</button>';
+  h+='<button class="tb'+(lineMode?' on':'')+'" id="tbLine"><svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="5" cy="19" r="2.5" fill="currentColor"/><circle cx="19" cy="5" r="2.5" fill="currentColor"/></svg>Line</button>';
   h+='<div class="sep"></div>';
   // Line style
   h+='<select id="dStyle">';
@@ -1581,6 +1706,8 @@ function render(){
   h+='<option value="curvedarrow"'+(drawStyle==='curvedarrow'?' selected':'')+'>Curved Arrow</option>';
   h+='<option value="block"'+(drawStyle==='block'?' selected':'')+'>Block</option>';
   h+='<option value="curvedblock"'+(drawStyle==='curvedblock'?' selected':'')+'>Curved Block</option>';
+  h+='<option value="dot"'+(drawStyle==='dot'?' selected':'')+'>Dot</option>';
+  h+='<option value="curveddot"'+(drawStyle==='curveddot'?' selected':'')+'>Curved Dot</option>';
   h+='</select>';
   h+='<div class="sep"></div>';
   // Colors
@@ -1595,6 +1722,13 @@ function render(){
     h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*4)+'px;height:'+(2+dwi*2)+'px"></span></button>';
   }
   h+='<div class="sep"></div>';
+  // Assignment type presets
+  var presets=[['#cc0000','Rush'],['#0055cc','Cov'],['#9333ea','Stunt'],['#16a34a','Zone']];
+  for(var pri=0;pri<presets.length;pri++){
+    var pc2=presets[pri][0],pn2=presets[pri][1];
+    h+='<button class="preset-btn'+(drawColor===pc2?' act':'')+'" data-preset="'+pc2+'" style="border-left:3px solid '+pc2+';'+(drawColor===pc2?'background:'+pc2+'1a;font-weight:700':'')+'">'+pn2+'</button>';
+  }
+  h+='<div class="sep"></div>';
   // Undo / Clear
   h+='<button class="tb" id="tbUndo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Undo</button>';
   h+='<button class="tb" id="tbClear" style="color:#ef4444"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Clear All</button>';
@@ -1603,16 +1737,36 @@ function render(){
   h+='<div class="eb">';
 
   // Field SVG
-  var svgClass=drawMode?'drawing':(textMode?'text-mode':(shapeMode?'drawing':''));
+  var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
   h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField();
   h+=buildDrawnLines(card.lines||[]);
-  h+=buildPlayers(dPlayers,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
-  h+=buildPlayers(oPlayers,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
-  h+=buildTextLabels(card);
-  h+=buildTextBoxes(card);
-  h+=buildWaypointHandles(card,oPlayers);
+  if(appMode==='playdesign'){
+    var fOff=getPDOffPlayers(card);
+    var fDef=getPDDefPlayers(card);
+    h+=buildPlayers(fOff,{},selSide==='off'?selPlayer:null,'o_',false,card.cl,null,false);
+    h+=buildPlayers(fDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true,card.pn);
+    h+=buildTextLabels(card);
+    h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,fDef);
+  } else {
+    h+=buildPlayers(dPlayers,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+    h+=buildPlayers(oPlayers,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
+    h+=buildTextLabels(card);
+    h+=buildTextBoxes(card);
+    h+=buildWaypointHandles(card,oPlayers);
+  }
   h+='</svg></div>';
+
+  // Play Designer notes section
+  if(appMode==='playdesign'){
+    h+='<div class="pd-notes">';
+    h+='<div class="pd-notes-col"><div class="pd-notes-title">FRONTS: ADJUSTMENTS / STUNTS</div>';
+    h+='<textarea id="pdFrontNotes" placeholder="Front calls, adjustments, stunts...">'+(card.frontNotes||'')+'</textarea></div>';
+    h+='<div class="pd-notes-col"><div class="pd-notes-title">COVERAGE DETAILS</div>';
+    h+='<textarea id="pdCoverageNotes" placeholder="Coverage assignments, rules...">'+(card.coverageNotes||'')+'</textarea></div>';
+    h+='</div>';
+  }
 
   // Right panel
   h+='<div class="rp">';
@@ -1653,9 +1807,30 @@ function render(){
     }
     h+='<div class="ns"><label>Note for '+(pl?pl.l:'')+'</label>';
     h+='<input type="text" id="pnI" placeholder="e.g. #4 - burns corner" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
+  } else if(selSide==='def'&&appMode==='playdesign'){
+    // Play Designer: defense gets route palette
+    var dpl=dPlayers[selPlayer];
+    var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
+    h+='<div class="sel-hdr"><span style="color:#C6A355">'+curDLabel+' — Assignment</span>';
+    if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
+    h+='</div>';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
+    h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    var gk=Object.keys(RGROUPS);
+    for(var gi=0;gi<gk.length;gi++){
+      h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
+      var rks=RGROUPS[gk[gi]];
+      for(var rii=0;rii<rks.length;rii++){
+        var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
+        h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
+      }
+      h+='</div>';
+    }
+    h+='<div class="ns"><label>Note for '+(dpl?dpl.l:'')+'</label>';
+    h+='<input type="text" id="pnI" placeholder="e.g. man #2 strong" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
   } else {
     var dpl=dPlayers[selPlayer];
-    var curDLabel=card.cl[selPlayer]||dpl.l;
+    var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
     h+='<div class="sel-hdr"><span style="color:#3b82f6">'+curDLabel+' — Defense</span></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
@@ -1765,13 +1940,64 @@ function bind(){
         },50);
         e.preventDefault();return;
       }
+      // Straight line mode: click to place waypoints
+      if(lineMode){
+        var pt=svgPoint(svg,e);
+        if(!currentStraightLine){
+          currentStraightLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle};
+        } else {
+          currentStraightLine.pts.push({x:pt.x,y:pt.y});
+        }
+        // Live preview
+        var el=document.getElementById('straightLinePreview');
+        if(!el){
+          el=document.createElementNS('http://www.w3.org/2000/svg','path');
+          el.id='straightLinePreview';
+          el.setAttribute('fill','none');
+          el.setAttribute('stroke-linecap','round');
+          el.setAttribute('stroke-linejoin','round');
+          svg.appendChild(el);
+        }
+        var slPts=currentStraightLine.pts;
+        var d='M '+slPts[0].x.toFixed(1)+' '+slPts[0].y.toFixed(1);
+        for(var si=1;si<slPts.length;si++){d+=' L '+slPts[si].x.toFixed(1)+' '+slPts[si].y.toFixed(1)}
+        el.setAttribute('d',d);
+        el.setAttribute('stroke',currentStraightLine.color);
+        el.setAttribute('stroke-width',currentStraightLine.width);
+        if(currentStraightLine.style==='dashed')el.setAttribute('stroke-dasharray','8,5');
+        else el.removeAttribute('stroke-dasharray');
+        // Draw point markers
+        svg.querySelectorAll('.sl-marker').forEach(function(m){m.remove()});
+        for(var mi=0;mi<slPts.length;mi++){
+          var mk=document.createElementNS('http://www.w3.org/2000/svg','circle');
+          mk.setAttribute('cx',slPts[mi].x.toFixed(1));mk.setAttribute('cy',slPts[mi].y.toFixed(1));
+          mk.setAttribute('r','4');mk.setAttribute('fill',currentStraightLine.color);mk.setAttribute('stroke','#fff');mk.setAttribute('stroke-width','1.5');
+          mk.classList.add('sl-marker');
+          svg.appendChild(mk);
+        }
+        e.preventDefault();return;
+      }
       // Shape mode: click-drag to draw circle or rectangle
       if(shapeMode){
         var pt=svgPoint(svg,e);
         currentShape={type:shapeMode,x1:pt.x,y1:pt.y,x2:pt.x,y2:pt.y,color:drawColor,width:drawWidth};
         e.preventDefault();return;
       }
-      // Line endpoint drag handle
+      // Line midpoint click to add waypoint
+      var lnmidAttr=e.target.getAttribute&&e.target.getAttribute('data-lnmid');
+      if(lnmidAttr){
+        var midParts=lnmidAttr.split('_');
+        var midLineIdx=parseInt(midParts[0]),midSegIdx=parseInt(midParts[1]);
+        var midLn=card.lines[midLineIdx];
+        if(midLn&&midLn.pts&&midSegIdx<midLn.pts.length-1){
+          var ma=midLn.pts[midSegIdx],mb=midLn.pts[midSegIdx+1];
+          pushUndo();
+          midLn.pts.splice(midSegIdx+1,0,{x:(ma.x+mb.x)/2,y:(ma.y+mb.y)/2});
+          render();bindDrag();
+        }
+        e.preventDefault();return;
+      }
+      // Line waypoint drag handle
       var lnptAttr=e.target.getAttribute&&e.target.getAttribute('data-lnpt');
       if(lnptAttr){
         var lnParts=lnptAttr.split('_');
@@ -1928,7 +2154,12 @@ function bind(){
         // Start drag
         var pt=svgPoint(svg,e);
         var curCard=cards[activeIdx];
-        var players=isDef?getDefPlayers(curCard):getOffPlayers(curCard);
+        var players;
+        if(appMode==='playdesign'){
+          players=isDef?getPDDefPlayers(curCard):getPDOffPlayers(curCard);
+        } else {
+          players=isDef?getDefPlayers(curCard):getOffPlayers(curCard);
+        }
         var pp=players[pk];
         if(pp){
           pushUndo();dragInfo={key:pk,isDef:isDef,offX:pt.x-pp.x,offY:pt.y-pp.y,moved:false};
@@ -1950,12 +2181,12 @@ function bind(){
   // Draw toolbar buttons
   var tbPen=document.getElementById('tbPen');
   if(tbPen)tbPen.addEventListener('click',function(){
-    if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false}
+    if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
     selPlayer=null;selTextBox=null;render();
   });
   var tbErase=document.getElementById('tbErase');
   if(tbErase)tbErase.addEventListener('click',function(){
-    if(eraserMode){eraserMode=false;drawMode=false}else{eraserMode=true;drawMode=true;textMode=false;shapeMode=false}
+    if(eraserMode){eraserMode=false;drawMode=false}else{eraserMode=true;drawMode=true;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
     selPlayer=null;selTextBox=null;render();
   });
   var tbUndo=document.getElementById('tbUndo');
@@ -1984,16 +2215,28 @@ function bind(){
     wbs[wbi].addEventListener('click',(function(w){return function(){drawWidth=parseFloat(w);drawMode=true;eraserMode=false;shapeMode=false;render()}})(wbs[wbi].getAttribute('data-dw')));
   }
 
+  // Preset buttons (Rush/Cov/Stunt/Zone)
+  var pbs=document.querySelectorAll('.preset-btn');
+  for(var pbi=0;pbi<pbs.length;pbi++){
+    pbs[pbi].addEventListener('click',(function(c){return function(){drawColor=c;drawMode=true;eraserMode=false;shapeMode=false;lineMode=false;render()}})(pbs[pbi].getAttribute('data-preset')));
+  }
+
   // Route buttons
   var rbs=document.querySelectorAll('.rb');
   for(var rb=0;rb<rbs.length;rb++){
-    rbs[rb].addEventListener('click',(function(rk){return function(){if(selPlayer&&selSide==='off'){
-      pushUndo();card.asgn[selPlayer]=rk;
-      // Compute and store initial waypoints
-      var oP=getOffPlayers(card);var pp=oP[selPlayer];
-      if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight)}
-      render();
-    }}})(rbs[rb].getAttribute('data-rk')));
+    rbs[rb].addEventListener('click',(function(rk){return function(){
+      if(selPlayer&&selSide==='off'){
+        pushUndo();card.asgn[selPlayer]=rk;
+        var oP=getOffPlayers(card);var pp=oP[selPlayer];
+        if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight)}
+        render();
+      } else if(selPlayer&&selSide==='def'&&appMode==='playdesign'){
+        pushUndo();card.asgn[selPlayer]=rk;
+        var dP=getPDDefPlayers(card);var pp=dP[selPlayer];
+        if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight,true)}
+        render();
+      }
+    }})(rbs[rb].getAttribute('data-rk')));
   }
 
   var bClr=document.getElementById('bClr');
@@ -2049,7 +2292,7 @@ function bind(){
   });
 
   var btnA=document.getElementById('btnA');
-  if(btnA)btnA.addEventListener('click',function(){cards.push(mkCard());activeIdx=cards.length-1;selPlayer=null;render()});
+  if(btnA)btnA.addEventListener('click',function(){cards.push(appMode==='playdesign'?mkPlayCard():mkCard());activeIdx=cards.length-1;selPlayer=null;render()});
 
   var btnD=document.getElementById('btnD');
   if(btnD)btnD.addEventListener('click',function(){
@@ -2118,6 +2361,16 @@ function bind(){
   var playbooksModal=document.getElementById('playbooksModal');
   if(btnPlaybooks&&playbooksModal){
     btnPlaybooks.addEventListener('click',function(){playbooksModal.style.display='flex'});
+
+  // Play Designer button
+  var btnPD=document.getElementById('btnPlayDesign');
+  if(btnPD)btnPD.addEventListener('click',function(){switchMode(appMode==='playdesign'?'scout':'playdesign')});
+
+  // Play Designer notes
+  var pdFN=document.getElementById('pdFrontNotes');
+  if(pdFN)pdFN.addEventListener('input',function(){card.frontNotes=this.value});
+  var pdCN=document.getElementById('pdCoverageNotes');
+  if(pdCN)pdCN.addEventListener('input',function(){card.coverageNotes=this.value});
     document.getElementById('playbooksClose').addEventListener('click',function(){playbooksModal.style.display='none'});
     playbooksModal.addEventListener('click',function(e){if(e.target===playbooksModal)playbooksModal.style.display='none'});
     // Upload button
@@ -2385,25 +2638,53 @@ function bind(){
   // === TEXT TOOL BUTTON ===
   var tbText=document.getElementById('tbText');
   if(tbText)tbText.addEventListener('click',function(){
-    if(textMode){textMode=false}else{textMode=true;drawMode=false;eraserMode=false;shapeMode=false}
+    if(textMode){textMode=false}else{textMode=true;drawMode=false;eraserMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
     selPlayer=null;render();
   });
 
   // === SHAPE TOOL BUTTONS ===
   var tbCircle=document.getElementById('tbCircle');
   if(tbCircle)tbCircle.addEventListener('click',function(){
-    if(shapeMode==='circle'){shapeMode=false}else{shapeMode='circle';drawMode=false;eraserMode=false;textMode=false}
+    if(shapeMode==='circle'){shapeMode=false}else{shapeMode='circle';drawMode=false;eraserMode=false;textMode=false;lineMode=false;commitStraightLine()}
     selPlayer=null;render();
   });
   var tbRect=document.getElementById('tbRect');
   if(tbRect)tbRect.addEventListener('click',function(){
-    if(shapeMode==='rect'){shapeMode=false}else{shapeMode='rect';drawMode=false;eraserMode=false;textMode=false}
+    if(shapeMode==='rect'){shapeMode=false}else{shapeMode='rect';drawMode=false;eraserMode=false;textMode=false;lineMode=false}
+    selPlayer=null;render();
+  });
+  var tbLine=document.getElementById('tbLine');
+  if(tbLine)tbLine.addEventListener('click',function(){
+    if(lineMode){
+      commitStraightLine();
+      lineMode=false;
+    }else{
+      lineMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;
+    }
     selPlayer=null;render();
   });
 
   // === DBLCLICK on SVG for waypoint removal & text box editing ===
   if(svg)svg.addEventListener('dblclick',function(e){
+    // Finish straight line on double-click
+    if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=2){
+      // Remove the last point (added by the second click of the double-click)
+      if(currentStraightLine.pts.length>2)currentStraightLine.pts.pop();
+      commitStraightLine();render();
+      e.preventDefault();return;
+    }
     var tgt=e.target;
+    // Line waypoint removal on double-click
+    var lnptDbl=tgt.getAttribute&&tgt.getAttribute('data-lnpt');
+    if(lnptDbl){
+      var lnpParts=lnptDbl.split('_');
+      var lnpLineIdx=parseInt(lnpParts[0]),lnpPtIdx=parseInt(lnpParts[1]);
+      var lnpLn=card.lines[lnpLineIdx];
+      if(lnpLn&&lnpLn.pts&&lnpLn.pts.length>2){
+        pushUndo();lnpLn.pts.splice(lnpPtIdx,1);render();
+      }
+      e.preventDefault();return;
+    }
     // Waypoint removal
     var wpAttr=tgt.getAttribute&&tgt.getAttribute('data-wp');
     if(wpAttr){
@@ -2558,6 +2839,19 @@ function bindDrag(){
   if(!svg)return;
 
   svg.onmousemove=function(e){
+    // Straight line rubber-band preview
+    if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=1){
+      var pt=svgPoint(svg,e);
+      var el=document.getElementById('straightLinePreview');
+      if(el){
+        var slPts=currentStraightLine.pts;
+        var d='M '+slPts[0].x.toFixed(1)+' '+slPts[0].y.toFixed(1);
+        for(var si=1;si<slPts.length;si++){d+=' L '+slPts[si].x.toFixed(1)+' '+slPts[si].y.toFixed(1)}
+        d+=' L '+pt.x.toFixed(1)+' '+pt.y.toFixed(1);
+        el.setAttribute('d',d);
+      }
+      return;
+    }
     // Drawing
     if(currentLine&&drawMode&&!eraserMode){
       var pt=svgPoint(svg,e);
@@ -2576,7 +2870,7 @@ function bindDrag(){
           el.setAttribute('stroke-linejoin','round');
           svg.appendChild(el);
         }
-        var isCurvedPreview=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock');
+        var isCurvedPreview=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock'||currentLine.style==='curveddot');
         var d;
         if(isCurvedPreview&&currentLine.pts.length>=3){
           d=smoothPath(currentLine.pts);
@@ -2769,14 +3063,23 @@ function bindDrag(){
     }
 
     var anchorKey=(dragInfo.isDef?'d_':'o_')+dragInfo.key;
-    var posStore=dragInfo.isDef?'dpos':'opos';
-    var playerPool=dragInfo.isDef?getDefPlayers(card):getOffPlayers(card);
+
+    // Play Designer uses separate position stores (pdOpos/pdDpos) in screen space
+    var posStore,playerPool;
+    if(appMode==='playdesign'){
+      posStore=dragInfo.isDef?'pdDpos':'pdOpos';
+      playerPool=dragInfo.isDef?getPDDefPlayers(card):getPDOffPlayers(card);
+    } else {
+      posStore=dragInfo.isDef?'dpos':'opos';
+      playerPool=dragInfo.isDef?getDefPlayers(card):getOffPlayers(card);
+    }
     if(!card[posStore])card[posStore]={};
     var oldPos=card[posStore][dragInfo.key]||playerPool[dragInfo.key]||{x:nx,y:ny};
     var dx2=nx-oldPos.x,dy2=ny-oldPos.y;
 
-    // Sync waypoints with player position delta (offensive only)
-    if(!dragInfo.isDef&&card.routePts&&card.routePts[dragInfo.key]){
+    // Sync waypoints with player position delta
+    var syncWaypoints=(!dragInfo.isDef)||(dragInfo.isDef&&appMode==='playdesign');
+    if(syncWaypoints&&card.routePts&&card.routePts[dragInfo.key]){
       if(dx2!==0||dy2!==0){
         for(var wi2=0;wi2<card.routePts[dragInfo.key].length;wi2++){
           card.routePts[dragInfo.key][wi2].x+=dx2;
@@ -2797,6 +3100,7 @@ function bindDrag(){
       }
     }
 
+    // Store directly in screen space (no transforms needed)
     card[posStore][dragInfo.key]={x:nx,y:ny};
 
     // Update SVG element positions directly for smooth drag
@@ -2986,6 +3290,20 @@ function smoothPath(pts){
   return d;
 }
 
+function commitStraightLine(){
+  if(!currentStraightLine||currentStraightLine.pts.length<2)  {currentStraightLine=null;return}
+  var card=cards[activeIdx];
+  pushUndo();
+  if(!card.lines)card.lines=[];
+  var newLine={pts:currentStraightLine.pts,color:currentStraightLine.color,width:currentStraightLine.width,style:currentStraightLine.style};
+  var anc=findNearestPlayer(card,currentStraightLine.pts[0].x,currentStraightLine.pts[0].y,18);
+  if(anc)newLine.anchor=anc.prefix+anc.key;
+  card.lines.push(newLine);
+  selLine=card.lines.length-1;
+  currentStraightLine=null;
+  var el=document.getElementById('straightLinePreview');if(el)el.remove();
+}
+
 function bindDraw(){
   // Draw bindings are handled in bindDrag now
 }
@@ -2993,7 +3311,8 @@ function bindDraw(){
 // Find nearest player to a point, returns {key, prefix, dist} or null
 function findNearestPlayer(card,px,py,maxDist){
   var best=null,bestD=maxDist||20;
-  var oP=getOffPlayers(card),dP=getDefPlayers(card);
+  var oP=appMode==='playdesign'?getPDOffPlayers(card):getOffPlayers(card);
+  var dP=appMode==='playdesign'?getPDDefPlayers(card):getDefPlayers(card);
   var check=function(players,prefix){
     var keys=Object.keys(players);
     for(var i=0;i<keys.length;i++){
@@ -3037,17 +3356,48 @@ function upSB(){
 }
 
 // ===== EXPORT FUNCTIONS =====
-function buildFullSVG(card){
-  var oPlayers = getOffPlayers(card);
-  var dPlayers = getDefPlayers(card);
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+FH+'" width="'+FW*2+'" height="'+FH*2+'">';
+function buildFullSVG(card,forPlayDesign){
+  var isPD=forPlayDesign||false;
+  var prevMode=appMode;
+  if(isPD)appMode='playdesign'; else appMode='scout';
+  var totalH=isPD?FH+180:FH;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+totalH+'" width="'+FW*2+'" height="'+totalH*2+'">';
   svg += buildField();
   svg += buildDrawnLines(card.lines||[]);
-  svg += buildPlayers(dPlayers,{},null,'d_',true,card.cl);
-  svg += buildPlayers(oPlayers,card.asgn,null,'o_',false,card.cl,card.routePts);
+  if(isPD){
+    var fOff=getPDOffPlayers(card);
+    var fDef=getPDDefPlayers(card);
+    svg += buildPlayers(fOff,{},null,'o_',false,card.cl,null,false);
+    svg += buildPlayers(fDef,card.asgn,null,'d_',true,card.cl,card.routePts,true,true,card.pn);
+  } else {
+    var oPlayers = getOffPlayers(card);
+    var dPlayers = getDefPlayers(card);
+    svg += buildPlayers(dPlayers,{},null,'d_',true,card.cl);
+    svg += buildPlayers(oPlayers,card.asgn,null,'o_',false,card.cl,card.routePts);
+  }
   svg += buildTextLabels(card);
   svg += buildTextBoxes(card);
+  // Play Designer notes in export
+  if(isPD){
+    var ny=FH+10;
+    svg += '<rect x="0" y="'+FH+'" width="'+FW+'" height="180" fill="#fff"/>';
+    svg += '<line x1="'+FW/2+'" y1="'+ny+'" x2="'+FW/2+'" y2="'+(FH+175)+'" stroke="#ccc" stroke-width="1"/>';
+    svg += '<rect x="10" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
+    svg += '<text x="'+(FW/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">FRONTS: ADJUSTMENTS / STUNTS</text>';
+    svg += '<rect x="'+(FW/2+10)+'" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
+    svg += '<text x="'+(FW*3/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">COVERAGE DETAILS</text>';
+    // Render note text
+    var fnLines=(card.frontNotes||'').split('\n');
+    for(var fi=0;fi<fnLines.length&&fi<10;fi++){
+      svg += '<text x="15" y="'+(ny+38+fi*14)+'" font-size="10" font-family="Arial,sans-serif">'+esc(fnLines[fi])+'</text>';
+    }
+    var cnLines=(card.coverageNotes||'').split('\n');
+    for(var ci=0;ci<cnLines.length&&ci<10;ci++){
+      svg += '<text x="'+(FW/2+15)+'" y="'+(ny+38+ci*14)+'" font-size="10" font-family="Arial,sans-serif">'+esc(cnLines[ci])+'</text>';
+    }
+  }
   svg += '</svg>';
+  appMode=prevMode;
   return svg;
 }
 
@@ -3078,8 +3428,10 @@ function svgToCanvas(svgStr, w, h){
 async function exportPNG(){
   // Export current card as PNG
   var card = cards[activeIdx];
-  var svgStr = buildFullSVG(card);
-  var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
+  var isPD=appMode==='playdesign';
+  var svgStr = buildFullSVG(card,isPD);
+  var eh=isPD?FH+180:FH;
+  var canvas = await svgToCanvas(svgStr, FW*2, eh*2);
   if(!canvas){alert('Export failed');return}
   var link = document.createElement('a');
   link.download = (card.play||'card_'+(activeIdx+1)).replace(/[^a-zA-Z0-9]/g,'_')+'.png';
@@ -3088,12 +3440,11 @@ async function exportPNG(){
 }
 
 async function exportPDF(){
-  // Export ALL cards as a multi-page PDF using jsPDF-like canvas approach
-  // We'll build a simple PDF from scratch using canvas images
-  var pw = FW*2, ph = FH*2;
+  var isPD=appMode==='playdesign';
+  var pw = FW*2, ph = (isPD?FH+180:FH)*2;
   var canvases = [];
   for(var ci=0;ci<cards.length;ci++){
-    var svgStr = buildFullSVG(cards[ci]);
+    var svgStr = buildFullSVG(cards[ci],isPD);
     var canvas = await svgToCanvas(svgStr, pw, ph);
     if(canvas) canvases.push({canvas:canvas, card:cards[ci], idx:ci});
   }
@@ -3216,10 +3567,12 @@ async function exportPrintView(){
   html += '</style></head><body>';
   html += '<div class="instructions">Press <b>Ctrl+P</b> (or Cmd+P) to print or save as PDF. Each card will be on its own page.</div>';
 
+  var isPD=appMode==='playdesign';
+  var eh=isPD?FH+180:FH;
   for(var ci=0;ci<cards.length;ci++){
     var card = cards[ci];
-    var svgStr = buildFullSVG(card);
-    var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
+    var svgStr = buildFullSVG(card,isPD);
+    var canvas = await svgToCanvas(svgStr, FW*2, eh*2);
     if(!canvas) continue;
     var dataUrl = canvas.toDataURL('image/png');
     html += '<div class="card">';
@@ -3346,18 +3699,33 @@ function shareToPlayers(){
     btn.disabled=true;btn.textContent='GENERATING...';
     status.textContent='Building card images...';
     try{
-      games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
+      if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+      else{games[activeGameIdx].cards=cards}
+      games[activeGameIdx].name=gameTitle;
+      // Build scout card images
+      var scoutCards=appMode==='playdesign'?games[activeGameIdx].cards:cards;
       var shareCards=[];
-      for(var i=0;i<cards.length;i++){
-        var c=cards[i];
+      for(var i=0;i<scoutCards.length;i++){
+        var c=scoutCards[i];
         if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
-        var svgStr=buildFullSVG(c);
+        var svgStr=buildFullSVG(c,false);
         var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
         var img=canvas?canvas.toDataURL('image/png'):'';
         shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
-        status.textContent='Building card images... '+(i+1)+'/'+cards.length;
+        status.textContent='Building scout cards... '+(i+1)+'/'+scoutCards.length;
       }
-      if(shareCards.length===0){alert('No cards to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
+      // Build play design images
+      var pdCards=appMode==='playdesign'?cards:(games[activeGameIdx].playDesigns||[]);
+      var sharePlayDesigns=[];
+      for(var pdi=0;pdi<pdCards.length;pdi++){
+        var pc=pdCards[pdi];
+        var pdSvg=buildFullSVG(pc,true);
+        var pdCanvas=await svgToCanvas(pdSvg,FW*2,(FH+180)*2);
+        var pdImg=pdCanvas?pdCanvas.toDataURL('image/png'):'';
+        sharePlayDesigns.push({play:pc.play||'Unnamed',dd:pc.dd||'',img:pdImg,frontNotes:pc.frontNotes||'',coverageNotes:pc.coverageNotes||''});
+        status.textContent='Building play designs... '+(pdi+1)+'/'+pdCards.length;
+      }
+      if(shareCards.length===0&&sharePlayDesigns.length===0){alert('No cards to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
 
       // Include persistent playbooks
       var playbookMeta=[];
@@ -3371,7 +3739,7 @@ function shareToPlayers(){
       for(var ri=0;ri<srList.length;ri++){
         reportsMeta.push({name:srList[ri].name,path:srList[ri].path,thumb:srList[ri].thumb||''});
       }
-      var payload={game:gameTitle,cards:shareCards,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta,reports:reportsMeta};
+      var payload={game:gameTitle,cards:shareCards,playDesigns:sharePlayDesigns,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta,reports:reportsMeta};
 
       status.textContent='Saving to cloud...';
       var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
@@ -3404,10 +3772,12 @@ function renderShareViewer(data){
   var playbooks=data.playbooks||[];
   var glossary=data.glossary||null;
   var reports=data.reports||[];
+  var playDesigns=data.playDesigns||[];
   var hasPb=playbooks.length>0;
   var hasGlossary=!!glossary;
   var hasReports=reports.length>0;
-  var hasTabs=hasPb||hasGlossary||hasReports;
+  var hasPD=playDesigns.length>0;
+  var hasTabs=hasPb||hasGlossary||hasReports||hasPD;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Juice Box Football';
   // Ensure viewport meta exists for mobile
@@ -3539,6 +3909,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
     html+='<div class="sv-tabs">';
     if(hasReports){html+='<button class="sv-tab active" data-tab="reports">Scouting Report</button>';}
     html+='<button class="sv-tab'+(hasReports?'':' active')+'" data-tab="cards">Scout Cards</button>';
+    if(hasPD){html+='<button class="sv-tab" data-tab="playdesigns">Play Designs</button>';}
     if(hasPb){html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';}
     if(hasGlossary){html+='<button class="sv-tab" data-tab="glossary">Glossary</button>';}
     html+='</div>';
@@ -3585,6 +3956,23 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   }
   html+='</div>';
   html+='</div>';
+
+  // === PLAY DESIGNS SECTION ===
+  if(hasPD){
+    html+='<div class="sv-section" id="svPlayDesignsSection">';
+    html+='<div class="sv-grid">';
+    for(var pdi=0;pdi<playDesigns.length;pdi++){
+      var pd=playDesigns[pdi];
+      html+='<div class="sv-card" data-pdidx="'+pdi+'">';
+      if(pd.img){html+='<img src="'+pd.img+'"/>';}
+      html+='<div class="sv-info">';
+      html+='<div class="sv-play">'+(pd.play||'Unnamed')+'</div>';
+      if(pd.dd){html+='<div class="sv-dd">'+esc(pd.dd)+'</div>';}
+      html+='</div></div>';
+    }
+    html+='</div>';
+    html+='</div>';
+  }
 
   // === PLAYBOOK SECTION ===
   if(hasPb){
@@ -3650,6 +4038,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
     var pbSection=document.getElementById('svPlaybookSection');
     var glossarySection=document.getElementById('svGlossarySection');
     var reportsSection=document.getElementById('svReportsSection');
+    var pdSection=document.getElementById('svPlayDesignsSection');
     for(var tbi=0;tbi<tabs.length;tbi++){
       (function(tab){
         tab.addEventListener('click',function(){
@@ -3660,6 +4049,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
           if(pbSection)pbSection.classList.toggle('active',which==='playbook');
           if(glossarySection)glossarySection.classList.toggle('active',which==='glossary');
           if(reportsSection)reportsSection.classList.toggle('active',which==='reports');
+          if(pdSection)pdSection.classList.toggle('active',which==='playdesigns');
         });
       })(tabs[tbi]);
     }
@@ -3690,7 +4080,16 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
 
   var cardEls=document.querySelectorAll('.sv-card');
   for(var ci=0;ci<cardEls.length;ci++){
-    (function(el){el.addEventListener('click',function(){openLightbox(parseInt(el.getAttribute('data-idx')))})})(cardEls[ci]);
+    (function(el){el.addEventListener('click',function(){
+      var idx=el.getAttribute('data-idx');
+      var pdIdx=el.getAttribute('data-pdidx');
+      if(idx!==null){openLightbox(parseInt(idx))}
+      else if(pdIdx!==null){
+        var pd=playDesigns[parseInt(pdIdx)];if(!pd)return;
+        lbImg.src=pd.img||'';lbPlay.textContent=pd.play||'Unnamed';lbDd.textContent=pd.dd||'';
+        lbTags.innerHTML='';lbFilm.innerHTML='';overlay.classList.add('open');
+      }
+    })})(cardEls[ci]);
   }
   overlay.addEventListener('click',function(e){if(e.target===overlay)closeLightbox()});
   svClose.addEventListener('click',closeLightbox);
@@ -3754,8 +4153,11 @@ document.addEventListener('keydown',function(e){
 
   // Escape: exit draw/eraser mode or deselect
   if(e.key==='Escape'){
-    if(drawMode||eraserMode||textMode||shapeMode){
-      drawMode=false;eraserMode=false;textMode=false;shapeMode=false;currentLine=null;currentShape=null;
+    if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=2){
+      commitStraightLine();lineMode=false;render();e.preventDefault();return;
+    }
+    if(drawMode||eraserMode||textMode||shapeMode||lineMode){
+      drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;currentLine=null;currentShape=null;currentStraightLine=null;
       render();e.preventDefault();return;
     }
     if(selLine!==null||selTextBox!==null||selPlayer||selLabel){
