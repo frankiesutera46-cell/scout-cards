@@ -81,7 +81,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .eb{display:flex;flex:1;min-height:0}
 .field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
 .field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15)}
-.field-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.field-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.field-col .field-wrap{flex:1;min-height:0}
+.field-col .field-wrap svg{max-height:calc(100vh - 340px)}
 .inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
 .pd-notes{display:flex;gap:12px;padding:0 12px 8px;background:#EEEEEC;flex-shrink:0}
 .pd-notes-col{flex:1}
