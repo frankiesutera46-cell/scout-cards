@@ -1708,6 +1708,7 @@ function render(){
   h+='<aside class="sidebar"><div class="btns">';
   h+='<button class="btn btn-add" id="btnA">+ New</button>';
   h+='<button class="btn btn-sec" id="btnD" title="Duplicate">&#x29C9;</button>';
+  h+='<button class="btn btn-sec" id="btnDF" title="Duplicate &amp; Flip">&#x29C9; &#x21C4;</button>';
   h+='<button class="script-toggle'+(scriptMode?' on':'')+'" id="btnScript">&#x1F4CB; Script</button>';
   h+='</div>';
 
@@ -2543,6 +2544,23 @@ function bind(){
     if(src.routePts&&Object.keys(src.routePts).length)d.routePts=JSON.parse(JSON.stringify(src.routePts));
     if(src.textBoxes&&src.textBoxes.length)d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));
     if(src.tags&&src.tags.length)d.tags=src.tags.slice();
+    cards.splice(activeIdx+1,0,d);activeIdx++;render();
+  });
+  var btnDF=document.getElementById('btnDF');
+  if(btnDF)btnDF.addEventListener('click',function(){
+    var src=cards[activeIdx];var d=mkCard();
+    d.fk=src.fk;d.dfk=src.dfk;d.play=src.play+' (flip)';d.hash=src.hash;d.dd=src.dd;d.notes=src.notes;
+    d.mir=!src.mir; // toggle mirror
+    d.asgn=JSON.parse(JSON.stringify(src.asgn));d.pn=JSON.parse(JSON.stringify(src.pn));
+    // Mirror custom positions around CX
+    if(src.opos){d.opos={};var oks=Object.keys(src.opos);for(var i=0;i<oks.length;i++){d.opos[oks[i]]={x:CX+(CX-src.opos[oks[i]].x),y:src.opos[oks[i]].y}}}
+    if(src.dpos){d.dpos={};var dks=Object.keys(src.dpos);for(var i=0;i<dks.length;i++){d.dpos[dks[i]]={x:CX+(CX-src.dpos[dks[i]].x),y:src.dpos[dks[i]].y}}}
+    if(src.lines&&src.lines.length){d.lines=JSON.parse(JSON.stringify(src.lines));for(var li=0;li<d.lines.length;li++){var pts=d.lines[li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}}
+    if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
+    if(src.routePts&&Object.keys(src.routePts).length){d.routePts=JSON.parse(JSON.stringify(src.routePts));var rks=Object.keys(d.routePts);for(var ri=0;ri<rks.length;ri++){var rp=d.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x=CX+(CX-rp[rpi].x)}}}}
+    if(src.textBoxes&&src.textBoxes.length){d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));for(var ti=0;ti<d.textBoxes.length;ti++){d.textBoxes[ti].x=CX+(CX-d.textBoxes[ti].x)}}
+    if(src.tags&&src.tags.length)d.tags=src.tags.slice();
+    if(src.lpos){d.lpos=JSON.parse(JSON.stringify(src.lpos));var lks=Object.keys(d.lpos);for(var lki=0;lki<lks.length;lki++){d.lpos[lks[lki]].x=CX+(CX-d.lpos[lks[lki]].x)}}
     cards.splice(activeIdx+1,0,d);activeIdx++;render();
   });
 
