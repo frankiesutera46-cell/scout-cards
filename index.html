@@ -2549,17 +2549,29 @@ function bind(){
   var btnDF=document.getElementById('btnDF');
   if(btnDF)btnDF.addEventListener('click',function(){
     var src=cards[activeIdx];var d=mkCard();
-    d.fk=src.fk;d.dfk=src.dfk;d.play=src.play+' (flip)';d.hash=src.hash;d.dd=src.dd;d.notes=src.notes;
+    d.fk=src.fk;d.dfk=src.dfk;d.play=src.play;d.dd=src.dd;d.notes=src.notes;
     d.mir=!src.mir; // toggle mirror
+    // Flip hash: L↔R, LM↔RM, M stays
+    var hashFlip={'L':'R','R':'L','LM':'RM','RM':'LM','M':'M'};
+    d.hash=hashFlip[src.hash]||src.hash;
     d.asgn=JSON.parse(JSON.stringify(src.asgn));d.pn=JSON.parse(JSON.stringify(src.pn));
-    // Mirror custom positions around CX
-    if(src.opos){d.opos={};var oks=Object.keys(src.opos);for(var i=0;i<oks.length;i++){d.opos[oks[i]]={x:CX+(CX-src.opos[oks[i]].x),y:src.opos[oks[i]].y}}}
-    if(src.dpos){d.dpos={};var dks=Object.keys(src.dpos);for(var i=0;i<dks.length;i++){d.dpos[dks[i]]={x:CX+(CX-src.dpos[dks[i]].x),y:src.dpos[dks[i]].y}}}
+    // Get fully rendered positions (includes hash offset, presets, custom drags)
+    var renderedOff=getOffPlayers(src);
+    var renderedDef=getDefPlayers(src);
+    // Mirror all rendered positions around CX and store as custom positions
+    d.opos={};var oks=Object.keys(renderedOff);
+    for(var i=0;i<oks.length;i++){d.opos[oks[i]]={x:CX+(CX-renderedOff[oks[i]].x),y:renderedOff[oks[i]].y}}
+    d.dpos={};var dks2=Object.keys(renderedDef);
+    for(var i=0;i<dks2.length;i++){d.dpos[dks2[i]]={x:CX+(CX-renderedDef[dks2[i]].x),y:renderedDef[dks2[i]].y}}
+    // Mirror drawings
     if(src.lines&&src.lines.length){d.lines=JSON.parse(JSON.stringify(src.lines));for(var li=0;li<d.lines.length;li++){var pts=d.lines[li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}}
     if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
+    // Mirror route waypoints
     if(src.routePts&&Object.keys(src.routePts).length){d.routePts=JSON.parse(JSON.stringify(src.routePts));var rks=Object.keys(d.routePts);for(var ri=0;ri<rks.length;ri++){var rp=d.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x=CX+(CX-rp[rpi].x)}}}}
+    // Mirror text boxes
     if(src.textBoxes&&src.textBoxes.length){d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));for(var ti=0;ti<d.textBoxes.length;ti++){d.textBoxes[ti].x=CX+(CX-d.textBoxes[ti].x)}}
     if(src.tags&&src.tags.length)d.tags=src.tags.slice();
+    // Mirror label positions
     if(src.lpos){d.lpos=JSON.parse(JSON.stringify(src.lpos));var lks=Object.keys(d.lpos);for(var lki=0;lki<lks.length;lki++){d.lpos[lks[lki]].x=CX+(CX-d.lpos[lks[lki]].x)}}
     cards.splice(activeIdx+1,0,d);activeIdx++;render();
   });
