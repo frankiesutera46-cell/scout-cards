@@ -1601,32 +1601,53 @@ function render(){
   var ps='font-family:\'Space Grotesk\',sans-serif;font-size:13px;color:#3A3A38;line-height:1.6;margin-bottom:6px';
   var ts='font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.5);letter-spacing:.04em;margin-bottom:10px';
 
-  h+='<div style="'+ps+'">Juice Box Football is a scout card generator built for defensive coordinators. Watch film, identify opponent tendencies, then build visual play cards for the scout team to rep in practice.</div>';
+  h+='<div style="'+ps+'">Juice Box Football is a scout card and play design tool built for football coaches. Scout opposing offenses for defensive game prep, then design your own plays in the Play Designer.</div>';
 
   h+='<div style="'+hs+'">Getting Started</div>';
-  h+='<div style="'+ps+'"><b>1.</b> Name your game week using the text field in the top bar (e.g. "Week 5 vs Lone Peak").</div>';
+  h+='<div style="'+ps+'"><b>1.</b> Name your game week in the top bar (e.g. "Week 5 vs Lone Peak").</div>';
   h+='<div style="'+ps+'"><b>2.</b> Click <b>+ New</b> in the sidebar to create your first card.</div>';
-  h+='<div style="'+ps+'"><b>3.</b> Select a formation from the dropdown (Doubles, Trips, Bunch, etc.).</div>';
-  h+='<div style="'+ps+'"><b>4.</b> Set the hash, down &amp; distance, and play name in the control panel.</div>';
+  h+='<div style="'+ps+'"><b>3.</b> Select a formation and defensive front from the dropdowns.</div>';
+  h+='<div style="'+ps+'"><b>4.</b> Set hash, down &amp; distance, and play name.</div>';
 
-  h+='<div style="'+hs+'">Building a Play Card</div>';
-  h+='<div style="'+ps+'"><b>Assign Routes</b> &mdash; Click any offensive player on the field, then pick a route from the route menu. Routes are grouped by Outside, Inside, Short/Slot, Run, Block, and Motion.</div>';
-  h+='<div style="'+ps+'"><b>Move Players</b> &mdash; Drag any player (offense or defense) to reposition them on the field. Custom positions are saved per card.</div>';
-  h+='<div style="'+ps+'"><b>Player Notes</b> &mdash; Select a player, then type in the Player Note field. Notes appear as text on the field and can be dragged to reposition.</div>';
-  h+='<div style="'+ps+'"><b>Jersey Numbers</b> &mdash; Select a player and enter a number in the Label field to show custom jersey numbers.</div>';
+  h+='<div style="'+hs+'">Scout Cards</div>';
+  h+='<div style="'+ps+'"><b>Assign Routes</b> &mdash; Click any offensive player, then pick a route from the route menu (Outside, Inside, Short/Slot, Run, Block, Motion).</div>';
+  h+='<div style="'+ps+'"><b>Move Players</b> &mdash; Drag any player to reposition. Custom positions are saved per card.</div>';
+  h+='<div style="'+ps+'"><b>Player Notes</b> &mdash; Select a player and type in the Player Note field. Notes appear on the field and can be dragged.</div>';
+  h+='<div style="'+ps+'"><b>Jersey Numbers</b> &mdash; Select a player and enter a number in the Label field.</div>';
+  h+='<div style="'+ps+'"><b>Player Colors</b> &mdash; Select an offensive player and use the color picker to change the circle color (white, green, red, yellow, blue, purple). For defenders, change the letter color.</div>';
+  h+='<div style="'+ps+'"><b>Tags</b> &mdash; Tag each card as Run, Pass, Screen, RPO, Play Action, Boot, Gadget, or Special Teams. Use the filter buttons above the sidebar to show only matching cards.</div>';
+
+  h+='<div style="'+hs+'">DEF / OFF Perspectives</div>';
+  h+='<div style="'+ps+'">Use the <b>DEF</b> and <b>OFF</b> toggle in the toolbar to switch field orientation.</div>';
+  h+='<div style="'+ps+'"><b>DEF view</b> (default) &mdash; Defense on top, offense on bottom. Standard scout card layout.</div>';
+  h+='<div style="'+ps+'"><b>OFF view</b> &mdash; Offense on top, defense on bottom. The card title shows the defensive front name. Field uses 40-50-40-30 yard numbering with the LOS shifted up.</div>';
+  h+='<div style="'+ps+'">Drawings and player positions are saved separately for each perspective, so switching views won\'t carry over lines or moved players.</div>';
+
+  h+='<div style="'+hs+'">Play Designer</div>';
+  h+='<div style="'+ps+'">Click <b>Play Designer</b> in the toolbar to switch modes. Play Designer is for drawing up your own defensive plays.</div>';
+  h+='<div style="'+ps+'"><b>DEF view</b> &mdash; Offense at top (no routes), your defense at bottom. Click a defensive player to assign a route &mdash; routes draw downward.</div>';
+  h+='<div style="'+ps+'"><b>OFF view</b> &mdash; Defense at top, offense at bottom with routes going up.</div>';
+  h+='<div style="'+ps+'"><b>Notes Section</b> &mdash; Below the field are two editable columns: Fronts/Adjustments and Coverage Details. Click the titles to rename them. These notes export with the PDF.</div>';
+  h+='<div style="'+ps+'">Play Designer cards are saved separately from scout cards and are included in share links as a separate tab.</div>';
+
+  h+='<div style="'+hs+'">Formation &amp; Defense Presets</div>';
+  h+='<div style="'+ps+'"><b>Save Presets</b> &mdash; In the right panel, use the Offensive Formation Presets or Defensive Front Presets sections. Name your preset and click Save. The current player positions are captured.</div>';
+  h+='<div style="'+ps+'"><b>Use Presets</b> &mdash; Saved presets appear in the formation and defense dropdowns below a separator line. Select one and it loads the saved positions. The preset name carries over to the card title.</div>';
 
   h+='<div style="'+hs+'">Drawing Tools</div>';
-  h+='<div style="'+ps+'"><b>Pen</b> &mdash; Freehand draw on the field. Choose color, line width, and style (solid, dashed, or arrow).</div>';
+  h+='<div style="'+ps+'"><b>Pen</b> &mdash; Freehand draw. Choose color, width, and style (solid, dashed, arrow, curved, block, dot).</div>';
   h+='<div style="'+ps+'"><b>Eraser</b> &mdash; Click any drawn line to delete it.</div>';
-  h+='<div style="'+ps+'"><b>Text</b> &mdash; Click the Text tool, then click the field to place a text box. Double-click to edit.</div>';
-  h+='<div style="'+ps+'"><b>Shapes</b> &mdash; Draw rectangles or ellipses on the field to highlight zones or areas.</div>';
-  h+='<div style="'+ps+'"><b>Undo</b> &mdash; Press <kbd style="background:#e8e6e1;padding:1px 5px;border-radius:2px;font-size:11px;border:1px solid #ccc">Ctrl/Cmd + Z</kbd> to undo the last action.</div>';
+  h+='<div style="'+ps+'"><b>Text</b> &mdash; Click the field to place a text box. Double-click to edit.</div>';
+  h+='<div style="'+ps+'"><b>Shapes</b> &mdash; Circle and Rect tools for highlighting zones.</div>';
+  h+='<div style="'+ps+'"><b>Straight Line</b> &mdash; Click and drag for precise straight lines.</div>';
+  h+='<div style="'+ps+'"><b>Quick Draw</b> &mdash; Rush, Cov, Stunt, and Zone buttons for common defensive drawing patterns.</div>';
+  h+='<div style="'+ps+'">Drawings render on top of player circles. Use Undo or Clear All to manage.</div>';
 
   h+='<div style="'+hs+'">Managing Cards</div>';
-  h+='<div style="'+ps+'"><b>Sidebar</b> &mdash; All your cards are listed in the left sidebar. Click to switch. Drag to reorder.</div>';
-  h+='<div style="'+ps+'"><b>Duplicate</b> &mdash; Click the <b>&#x29C9;</b> button to copy the current card.</div>';
-  h+='<div style="'+ps+'"><b>Mirror</b> &mdash; The mirror toggle flips the entire formation to the opposite side.</div>';
-  h+='<div style="'+ps+'"><b>Multiple Weeks</b> &mdash; Use the dropdown in the top bar to switch between game weeks. Click <b>+</b> to add a new week.</div>';
+  h+='<div style="'+ps+'"><b>Sidebar</b> &mdash; All cards listed on the left. Click to switch, drag to reorder.</div>';
+  h+='<div style="'+ps+'"><b>Duplicate</b> &mdash; Click <b>&#x29C9;</b> to copy the current card.</div>';
+  h+='<div style="'+ps+'"><b>Mirror</b> &mdash; Flip toggle mirrors the entire formation.</div>';
+  h+='<div style="'+ps+'"><b>Multiple Weeks</b> &mdash; Use the week dropdown to switch weeks. Click <b>+</b> to add a new week.</div>';
 
   h+='<div style="'+hs+'">Keyboard Shortcuts</div>';
   h+='<div style="'+ts+'"><kbd style="background:#e8e6e1;padding:1px 5px;border-radius:2px;border:1px solid #ccc">Ctrl/Cmd + Z</kbd> &nbsp; Undo</div>';
@@ -1636,19 +1657,18 @@ function render(){
   h+='<div style="'+ts+'"><kbd style="background:#e8e6e1;padding:1px 5px;border-radius:2px;border:1px solid #ccc">Escape</kbd> &nbsp; Exit draw mode / deselect</div>';
 
   h+='<div style="'+hs+'">Exporting &amp; Sharing</div>';
-  h+='<div style="'+ps+'"><b>PDF</b> &mdash; Opens a print-friendly view of all cards. Use Ctrl+P to print or save as PDF.</div>';
+  h+='<div style="'+ps+'"><b>PDF</b> &mdash; Opens a print view with a Save PDF button. Scout cards export in landscape (one per page, fills the full 8.5x11 sheet). Play Designer cards export in portrait with the notes section below the field.</div>';
   h+='<div style="'+ps+'"><b>PNG</b> &mdash; Exports the current card as a high-res image.</div>';
   h+='<div style="'+ps+'"><b>Grid</b> &mdash; Print multiple cards per page (2-up, 4-up, or 6-up).</div>';
-  h+='<div style="'+ps+'"><b>Share</b> &mdash; Creates a shareable link for your players at juiceboxfootball.cc. They can view scout cards, tap to enlarge, and access any playbook PDFs you\'ve uploaded.</div>';
+  h+='<div style="'+ps+'"><b>Share</b> &mdash; Creates a shareable link at juiceboxfootball.cc. Players can view scout cards, play designs, tap to enlarge, and access uploaded playbook PDFs.</div>';
 
-  h+='<div style="'+hs+'">Team Branding</div>';
-  h+='<div style="'+ps+'">Click <b>Team</b> to set your team name, logo URL, and primary color. This branding appears on shared player pages.</div>';
-
-  h+='<div style="'+hs+'">Playbooks</div>';
-  h+='<div style="'+ps+'">Click <b>Playbooks</b> to upload PDF playbook files. These persist across weeks and are automatically included when you share with players. Players see them as a separate Playbook tab on the share page.</div>';
+  h+='<div style="'+hs+'">Team, Playbooks &amp; Reports</div>';
+  h+='<div style="'+ps+'"><b>Team</b> &mdash; Set your team name, logo URL, and primary color. Branding appears on shared player pages.</div>';
+  h+='<div style="'+ps+'"><b>Playbooks</b> &mdash; Upload PDF playbook files. These persist across weeks and are included in share links. Upload a glossary PDF for terminology reference.</div>';
+  h+='<div style="'+ps+'"><b>Reports</b> &mdash; Upload scouting report PDFs for each game week. These are week-specific and included when sharing.</div>';
 
   h+='<div style="'+hs+'">Practice Scripts</div>';
-  h+='<div style="'+ps+'">Click the <b>Script</b> button in the sidebar to enter script mode. Drag cards into a practice script order, assign periods (Indy, Team, 7on7, etc.), then export as a printable numbered list.</div>';
+  h+='<div style="'+ps+'">Click <b>Script</b> in the sidebar to enter script mode. Drag cards into a practice order, assign periods (Indy, Team, 7on7, etc.), then export as a printable numbered list.</div>';
 
   h+='<div style="margin-top:24px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.3);letter-spacing:.1em;text-transform:uppercase">Juice Box Football &mdash; juiceboxfootball.cc</div>';
   h+='</div></div>';
