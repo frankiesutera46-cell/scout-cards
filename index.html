@@ -960,11 +960,11 @@ function buildField(){
   s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
   s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
-  // LOS - bold black (scout mode) or subtle line at PD_LOS_Y (play designer)
+  // LOS - dashed line in both modes
   if(appMode==='playdesign'){
     s+='<line x1="'+SL+'" y1="'+PD_LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+PD_LOS_Y.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
   } else {
-    s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#222" stroke-width="2.5"/>';
+    s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
   }
 
   s+='</g>'; // end fieldClip
