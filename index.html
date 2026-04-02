@@ -24,18 +24,21 @@
 body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
 
 /* ---- TOP BAR ---- */
-.topbar{background:#1A3C2B;border-bottom:1px solid rgba(58,58,56,.2);padding:0 24px;display:flex;align-items:center;gap:16px;height:52px}
+.topbar{background:#1A3C2B;display:flex;flex-direction:column}
+.topbar-row1{display:flex;align-items:center;gap:14px;padding:0 20px;height:44px;border-bottom:1px solid rgba(247,247,245,.08)}
+.topbar-row2{display:flex;align-items:center;gap:6px;padding:0 20px;height:36px;background:rgba(0,0,0,.15)}
 .topbar .brand{display:flex;align-items:center;gap:10px}
-.topbar .brand .logo-mark{width:28px;height:40px;display:flex;align-items:center;justify-content:center}
-.topbar .brand .logo-mark svg{width:28px;height:40px}
-.topbar .brand span{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:20px;letter-spacing:0.08em;text-transform:uppercase;color:#F7F7F5}
-.topbar .brand .sub{font-family:'Oswald',sans-serif;font-size:8px;color:#B8A88A;letter-spacing:0.3em;font-weight:600;text-transform:uppercase}
-.topbar input{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:6px 12px;border-radius:2px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:border .15s}
+.topbar .brand .logo-mark{width:24px;height:34px;display:flex;align-items:center;justify-content:center}
+.topbar .brand .logo-mark svg{width:24px;height:34px}
+.topbar .brand span{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:18px;letter-spacing:0.08em;text-transform:uppercase;color:#F7F7F5}
+.topbar .brand .sub{font-family:'Oswald',sans-serif;font-size:7px;color:#B8A88A;letter-spacing:0.3em;font-weight:600;text-transform:uppercase}
+.topbar input{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:5px 10px;border-radius:2px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:border .15s}
 .topbar input:focus{outline:none;border-color:rgba(247,247,245,.5)}
 .topbar input::placeholder{color:rgba(247,247,245,.35)}
-.topbar .game-input{flex:1;max-width:320px;margin-left:20px}
-.topbar .right{margin-left:auto;display:flex;align-items:center;gap:6px}
-.topbar .count{font-family:'JetBrains Mono',monospace;color:rgba(247,247,245,.5);font-size:10px;margin-right:10px;font-weight:400;letter-spacing:0.1em}
+.topbar .game-input{flex:1;max-width:280px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar .count{font-family:'JetBrains Mono',monospace;color:rgba(247,247,245,.5);font-size:10px;font-weight:400;letter-spacing:0.1em}
+.topbar-row2 .tb-sep{width:1px;height:18px;background:rgba(247,247,245,.15);margin:0 2px}
 
 /* ---- BUTTONS ---- */
 .btn{padding:6px 14px;border-radius:2px;border:1px solid rgba(58,58,56,.2);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;font-weight:500;transition:all .15s;letter-spacing:0.05em;text-transform:uppercase}
@@ -1445,7 +1448,9 @@ function render(){
   var h='';
 
   // Topbar
-  h+='<div class="topbar"><div class="brand">';
+  h+='<div class="topbar">';
+  // Row 1: Brand, week, title, user
+  h+='<div class="topbar-row1"><div class="brand">';
   h+='<div class="logo-mark"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#F5F0E8"/><rect x="25" y="46" width="24" height="130" fill="#E0D9CC"/><polygon points="22,46 112,46 107,56 27,56" fill="#D6CEBD"/><polygon points="27,56 65,46 107,56" fill="#F5F0E8" stroke="#D6CEBD" stroke-width="0.6"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>';
   h+='<div><span>Juice Box</span><div class="sub">Football</div></div></div>';
   h+='<select class="week-sel" id="weekSel">';
@@ -1456,26 +1461,36 @@ function render(){
   h+='<button class="week-btn" id="weekAdd" title="New Week">+</button>';
   h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
   h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
-  h+='<div class="right"><span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
-  h+='<button class="btn btn-sec" id="btnSv" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Save</button>';
-  h+='<button class="btn btn-sec" id="btnLd" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Load</button>';
-  h+='<button class="btn btn-pri" id="btnExportPDF">PDF</button>';
-  h+='<button class="btn btn-pri" id="btnExportPNG">PNG</button>';
-  h+='<select id="gridSel" class="sel">';
-  h+='<option value="">Grid</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
-  h+='</select>';
-  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6">Share</button>';
-  h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
-  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Team</button>';
-  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3)">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
-  h+='<div style="display:inline-flex;border:1px solid rgba(247,247,245,.3);border-radius:4px;overflow:hidden;margin-right:4px">';
-  h+='<button class="btn btn-sec" id="btnViewDef" style="border:none;border-radius:0;font-size:10px;padding:4px 10px;'+(viewPerspective==='def'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">DEF</button>';
-  h+='<button class="btn btn-sec" id="btnViewOff" style="border:none;border-radius:0;font-size:10px;padding:4px 10px;'+(viewPerspective==='off'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">OFF</button>';
-  h+='</div>';
-  h+='<button class="btn btn-sec" id="btnPlayDesign" style="color:'+(appMode==='playdesign'?'#1A3C2B;background:#C6A355;border-color:#C6A355':'#C6A355;border-color:rgba(198,163,85,.4)')+';font-weight:700">'+(appMode==='playdesign'?'Scout Cards':'Play Designer')+'</button>';
-  h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700">?</button>';
+  h+='<div class="right">';
   if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
+  // Row 2: Actions
+  h+='<div class="topbar-row2">';
+  h+='<span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
+  h+='<div class="tb-sep"></div>';
+  h+='<button class="btn btn-sec" id="btnSv" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Save</button>';
+  h+='<button class="btn btn-sec" id="btnLd" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Load</button>';
+  h+='<div class="tb-sep"></div>';
+  h+='<button class="btn btn-sec" id="btnExportPDF" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">PDF</button>';
+  h+='<button class="btn btn-sec" id="btnExportPNG" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">PNG</button>';
+  h+='<select id="gridSel" class="sel" style="padding:3px 6px;font-size:9px">';
+  h+='<option value="">Grid</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
+  h+='</select>';
+  h+='<div class="tb-sep"></div>';
+  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6;padding:3px 12px;font-size:9px">Share</button>';
+  h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
+  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Team</button>';
+  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<div style="margin-left:auto;display:flex;align-items:center;gap:6px">';
+  h+='<div style="display:inline-flex;border:1px solid rgba(247,247,245,.3);border-radius:3px;overflow:hidden">';
+  h+='<button class="btn btn-sec" id="btnViewDef" style="border:none;border-radius:0;font-size:9px;padding:3px 10px;'+(viewPerspective==='def'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">DEF</button>';
+  h+='<button class="btn btn-sec" id="btnViewOff" style="border:none;border-radius:0;font-size:9px;padding:3px 10px;'+(viewPerspective==='off'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">OFF</button>';
+  h+='</div>';
+  h+='<button class="btn btn-sec" id="btnPlayDesign" style="padding:3px 12px;font-size:9px;color:'+(appMode==='playdesign'?'#1A3C2B;background:#C6A355;border-color:#C6A355':'#C6A355;border-color:rgba(198,163,85,.4)')+';font-weight:700">'+(appMode==='playdesign'?'Scout Cards':'Play Designer')+'</button>';
+  h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700;padding:3px 8px;font-size:9px">?</button>';
+  h+='</div>';
+  h+='</div>';
+  h+='</div>';
 
   // Team Branding Modal
   h+='<div id="brandingModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
