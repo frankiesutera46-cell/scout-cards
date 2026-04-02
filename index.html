@@ -956,7 +956,9 @@ function buildField(){
     var yy = MARGIN_TOP + i * Y5;
     if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
     var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
-    if(isLOS) continue;
+    var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
+    if(appMode==='playdesign'){ if(i===pdLosIdx) continue; }
+    else { if(isLOS) continue; }
     s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
   }
 
