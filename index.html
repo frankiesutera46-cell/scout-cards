@@ -873,14 +873,14 @@ function getPDDefPlayers(card){
   return flipped;
 }
 
-// Offensive perspective: flip scout players around LOS_Y
+// Offensive perspective: flip scout players around PD_LOS_Y (LOS at 15 yards from top)
 function getScoutFlippedOff(card){
   var fm=FORMATIONS[card.fk];if(!fm)return{};
   var p=fm.p();if(card.mir)p=mirrorPlayers(p);
   var ho=getHashOffset(card);
   if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
   var out={};var ks=Object.keys(p);
-  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:2*LOS_Y-b.y,l:b.l,side:b.side}}
+  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:PD_LOS_Y-(b.y-LOS_Y),l:b.l,side:b.side}}
   if(card.oposOff){var cks=Object.keys(card.oposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.oposOff[cks[j]].x;out[cks[j]].y=card.oposOff[cks[j]].y}}}
   return out;
 }
@@ -890,7 +890,7 @@ function getScoutFlippedDef(card){
   var ho=getHashOffset(card);
   if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
   var out={};var ks=Object.keys(p);
-  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:2*LOS_Y-b.y,l:b.l,side:b.side}}
+  for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:PD_LOS_Y+(LOS_Y-b.y),l:b.l,side:b.side}}
   if(card.dposOff){var cks=Object.keys(card.dposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.dposOff[cks[j]].x;out[cks[j]].y=card.dposOff[cks[j]].y}}}
   return out;
 }
@@ -957,7 +957,8 @@ function buildField(){
     var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
     var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
     // Skip the yard line where the dashed LOS is drawn
-    var skipIdx=(appMode==='playdesign'&&viewPerspective==='def')?pdLosIdx:losIdx;
+    var usePdLos=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+    var skipIdx=usePdLos?pdLosIdx:losIdx;
     if(i===skipIdx) continue;
     s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
   }
@@ -983,8 +984,9 @@ function buildField(){
   }
 
   // Yard numbers
-  if(appMode==='playdesign'&&viewPerspective==='def'){
-    // Play Designer: 40, 50, 40, 30 from top to bottom (every 10 yards)
+  var usePdYardNums2=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+  if(usePdYardNums2){
+    // 40, 50, 40, 30 from top to bottom (every 10 yards)
     var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
     for(var ni=0;ni<pdNums.length;ni++){
       var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
@@ -1013,7 +1015,9 @@ function buildField(){
   s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
   // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
-  var losLineY=(appMode==='playdesign'&&viewPerspective==='def')?PD_LOS_Y:LOS_Y;
+  // PD defensive and scout offensive both use the higher LOS (PD_LOS_Y)
+  var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+  var losLineY=usePdLayout?PD_LOS_Y:LOS_Y;
   s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
 
   s+='</g>'; // end fieldClip
@@ -1096,10 +1100,16 @@ function buildTextLabels(card){
       s+='<text x="6" y="'+hdrY+'" text-anchor="start" fill="#222" font-size="'+fsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(playText)+'</text>';
     }
   } else {
-    // Scout mode: Formation + Hash + Play name (editable header override)
-    var fmName=(card._offPreset!=null&&offPresets[card._offPreset])?offPresets[card._offPreset].name:((FORMATIONS[card.fk]||{}).name||card.fk);
+    // Scout mode: Formation/Front + Hash + Play name (editable header override)
+    var headerName;
+    if(viewPerspective==='off'){
+      // Offensive perspective: show defensive front name
+      headerName=(card._defPreset!=null&&defPresets[card._defPreset])?defPresets[card._defPreset].name:((DEF_FRONTS[card.dfk]||{}).name||card.dfk);
+    } else {
+      headerName=(card._offPreset!=null&&offPresets[card._offPreset])?offPresets[card._offPreset].name:((FORMATIONS[card.fk]||{}).name||card.fk);
+    }
     var hashName=HASH_LABELS[card.hash]||card.hash;
-    var autoHeader=fmName+' — '+hashName;
+    var autoHeader=headerName+' — '+hashName;
     var fmhashText=card.headerText||autoHeader;
     var fsz=labelSz(card,'fmhash');
     var playText=card.play||'';
