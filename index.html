@@ -63,6 +63,8 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .ci .ci-del{position:absolute;top:4px;right:4px;background:none;border:none;color:rgba(58,58,56,.25);font-size:13px;cursor:pointer;padding:2px 5px;line-height:1;border-radius:2px;display:none;font-family:Arial,sans-serif}
 .ci:hover .ci-del{display:block}
 .ci .ci-del:hover{color:#ef4444;background:rgba(239,68,68,.08)}
+.ci.drag-over{border-top:2px solid #1A3C2B}
+.ci.dragging{opacity:.3}
 .ci:hover{background:rgba(26,60,43,.03);border-left-color:rgba(26,60,43,.15)}
 .ci.act{background:rgba(26,60,43,.05);color:#1A3C2B;border-left-color:#1A3C2B}
 .ci .cn{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:0.05em}
@@ -1749,7 +1751,7 @@ function render(){
       var cc=cards[ci];var cfm=FORMATIONS[cc.fk];
       // Filter by tag
       if(activeTagFilter && (!cc.tags || cc.tags.indexOf(activeTagFilter)<0)) continue;
-      h+='<button class="ci'+(ci===activeIdx?' act':'')+'" data-ci="'+ci+'">';
+      h+='<button class="ci'+(ci===activeIdx?' act':'')+'" data-ci="'+ci+'" draggable="true">';
       h+='<span class="ci-del" data-cdel="'+ci+'" title="Delete card">&#x2715;</span>';
       h+='<span class="cn">#'+(ci+1)+'</span> ';
       h+='<span class="card-name">'+(esc(cc.play)||'Unnamed')+'</span>';
@@ -2062,6 +2064,18 @@ function bind(){
         activeIdx=Math.min(activeIdx,cards.length-1);selPlayer=null;render();
       }
     }})(parseInt(ciDels[di].getAttribute('data-cdel'))));
+  }
+
+  // Card drag-to-reorder
+  var cardDragIdx=null;
+  for(var cdi=0;cdi<cis.length;cdi++){
+    (function(el,idx){
+      el.addEventListener('dragstart',function(e){cardDragIdx=idx;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',idx)});
+      el.addEventListener('dragend',function(){el.classList.remove('dragging');cardDragIdx=null;var all=document.querySelectorAll('.ci.drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over')});
+      el.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='move';var all=document.querySelectorAll('.ci.drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over');if(idx!==cardDragIdx)el.classList.add('drag-over')});
+      el.addEventListener('dragleave',function(){el.classList.remove('drag-over')});
+      el.addEventListener('drop',function(e){e.preventDefault();el.classList.remove('drag-over');if(cardDragIdx===null||cardDragIdx===idx)return;var moved=cards.splice(cardDragIdx,1)[0];cards.splice(idx,0,moved);if(activeIdx===cardDragIdx)activeIdx=idx;else if(cardDragIdx<activeIdx&&idx>=activeIdx)activeIdx--;else if(cardDragIdx>activeIdx&&idx<=activeIdx)activeIdx++;cardDragIdx=null;render()});
+    })(cis[cdi],parseInt(cis[cdi].getAttribute('data-ci')));
   }
 
   // SVG interactions
