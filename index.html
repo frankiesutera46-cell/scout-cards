@@ -1712,18 +1712,19 @@ function render(){
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
   h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField();
-  h+=buildDrawnLines(card.lines||[]);
   if(appMode==='playdesign'){
     var fOff=getPDOffPlayers(card);
     var fDef=getPDDefPlayers(card);
     h+=buildPlayers(fOff,{},selSide==='off'?selPlayer:null,'o_',false,card.cl,null,false);
     h+=buildPlayers(fDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true,card.pn);
+    h+=buildDrawnLines(card.lines||[]);
     h+=buildTextLabels(card);
     h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,fDef);
   } else {
     h+=buildPlayers(dPlayers,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
     h+=buildPlayers(oPlayers,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
+    h+=buildDrawnLines(card.lines||[]);
     h+=buildTextLabels(card);
     h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,oPlayers);
