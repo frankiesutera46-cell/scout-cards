@@ -380,7 +380,11 @@ function saveToCloud(){
 
 function autoSave(){
   if(autoSaveTimer)clearTimeout(autoSaveTimer);
-  autoSaveTimer=setTimeout(function(){games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;saveToCloud()},2000);
+  autoSaveTimer=setTimeout(function(){
+    if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+    else{games[activeGameIdx].cards=cards}
+    games[activeGameIdx].name=gameTitle;saveToCloud();
+  },2000);
 }
 
 function signOut(){
