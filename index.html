@@ -1697,18 +1697,13 @@ function render(){
     h+='<button class="tag-btn'+(tgOn?' tag-on':'')+'" data-tag="'+tg+'">'+tg+'</button>';
   }
   h+='</div>';
-  if(appMode==='playdesign'){
-    // Play Designer: formation dropdown from saved presets only
-    h+='<select id="fSel"><option value="">— Formation —</option>';
-    for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}
-    h+='</select>';
-  } else {
-    h+='<select id="fSel">';
-    var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
-    h+='</select>';
-  }
+  h+='<select id="fSel">';
+  var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]&&!card._offPreset?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
+  if(offPresets.length){h+='<option disabled>──────────</option>';for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}}
+  h+='</select>';
   h+='<select id="dfSel">';
-  var dks=Object.keys(DEF_FRONTS);for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
+  var dks=Object.keys(DEF_FRONTS);for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]&&!card._defPreset?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
+  if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi2=0;dpi2<defPresets.length;dpi2++){h+='<option value="defp_'+dpi2+'"'+(card._defPreset===dpi2?' selected':'')+'>'+esc(defPresets[dpi2].name)+'</option>'}}
   h+='</select>';
   h+='<button class="btn-del" id="bDel">&#x2715;</button>';
   h+='</div>';
@@ -1873,7 +1868,8 @@ function render(){
   // Defensive front selector
   h+='<div class="front-sel"><label>Defensive Front</label>';
   h+='<select id="dfSel2">';
-  for(var di2=0;di2<dks.length;di2++){h+='<option value="'+dks[di2]+'"'+(card.dfk===dks[di2]?' selected':'')+'>'+DEF_FRONTS[dks[di2]].name+'</option>'}
+  for(var di2=0;di2<dks.length;di2++){h+='<option value="'+dks[di2]+'"'+(card.dfk===dks[di2]&&!card._defPreset?' selected':'')+'>'+DEF_FRONTS[dks[di2]].name+'</option>'}
+  if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi3=0;dpi3<defPresets.length;dpi3++){h+='<option value="defp_'+dpi3+'"'+(card._defPreset===dpi3?' selected':'')+'>'+esc(defPresets[dpi3].name)+'</option>'}}
   h+='</select></div>';
 
   // === PRESET: Save/Load Offensive Formation ===
@@ -2312,25 +2308,60 @@ function bind(){
 
   var fSel=document.getElementById('fSel');
   if(fSel)fSel.addEventListener('change',function(){
-    if(appMode==='playdesign'){
-      // Load offensive preset into PD card
-      var v=this.value;
-      if(!v||v.indexOf('offp_')!==0)return;
+    var v=this.value;
+    if(v.indexOf('offp_')===0){
+      // Saved offensive preset
       var idx=parseInt(v.substring(5));
       var p=offPresets[idx];if(!p)return;
       card.fk=p.data.fk;
-      card.pdOpos=JSON.parse(JSON.stringify(p.data.opos));
       card._offPreset=idx;
-      selPlayer=null;render();
+      if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
+      else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
+      card.mir=false;selPlayer=null;render();
     } else {
-      card.fk=this.value;card.asgn={};card.routePts={};card.opos=null;selPlayer=null;render();
+      // Built-in formation
+      card._offPreset=null;
+      card.fk=v;card.asgn={};card.routePts={};
+      if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
+      selPlayer=null;render();
     }
   });
 
   var dfSel=document.getElementById('dfSel');
-  if(dfSel)dfSel.addEventListener('change',function(){card.dfk=this.value;card.dpos=null;render()});
+  if(dfSel)dfSel.addEventListener('change',function(){
+    var v=this.value;
+    if(v.indexOf('defp_')===0){
+      var idx=parseInt(v.substring(5));
+      var p=defPresets[idx];if(!p)return;
+      card.dfk=p.data.dfk;
+      card._defPreset=idx;
+      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      render();
+    } else {
+      card._defPreset=null;
+      card.dfk=v;
+      if(appMode==='playdesign'){card.pdDpos={}}else{card.dpos=null}
+      render();
+    }
+  });
   var dfSel2=document.getElementById('dfSel2');
-  if(dfSel2)dfSel2.addEventListener('change',function(){card.dfk=this.value;card.dpos=null;render()});
+  if(dfSel2)dfSel2.addEventListener('change',function(){
+    var v=this.value;
+    if(v.indexOf('defp_')===0){
+      var idx=parseInt(v.substring(5));
+      var p=defPresets[idx];if(!p)return;
+      card.dfk=p.data.dfk;
+      card._defPreset=idx;
+      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      render();
+    } else {
+      card._defPreset=null;card.dfk=v;
+      if(appMode==='playdesign'){card.pdDpos={}}else{card.dpos=null}
+      render();
+    }
+  });
 
   var bFlip=document.getElementById('bFlip');
   if(bFlip)bFlip.addEventListener('click',function(){card.mir=!card.mir;card.opos=null;card.routePts={};render()});
@@ -2605,12 +2636,9 @@ function bind(){
       var p=offPresets[idx];if(!p)return;
       var card=cards[activeIdx];
       card.fk=p.data.fk;
-      if(appMode==='playdesign'){
-        card.pdOpos=JSON.parse(JSON.stringify(p.data.opos));
-        card._offPreset=idx;
-      } else {
-        card.opos=JSON.parse(JSON.stringify(p.data.opos));
-      }
+      card._offPreset=idx;
+      if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
+      else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
       card.mir=false;
       selPlayer=null;render();
     }})(parseInt(loadOffs[loi].getAttribute('data-loadoff'))));
@@ -2646,7 +2674,9 @@ function bind(){
       var p=defPresets[idx];if(!p)return;
       var card=cards[activeIdx];
       card.dfk=p.data.dfk;
-      card.dpos=JSON.parse(JSON.stringify(p.data.dpos));
+      card._defPreset=idx;
+      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
       selPlayer=null;render();
     }})(parseInt(loadDefs[ldi].getAttribute('data-loaddef'))));
   }
