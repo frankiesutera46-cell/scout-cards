@@ -2377,7 +2377,28 @@ function bind(){
 
   var pI=document.getElementById('pI');if(pI)pI.addEventListener('input',function(){card.play=this.value;upSB()});
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
-  var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){card.hash=this.value;card.opos=null;card.dpos=null;card.routePts={};upSB();render()});
+  var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){
+    var oldHo=getHashOffset(card);
+    card.hash=this.value;
+    var newHo=getHashOffset(card);
+    var delta=newHo-oldHo;
+    // Shift custom positions by hash delta instead of clearing them
+    if(delta!==0){
+      var stores=[card.opos,card.dpos];
+      for(var si=0;si<stores.length;si++){
+        var st=stores[si];if(!st)continue;
+        var ks=Object.keys(st);
+        for(var ki=0;ki<ks.length;ki++){
+          st[ks[ki]].x+=delta;
+          if(st[ks[ki]].x<SL+15)st[ks[ki]].x=SL+15;
+          if(st[ks[ki]].x>SR-15)st[ks[ki]].x=SR-15;
+        }
+      }
+      // Shift route waypoints
+      if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x+=delta}}}}
+    }
+    upSB();render();
+  });
   var nI=document.getElementById('nI');if(nI)nI.addEventListener('input',function(){card.notes=this.value});
   var hudlI=document.getElementById('hudlI');if(hudlI)hudlI.addEventListener('input',function(){card.hudlUrl=this.value});
   var pnI=document.getElementById('pnI');if(pnI)pnI.addEventListener('input',function(){if(!selPlayer)return;var v=this.value;if(v){card.pn[selPlayer]=v}else{delete card.pn[selPlayer]}});
