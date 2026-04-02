@@ -1104,7 +1104,7 @@ function buildTextLabels(card){
     }
   } else {
     // Scout mode: Formation + Hash + Play name (editable header override)
-    var fmName=(FORMATIONS[card.fk]||{}).name||card.fk;
+    var fmName=(card._offPreset!=null&&offPresets[card._offPreset])?offPresets[card._offPreset].name:((FORMATIONS[card.fk]||{}).name||card.fk);
     var hashName=HASH_LABELS[card.hash]||card.hash;
     var autoHeader=fmName+' — '+hashName;
     var fmhashText=card.headerText||autoHeader;
