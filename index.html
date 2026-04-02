@@ -809,6 +809,21 @@ function applyPresetCl(card,presetCl){
   }
 }
 
+// Convert scout-space positions to PD-space for preset loading
+function scoutToPdPos(pos,isOff){
+  var out={};var ks=Object.keys(pos);
+  for(var i=0;i<ks.length;i++){
+    var k=ks[i],p=pos[k];
+    // Offense in PD def-view: flipped above PD_LOS_Y
+    // Defense in PD def-view: flipped below PD_LOS_Y
+    var ny=isOff?(PD_LOS_Y-(p.y-LOS_Y)):(PD_LOS_Y+(LOS_Y-p.y));
+    out[k]={x:p.x,y:ny};
+    if(p.l!==undefined)out[k].l=p.l;
+    if(p.side!==undefined)out[k].side=p.side;
+  }
+  return out;
+}
+
 function getHashOffset(card){
   return HASH_OFFSETS[card.hash] || 0;
 }
@@ -2436,7 +2451,7 @@ function bind(){
       var p=offPresets[idx];if(!p)return;
       card.fk=p.data.fk;
       card._offPreset=idx;
-      if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
+      if(appMode==='playdesign'){card.pdOpos=scoutToPdPos(JSON.parse(JSON.stringify(p.data.opos)),true)}
       else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
       applyPresetCl(card,p.data.cl);
       card.mir=false;selPlayer=null;render();
@@ -2457,7 +2472,7 @@ function bind(){
       var p=defPresets[idx];if(!p)return;
       card.dfk=p.data.dfk;
       card._defPreset=idx;
-      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      if(appMode==='playdesign'){card.pdDpos=scoutToPdPos(JSON.parse(JSON.stringify(p.data.dpos)),false)}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
       applyPresetCl(card,p.data.cl);
       render();
@@ -2476,7 +2491,7 @@ function bind(){
       var p=defPresets[idx];if(!p)return;
       card.dfk=p.data.dfk;
       card._defPreset=idx;
-      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      if(appMode==='playdesign'){card.pdDpos=scoutToPdPos(JSON.parse(JSON.stringify(p.data.dpos)),false)}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
       applyPresetCl(card,p.data.cl);
       render();
@@ -2774,7 +2789,7 @@ function bind(){
       var card=cards[activeIdx];
       card.fk=p.data.fk;
       card._offPreset=idx;
-      if(appMode==='playdesign'){card.pdOpos=JSON.parse(JSON.stringify(p.data.opos))}
+      if(appMode==='playdesign'){card.pdOpos=scoutToPdPos(JSON.parse(JSON.stringify(p.data.opos)),true)}
       else{card.opos=JSON.parse(JSON.stringify(p.data.opos))}
       applyPresetCl(card,p.data.cl);
       card.mir=false;
@@ -2817,7 +2832,7 @@ function bind(){
       var card=cards[activeIdx];
       card.dfk=p.data.dfk;
       card._defPreset=idx;
-      if(appMode==='playdesign'){card.pdDpos=JSON.parse(JSON.stringify(p.data.dpos))}
+      if(appMode==='playdesign'){card.pdDpos=scoutToPdPos(JSON.parse(JSON.stringify(p.data.dpos)),false)}
       else{card.dpos=JSON.parse(JSON.stringify(p.data.dpos))}
       applyPresetCl(card,p.data.cl);
       selPlayer=null;render();
