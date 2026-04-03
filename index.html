@@ -2376,7 +2376,20 @@ function bind(){
       // Check for text box click
       var tbAttr2=tgt2.getAttribute&&tgt2.getAttribute('data-tb');
       if(tbAttr2!==null&&tbAttr2!==undefined){
-        selTextBox=parseInt(tbAttr2);selPlayer=null;selLabel=null;
+        var clickedTBIdx2=parseInt(tbAttr2);
+        // Double-click detection: if clicking already-selected text box, open editor
+        if(selTextBox===clickedTBIdx2){
+          var editTb2=getCurTB(card)[clickedTBIdx2];
+          if(editTb2){
+            startInlineEditMulti(String(clickedTBIdx2),editTb2.text,function(nv){
+              if(nv===''){getCurTB(card).splice(clickedTBIdx2,1);selTextBox=null}
+              else{editTb2.text=nv}
+              render();bindDrag();
+            });
+          }
+          e.preventDefault();return;
+        }
+        selTextBox=clickedTBIdx2;selPlayer=null;selLabel=null;
         var pt3=svgPoint(svg,e);
         var tb2=getCurTB(card)[selTextBox];
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false};
