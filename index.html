@@ -4324,36 +4324,34 @@ function shareToPlayers(){
   m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center';
   var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:460px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
   mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Share to Players</span><button id="shareModalClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
-  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">'+cardCount+' scout card'+(cardCount!==1?'s':'')+' from <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
-  // Scouting reports info
+  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">From <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
+  // Section toggles
   var srForShare=getScoutReports();
+  var pdForShare=appMode==='playdesign'?cards:(games[activeGameIdx].playDesigns||[]);
+  var toggleStyle='display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:3px;margin-bottom:6px;cursor:pointer;transition:.15s';
+  var labelStyle='font-family:"JetBrains Mono",monospace;font-size:11px;color:#3A3A38;font-weight:500;flex:1';
+  var metaStyle='font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(58,58,56,.4)';
+  mh+='<div style="margin-bottom:16px">';
+  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);margin-bottom:8px;font-weight:500">Include in Share</div>';
+  // Scout Cards toggle
+  mh+='<label style="'+toggleStyle+'"><input type="checkbox" id="shareToggleCards" checked style="accent-color:#1A3C2B;width:16px;height:16px"/><div><div style="'+labelStyle+'">Scout Cards</div><div style="'+metaStyle+'">'+cardCount+' card'+(cardCount!==1?'s':'')+'</div></div></label>';
+  // Scouting Reports toggle
   if(srForShare.length>0){
-    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
-    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:6px;font-weight:500">Scouting Reports ('+srForShare.length+' PDF'+(srForShare.length!==1?'s':'')+')</label>';
-    for(var sri=0;sri<srForShare.length;sri++){
-      mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4CB; '+esc(srForShare[sri].name)+'</div>';
-    }
-    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">Week-specific reports included in this share.</div>';
-    mh+='</div>';
+    mh+='<label style="'+toggleStyle+'"><input type="checkbox" id="shareToggleReports" checked style="accent-color:#1A3C2B;width:16px;height:16px"/><div><div style="'+labelStyle+'">Scouting Reports</div><div style="'+metaStyle+'">'+srForShare.length+' PDF'+(srForShare.length!==1?'s':'')+'</div></div></label>';
   }
-  // Playbook library info
+  // Play Designs toggle
+  if(pdForShare.length>0){
+    mh+='<label style="'+toggleStyle+'"><input type="checkbox" id="shareTogglePD" checked style="accent-color:#1A3C2B;width:16px;height:16px"/><div><div style="'+labelStyle+'">Play Designs</div><div style="'+metaStyle+'">'+pdForShare.length+' play'+(pdForShare.length!==1?'s':'')+'</div></div></label>';
+  }
+  // Playbook toggle
   if(userPlaybooks.length>0){
-    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px">';
-    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:6px;font-weight:500">Playbook Library ('+userPlaybooks.length+' PDF'+(userPlaybooks.length!==1?'s':'')+')</label>';
-    for(var pi=0;pi<userPlaybooks.length;pi++){
-      mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4C4; '+esc(userPlaybooks[pi].name)+'</div>';
-    }
-    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">These will be included in the share. Manage in &#x1F4DA; Playbooks.</div>';
-    mh+='</div>';
+    mh+='<label style="'+toggleStyle+'"><input type="checkbox" id="shareTogglePB" checked style="accent-color:#1A3C2B;width:16px;height:16px"/><div><div style="'+labelStyle+'">Playbook</div><div style="'+metaStyle+'">'+userPlaybooks.length+' PDF'+(userPlaybooks.length!==1?'s':'')+'</div></div></label>';
   }
-  // Glossary info
+  // Glossary toggle
   if(glossaryPdf){
-    mh+='<div style="margin-bottom:16px;padding:12px 14px;background:#fff;border:1px solid rgba(184,168,138,.25);border-radius:2px">';
-    mh+='<label style="font-family:\'JetBrains Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#B8A88A;display:block;margin-bottom:6px;font-weight:600">Defensive Glossary</label>';
-    mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#3A3A38;padding:2px 0">&#x1F4D6; '+esc(glossaryPdf.name)+'</div>';
-    mh+='<div style="font-size:9px;color:rgba(58,58,56,.35);margin-top:6px;font-family:\'JetBrains Mono\',monospace">Players will see a Glossary tab to reference terminology.</div>';
-    mh+='</div>';
+    mh+='<label style="'+toggleStyle+'"><input type="checkbox" id="shareToggleGlossary" checked style="accent-color:#1A3C2B;width:16px;height:16px"/><div><div style="'+labelStyle+'">Defensive Glossary</div><div style="'+metaStyle+'">'+esc(glossaryPdf.name)+'</div></div></label>';
   }
+  mh+='</div>';
   // Status area
   mh+='<div id="shareStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.5);margin-bottom:12px;min-height:18px"></div>';
   mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Create Share Link</button>';
@@ -4370,46 +4368,60 @@ function shareToPlayers(){
     var btn=this;var status=document.getElementById('shareStatus');
     btn.disabled=true;btn.textContent='GENERATING...';
     status.textContent='Building card images...';
+    // Read toggle states
+    var inclCards=document.getElementById('shareToggleCards');inclCards=inclCards?inclCards.checked:true;
+    var inclReports=document.getElementById('shareToggleReports');inclReports=inclReports?inclReports.checked:false;
+    var inclPD=document.getElementById('shareTogglePD');inclPD=inclPD?inclPD.checked:false;
+    var inclPB=document.getElementById('shareTogglePB');inclPB=inclPB?inclPB.checked:false;
+    var inclGlossary=document.getElementById('shareToggleGlossary');inclGlossary=inclGlossary?inclGlossary.checked:false;
     try{
       if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
       else{games[activeGameIdx].cards=cards}
       games[activeGameIdx].name=gameTitle;
       // Build scout card images
-      var scoutCards=appMode==='playdesign'?games[activeGameIdx].cards:cards;
       var shareCards=[];
-      for(var i=0;i<scoutCards.length;i++){
-        var c=scoutCards[i];
-        if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
-        var svgStr=buildFullSVG(c,false);
-        var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
-        var img=canvas?canvas.toDataURL('image/png'):'';
-        shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
-        status.textContent='Building scout cards... '+(i+1)+'/'+scoutCards.length;
+      if(inclCards){
+        var scoutCards=appMode==='playdesign'?games[activeGameIdx].cards:cards;
+        for(var i=0;i<scoutCards.length;i++){
+          var c=scoutCards[i];
+          if(activeTagFilter&&(!c.tags||c.tags.indexOf(activeTagFilter)<0))continue;
+          var svgStr=buildFullSVG(c,false);
+          var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
+          var img=canvas?canvas.toDataURL('image/png'):'';
+          shareCards.push({play:c.play||'Unnamed',dd:c.dd||'',tags:c.tags||[],hudlUrl:c.hudlUrl||'',img:img});
+          status.textContent='Building scout cards... '+(i+1)+'/'+scoutCards.length;
+        }
       }
       // Build play design images
-      var pdCards=appMode==='playdesign'?cards:(games[activeGameIdx].playDesigns||[]);
       var sharePlayDesigns=[];
-      for(var pdi=0;pdi<pdCards.length;pdi++){
-        var pc=pdCards[pdi];
-        var pdSvg=buildFullSVG(pc,true);
-        var pdCanvas=await svgToCanvas(pdSvg,FW*2,(FH+180)*2);
-        var pdImg=pdCanvas?pdCanvas.toDataURL('image/png'):'';
-        sharePlayDesigns.push({play:pc.play||'Unnamed',dd:pc.dd||'',img:pdImg,frontNotes:pc.frontNotes||'',coverageNotes:pc.coverageNotes||''});
-        status.textContent='Building play designs... '+(pdi+1)+'/'+pdCards.length;
+      if(inclPD){
+        var pdCards=appMode==='playdesign'?cards:(games[activeGameIdx].playDesigns||[]);
+        for(var pdi=0;pdi<pdCards.length;pdi++){
+          var pc=pdCards[pdi];
+          var pdSvg=buildFullSVG(pc,true);
+          var pdCanvas=await svgToCanvas(pdSvg,FW*2,(FH+180)*2);
+          var pdImg=pdCanvas?pdCanvas.toDataURL('image/png'):'';
+          sharePlayDesigns.push({play:pc.play||'Unnamed',dd:pc.dd||'',img:pdImg,frontNotes:pc.frontNotes||'',coverageNotes:pc.coverageNotes||''});
+          status.textContent='Building play designs... '+(pdi+1)+'/'+pdCards.length;
+        }
       }
-      if(shareCards.length===0&&sharePlayDesigns.length===0){alert('No cards to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
+      if(shareCards.length===0&&sharePlayDesigns.length===0&&!inclReports&&!inclPB&&!inclGlossary){alert('Select at least one section to share');btn.disabled=false;btn.textContent='CREATE SHARE LINK';return}
 
       // Include persistent playbooks
       var playbookMeta=[];
-      for(var pbi=0;pbi<userPlaybooks.length;pbi++){
-        playbookMeta.push({name:userPlaybooks[pbi].name,path:userPlaybooks[pbi].path,thumb:userPlaybooks[pbi].thumb||''});
+      if(inclPB){
+        for(var pbi=0;pbi<userPlaybooks.length;pbi++){
+          playbookMeta.push({name:userPlaybooks[pbi].name,path:userPlaybooks[pbi].path,thumb:userPlaybooks[pbi].thumb||''});
+        }
       }
 
-      var glossaryMeta=glossaryPdf?{name:glossaryPdf.name,path:glossaryPdf.path,thumb:glossaryPdf.thumb||''}:null;
+      var glossaryMeta=(inclGlossary&&glossaryPdf)?{name:glossaryPdf.name,path:glossaryPdf.path,thumb:glossaryPdf.thumb||''}:null;
       var reportsMeta=[];
-      var srList=getScoutReports();
-      for(var ri=0;ri<srList.length;ri++){
-        reportsMeta.push({name:srList[ri].name,path:srList[ri].path,thumb:srList[ri].thumb||''});
+      if(inclReports){
+        var srList=getScoutReports();
+        for(var ri=0;ri<srList.length;ri++){
+          reportsMeta.push({name:srList[ri].name,path:srList[ri].path,thumb:srList[ri].thumb||''});
+        }
       }
       var payload={game:gameTitle,cards:shareCards,playDesigns:sharePlayDesigns,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta,reports:reportsMeta};
 
