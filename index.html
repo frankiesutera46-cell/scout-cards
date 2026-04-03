@@ -473,136 +473,108 @@ var DEF_FRONTS={
 }}},
 };
 
-// ===== ROUTES (NFL Route Tree - proper depths) =====
-// YPX = 5 px/yard. Depths: Hitch=6yd, Slant=6yd stem, Out/In=10yd, Curl=12yd,
-// Comeback=20yd, Dig=20yd, Post=10-12yd stem, Corner=10yd stem, Go=25+yd,
-// Seam=25yd, Wheel=backfield release, etc.
+// ===== ROUTES =====
 var ROUTES={
+// Vertical
 go:{n:'Go',t:'pass',c:COL_ROUTE},
-comeback:{n:'Comeback',t:'pass',c:COL_ROUTE},
-shake:{n:'Shake',t:'pass',c:COL_ROUTE},
-sqout:{n:'Sq Out',t:'pass',c:COL_ROUTE},
-puma:{n:'Puma',t:'pass',c:COL_ROUTE},
-omaha:{n:'Omaha',t:'pass',c:COL_ROUTE},
 post:{n:'Post',t:'pass',c:COL_ROUTE},
-deepover:{n:'Deep Over',t:'pass',c:COL_ROUTE},
-dagger:{n:'Dagger',t:'pass',c:COL_ROUTE},
-dig:{n:'Dig',t:'pass',c:COL_ROUTE},
-inhook:{n:'In-Hook',t:'pass',c:COL_ROUTE},
-flkpost:{n:'Flk Post',t:'pass',c:COL_ROUTE},
-pivot:{n:'Pivot',t:'pass',c:COL_ROUTE},
-slant:{n:'Slant',t:'pass',c:COL_ROUTE},
-sluggo:{n:'Sluggo',t:'pass',c:COL_ROUTE},
-hitch:{n:'Hitch',t:'pass',c:COL_ROUTE},
-under:{n:'Under',t:'pass',c:COL_ROUTE},
-arrow:{n:'Arrow',t:'pass',c:COL_ROUTE},
-smoke:{n:'Smoke',t:'pass',c:COL_ROUTE},
-flanker:{n:'Flank Drive',t:'pass',c:COL_ROUTE},
-spot:{n:'Spot',t:'pass',c:COL_ROUTE},
-deepx:{n:'Deep Cross',t:'pass',c:COL_ROUTE},
-basicx:{n:'Basic Cross',t:'pass',c:COL_ROUTE},
-seam:{n:'Seam/All Go',t:'pass',c:COL_ROUTE},
-lookie:{n:'Lookie',t:'pass',c:COL_ROUTE},
 corner:{n:'Corner',t:'pass',c:COL_ROUTE},
+seam:{n:'Seam',t:'pass',c:COL_ROUTE},
+wheel:{n:'Wheel',t:'pass',c:COL_ROUTE},
+// Intermediate
+dig:{n:'Dig',t:'pass',c:COL_ROUTE},
+out:{n:'Out',t:'pass',c:COL_ROUTE},
+comeback:{n:'Comeback',t:'pass',c:COL_ROUTE},
+slant:{n:'Slant',t:'pass',c:COL_ROUTE},
+over:{n:'Over',t:'pass',c:COL_ROUTE},
+hitch:{n:'Hitch',t:'pass',c:COL_ROUTE},
+// Quick/Short
 flat:{n:'Flat',t:'pass',c:COL_ROUTE},
 screen:{n:'Screen',t:'pass',c:COL_ROUTE},
+drag:{n:'Drag',t:'pass',c:COL_ROUTE},
+arrow:{n:'Arrow',t:'pass',c:COL_ROUTE},
 swing:{n:'Swing',t:'pass',c:COL_ROUTE},
-wheel:{n:'Wheel',t:'pass',c:COL_ROUTE},
 // Run
 riz:{n:'IZ',t:'run',c:COL_RUN},roz:{n:'OZ',t:'run',c:COL_RUN},rpwr:{n:'Power',t:'run',c:COL_RUN},
-rctr:{n:'Counter',t:'run',c:COL_RUN},rdraw:{n:'Draw',t:'run',c:COL_RUN},rswp:{n:'Sweep',t:'run',c:COL_RUN},rdive:{n:'Dive',t:'run',c:COL_RUN},
+rctr:{n:'Counter',t:'run',c:COL_RUN},rdraw:{n:'Draw',t:'run',c:COL_RUN},rswp:{n:'Sweep',t:'run',c:COL_RUN},
 // Block
 bpass:{n:'Pass Pro',t:'block',c:COL_BLOCK},
 bdrive:{n:'Drive',t:'block',c:COL_BLOCK},
-bdown:{n:'Down',t:'block',c:COL_BLOCK},
-breach:{n:'Reach',t:'block',c:COL_BLOCK},
 bpull:{n:'Pull',t:'block',c:COL_BLOCK},
-btrap:{n:'Trap',t:'block',c:COL_BLOCK},
-bkick:{n:'Kick Out',t:'block',c:COL_BLOCK},
-blead:{n:'Lead',t:'block',c:COL_BLOCK},
-bcombo:{n:'Combo',t:'block',c:COL_BLOCK},
-bcut:{n:'Cut',t:'block',c:COL_BLOCK},
-bfold:{n:'Fold',t:'block',c:COL_BLOCK},
-bwham:{n:'Wham',t:'block',c:COL_BLOCK},
+breach:{n:'Reach',t:'block',c:COL_BLOCK},
 // Motion
-motl:{n:'Mot L',t:'motion',c:COL_MOTION},motr:{n:'Mot R',t:'motion',c:COL_MOTION}
+motl:{n:'Mot L',t:'motion',c:COL_MOTION},motr:{n:'Mot R',t:'motion',c:COL_MOTION},
+jetl:{n:'Jet L',t:'motion',c:COL_MOTION},jetr:{n:'Jet R',t:'motion',c:COL_MOTION}
 };
 
 var RGROUPS={
-  'Outside'  :['go','comeback','shake','sqout','puma','omaha','corner'],
-  'Inside'   :['post','deepover','dagger','dig','inhook','flkpost','pivot','slant','sluggo','hitch'],
-  'Short/Slot':['under','arrow','smoke','flanker','spot','deepx','basicx','seam','lookie','flat','screen','swing','wheel'],
-  'Run'      :['riz','roz','rpwr','rctr','rdraw','rswp','rdive'],
-  'Block'    :['bpass','bdrive','bdown','breach','bpull','btrap','bkick','blead','bcombo','bcut','bfold','bwham'],
-  'Motion'   :['motl','motr']
+  'Vertical'    :['go','post','corner','seam','wheel'],
+  'Intermediate':['dig','out','comeback','slant','over','hitch'],
+  'Quick/Short' :['flat','screen','drag','arrow','swing'],
+  'Run'         :['riz','roz','rpwr','rctr','rdraw','rswp'],
+  'Block'       :['bpass','bdrive','bpull','breach'],
+  'Motion'      :['motl','motr','jetl','jetr']
 };
 
-// Route paths with NFL-accurate depths (Y = yards * YPX, upfield = negative Y)
+// Route paths — multi-point for smooth curves via smoothPath()
 function routePath(rk,px,py,playerIsOnRight,dirDown){
   var m = playerIsOnRight ? -1 : 1; // mirror for right-side players
   var Y = YPX; // ~14 pixels per yard vertical
   var X = YPX * 0.7; // horizontal scale
   var P={
-    // OUTSIDE ROUTES (break away from center of field)
-    go:       [[0,-25*Y]],                                          // 1. Go/Vert - straight vertical 25yds
-    comeback: [[0,-18*Y],[-5*X*m, 5*Y]],                           // 2. Comeback - 18yd, break back outside
-    shake:    [[0,-11*Y],[-8*X*m,-5*Y]],                            // 3. Shake - 11yd stem, break to corner
-    sqout:    [[0,-10*Y],[-12*X*m, 0]],                             // 4. Square Out - 10yd, sharp turn out
-    puma:     [[0,-14*Y],[-6*X*m, 4*Y]],                            // 5. Puma - 14yd, comeback outside
-    omaha:    [[0,-6*Y],[-10*X*m, 0]],                              // 7. Omaha - 6yd speed out
-    corner:   [[0,-10*Y],[-8*X*m,-10*Y]],                           // 26. Corner - 10yd stem, 45 out+up
+    // VERTICAL — deep routes
+    go:       [[0,-8*Y],[0,-17*Y]],                                  // Go — straight vertical
+    post:     [[0,-10*Y],[6*X*m,-10*Y]],                              // Post — stem, break inside
+    corner:   [[0,-10*Y],[-8*X*m,-10*Y]],                             // Corner — stem, break outside
+    seam:     [[0,-8*Y],[0,-14*Y]],                                  // Seam — vertical up the hash
+    wheel:    [[-2*X*m,0.5*Y],[-1*X*m,-3*Y],[0,-18*Y]], // Wheel — short flat, curve up, long vertical
 
-    // INSIDE ROUTES (break toward center of field)
-    post:     [[0,-10*Y],[6*X*m,-10*Y]],                            // 8. Post - 10yd stem, 45 degree inside
-    deepover: [[0,-10*Y],[6*X*m,-8*Y],[15*X*m,0]],                 // 9. Deep Over - post stem, flatten at 18
-    dagger:   [[0,-15*Y],[18*X*m,0]],                               // 10. Dagger - 15yd stem, flat inside
-    dig:      [[0,-10*Y],[18*X*m,0]],                               // 11. Dig - 10yd stem, sharp 90 flat inside
-    inhook:   [[0,-12*Y],[2*X*m,2*Y]],                              // 12. In-Hook - 12yd, settle inside
-    flkpost:  [[0,-8*Y],[5*X*m,-6*Y]],                              // 13. Flk Short Post - 8yd, shallow post
-    pivot:    [[0,-10*Y],[-3*X*m,2*Y],[6*X*m,-2*Y]],               // 14. Pivot - plant outside, pivot to QB
-    slant:    [[0,-3*Y],[8*X*m,-10*Y]],                             // 15. Slant - 3yd stem, 45 inside
-    sluggo:   [[0,-3*Y],[4*X*m,-3*Y],[-6*X*m,-14*Y]],              // 15a. Sluggo - sell slant, go
-    hitch:    [[0,-6*Y],[-1*X*m,2*Y]],                              // 16. Hitch - 6yd, sit
+    // INTERMEDIATE — 8-18 yard routes
+    dig:      [[0,-10*Y],[14*X*m,0]],                                 // Dig — stem, 90 break inside
+    out:      [[0,-5*Y],[-12*X*m,0]],                                 // Out — 5yd stem, 90 break outside
+    comeback: [[0,-16*Y],[-4*X*m,5*Y]],                               // Comeback — stem, break back
+    slant:    [[0,-3*Y],[8*X*m,-10*Y]],                               // Slant — short stem, angle inside
+    over:     [[0,-10*Y],[2*X*m,-1*Y],[6*X*m,0],[12*X*m,0],[16*X*m,0]], // Over — deep cross, flatten
+    hitch:    [[0,-6*Y],[-1*X*m,2*Y]],                                // Hitch — stem, settle back
 
-    // SHORT / SLOT ROUTES
-    under:    [[0,-2*Y],[22*X*m,0]],                                // Under/Drag - 2yd stem, flat across underneath
-    arrow:    [[0,-4*Y],[-6*X*m,-4*Y]],                             // 17. Arrow - angle to void
-    smoke:    [[-1*X*m,1*Y],[6*X*m,-4*Y]],                         // 18. Smoke - quick inside
-    flanker:  [[12*X*m,-4*Y]],                                      // 19. Flanker Drive - underneath LBs
-    spot:     [[3*X*m,-5*Y]],                                       // 20. Spot - settle over ball
-    deepx:    [[0,-4*Y],[22*X*m,-14*Y]],                            // 21. Deep Cross - angle across 18-22yd
-    basicx:   [[0,-3*Y],[18*X*m,-7*Y]],                             // 22. Basic Cross - 10yd across
-    seam:     [[0,-22*Y]],                                          // 23. Seam - vertical 22yds
-    lookie:   [[0,-3*Y],[4*X*m,-12*Y]],                             // 24. Lookie - slight inside angle
-    flat:     [[-8*X*m,-2*Y]],                                      // Flat
-    screen:   [[-3*X*m,2*Y],[-7*X*m,1*Y]],                         // Screen
-    swing:    [[-8*X*m,1*Y],[-4*X*m,-8*Y]],                        // Swing
-    wheel:    [[-6*X*m,1*Y],[-1*X*m,-22*Y]],                       // Wheel
+    // QUICK/SHORT — under 8 yards
+    flat:     [[-2*X*m,-0.5*Y],[-5*X*m,-1*Y],[-8*X*m,-2*Y]],       // Flat — release outside
+    screen:   [[-1*X*m,1*Y],[-3*X*m,1.5*Y],[-6*X*m,1*Y]],          // Screen — drift behind LOS
+    drag:     [[0,-2*Y],[2*X*m,-0.5*Y],[8*X*m,0],[16*X*m,0]],       // Drag — shallow cross
+    arrow:    [[-1*X*m,-1*Y],[-3*X*m,-3*Y],[-6*X*m,-5*Y]],          // Arrow — angle out and up
+    swing:    [[-2*X*m,1*Y],[-5*X*m,0.5*Y],[-6*X*m,-2*Y],[-5*X*m,-5*Y],[-3*X*m,-7*Y]], // Swing — release flat, arc upfield
 
     // RUN
     riz:  [[2*X*m,-6*Y]],
-    roz:  [[-5*X*m,-2*Y],[-4*X*m,-6*Y]],
-    rpwr: [[3*X*m,-3*Y],[0,-5*Y]],
-    rctr: [[-3*X*m,-1*Y],[5*X*m,-8*Y]],
-    rdraw:[[0,1*Y],[2*X*m,-10*Y]],
-    rswp: [[-10*X*m,0],[-4*X*m,-8*Y]],
-    rdive:[[0,-6*Y]],
-    // Block schemes
-    bpass:  [[0,1.2*Y]],                                             // Pass Pro - set back
-    bdrive: [[0,-1.5*Y]],                                           // Drive/Base - straight ahead short
-    bdown:  [[3*X*m,-1.5*Y]],                                       // Down block - angle inside
-    breach: [[-3*X*m,-1.5*Y]],                                      // Reach block - angle outside
-    bpull:  [[-4*X*m,1*Y],[-4*X*m,-3*Y]],                          // Pull - behind OL then upfield
-    btrap:  [[4*X*m,0.5*Y],[0,-2.5*Y]],                             // Trap - through gap, kick out
-    bkick:  [[-3*X*m,-2.5*Y]],                                      // Kick out - angle out on EMOL
-    blead:  [[0,-3*Y]],                                              // Lead - straight through hole
-    bcombo: [[0,-1.5*Y],[2*X*m,-2*Y]],                              // Combo - double then climb to LB
-    bcut:   [[0,-0.8*Y]],                                            // Cut block - low short
-    bfold:  [[-2*X*m,1*Y],[-2*X*m,-3*Y]],                          // Fold - behind adjacent OL then up
-    bwham:  [[4*X*m,-2*Y]],                                          // Wham - inside-out kick block
-    // Motion
-    motl:[[-45,0]],motr:[[45,0]]
+    roz:  [[-3*X*m,-1*Y],[-5*X*m,-3*Y],[-4*X*m,-5*Y]],
+    rpwr: [[2*X*m,-2*Y],[1*X*m,-4*Y],[0,-5*Y]],
+    rctr: [[-2*X*m,-0.5*Y],[0,-2*Y],[3*X*m,-4*Y],[5*X*m,-6*Y]],
+    rdraw:[[0,0.5*Y],[0.5*X*m,-2*Y],[1*X*m,-6*Y],[2*X*m,-10*Y]],
+    rswp: [[-5*X*m,0],[-8*X*m,-1*Y],[-6*X*m,-4*Y],[-4*X*m,-7*Y]],
+
+    // BLOCK
+    bpass:  [[0,1.2*Y]],                                             // Pass Pro — set back
+    bdrive: [[0,-1.5*Y]],                                           // Drive — straight ahead
+    bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
+    breach: [[-2*X*m,-0.5*Y],[-3*X*m,-1.5*Y]],                     // Reach — angle outside
+
+    // MOTION
+    motl:[[-45,0]],motr:[[45,0]],
+    jetl:[[-55,0]],jetr:[[55,0]]
   };
+  // Custom routes stored with offsets
+  if(rk.indexOf('cr_')===0){
+    var crIdx=parseInt(rk.substring(3));
+    if(customRoutes[crIdx]&&customRoutes[crIdx].offsets){
+      var offsets=customRoutes[crIdx].offsets;
+      var mirFlip=playerIsOnRight!==customRoutes[crIdx].wasRight?-1:1;
+      var pts=[{x:px,y:py}];
+      var cx2=px,cy2=py;
+      var yd2=dirDown?-1:1;
+      for(var oi=0;oi<offsets.length;oi++){cx2+=offsets[oi][0]*mirFlip;cy2+=offsets[oi][1]*yd2;pts.push({x:cx2,y:cy2})}
+      return pts;
+    }
+  }
   var segs=P[rk]||[[0,-8*Y]];
   var pts=[{x:px,y:py}];
   var cx=px,cy=py;
@@ -799,15 +771,33 @@ async function pdfThumbnailFromUrl(url){
 var offPresets=[];
 var defPresets=[];
 var routePresets=[];
+var customRoutes=[];
 
 function loadPresets(){
   try{
     var raw=localStorage.getItem('scoutPresets');
-    if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[]}
+    if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[];customRoutes=d.croutes||[]}
+    // Register custom routes into ROUTES and RGROUPS
+    rebuildCustomRoutes();
   }catch(e){}
 }
 function savePresets(){
-  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets}))}catch(e){}
+  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes}))}catch(e){}
+}
+function rebuildCustomRoutes(){
+  // Remove old custom entries
+  var crKeys=Object.keys(ROUTES).filter(function(k){return k.indexOf('cr_')===0});
+  for(var i=0;i<crKeys.length;i++) delete ROUTES[crKeys[i]];
+  delete RGROUPS['Custom'];
+  if(!customRoutes.length)return;
+  var crGroup=[];
+  for(var ci=0;ci<customRoutes.length;ci++){
+    var cr=customRoutes[ci];
+    var crk='cr_'+ci;
+    ROUTES[crk]={n:cr.name,t:cr.type||'pass',c:cr.type==='run'?COL_RUN:cr.type==='block'?COL_BLOCK:COL_ROUTE};
+    crGroup.push(crk);
+  }
+  RGROUPS['Custom']=crGroup;
 }
 loadPresets();
 
@@ -1339,12 +1329,12 @@ function playerColor(side){
 }
 
 function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,renderRoutes,dirDown,playerNotes){
-  var s='';var keys=Object.keys(players);
+  var s='';var routeSvg='';var keys=Object.keys(players);
   var cl=customLabels||{};
   var rpm=routePtsMap||{};
   var showRoutes=(renderRoutes!==undefined)?renderRoutes:!isDef;
 
-  // Routes first (underneath)
+  // Routes (collected separately, appended after players)
   if(showRoutes){
     for(var ri=0;ri<keys.length;ri++){
       var rk2=keys[ri],rp=players[rk2],ra=asgn[rk2];
@@ -1354,39 +1344,44 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var pts=(rpm[rk2]&&rpm[rk2].length>=2)?rpm[rk2]:routePath(ra,rp.x,rp.y,isRight,dirDown);
       if(pts.length<2)continue;
       var isMot=rt.t==='motion',isBlk=rt.t==='block';
+      // Offset start point to edge of player circle (radius=11 for offense, skip for defense text)
+      var drawPts=pts;
+      if(!isDef&&pts.length>=2){
+        var r0=11;
+        var ang0=Math.atan2(pts[1].y-pts[0].y,pts[1].x-pts[0].x);
+        drawPts=[{x:pts[0].x+r0*Math.cos(ang0),y:pts[0].y+r0*Math.sin(ang0)}];
+        for(var dp0=1;dp0<pts.length;dp0++)drawPts.push(pts[dp0]);
+      }
       var d;
-      if(!isBlk&&!isMot&&pts.length>=3){d=smoothPath(pts)}
-      else{d='M '+pts[0].x+' '+pts[0].y;for(var j=1;j<pts.length;j++)d+=' L '+pts[j].x+' '+pts[j].y}
+      var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant');
+      if(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3){d=smoothPath(drawPts)}
+      else{d='M '+drawPts[0].x+' '+drawPts[0].y;for(var j=1;j<drawPts.length;j++)d+=' L '+drawPts[j].x+' '+drawPts[j].y}
       var isPassPro=(ra==='bpass');
       var dash=isMot?' stroke-dasharray="6,4"':'';
       var sw=isBlk?2.5:2;
-      s+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
+      routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
       var ep=pts[pts.length-1];
       if(!isBlk){
-        // Arrow head for routes
         if(pts.length>=2){
           var lp=pts[pts.length-2];
           var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
           var ax1=ep.x-8*Math.cos(ang-0.4),ay1=ep.y-8*Math.sin(ang-0.4);
           var ax2=ep.x-8*Math.cos(ang+0.4),ay2=ep.y-8*Math.sin(ang+0.4);
-          s+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
+          routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
         }
       } else {
-        // Blocking endpoint symbols
         if(pts.length>=2){
           var lp2=pts[pts.length-2];
           var ang2=Math.atan2(ep.y-lp2.y,ep.x-lp2.x);
           if(isPassPro){
-            // Pass Pro: wide horizontal bar (kickstand/cup shape)
             var barW=10;
             var px1=ep.x+barW*Math.cos(ang2+1.57),py1=ep.y+barW*Math.sin(ang2+1.57);
             var px2=ep.x+barW*Math.cos(ang2-1.57),py2=ep.y+barW*Math.sin(ang2-1.57);
-            s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
           } else {
-            // Other blocks: standard perpendicular cap
             var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
             var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
-            s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
           }
         }
       }
@@ -1446,6 +1441,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
     }
   }
+  // Append routes on top of all player shapes
+  s+=routeSvg;
   return s;
 }
 
@@ -1945,9 +1942,10 @@ function render(){
   } else if(selSide==='off') {
     var pl=oPlayers[selPlayer];
     var curLabel=card.cl[selPlayer]||pl.l;
-    h+='<div class="sel-hdr"><span>'+curLabel+' — Route</span>';
+    h+='<div class="sel-hdr"><span>'+curLabel+' — Route</span><div style="display:flex;gap:4px">';
+    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer])h+='<button class="clr-btn" id="bFlipRoute">Flip</button>';
     if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
-    h+='</div>';
+    h+='</div></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 7, WR1, etc" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
     // Circle color picker
@@ -1964,8 +1962,17 @@ function render(){
       for(var rii=0;rii<rks.length;rii++){
         var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
         h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
+        if(rkk.indexOf('cr_')===0){h+='<button class="btn-del" data-delcr="'+rkk.substring(3)+'" style="font-size:10px;padding:0 3px;margin-left:-4px">&times;</button>'}
       }
       h+='</div>';
+    }
+    // Save custom route preset (only when player has a route with waypoints)
+    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer]&&card.routePts[selPlayer].length>=2){
+      h+='<div class="preset-section"><label>&#x1F4BE; Save Route as Preset</label>';
+      h+='<div class="save-preset-row">';
+      h+='<input type="text" id="crName" placeholder="Route name..."/>';
+      h+='<button class="btn btn-pri" id="btnSaveCR">Save</button>';
+      h+='</div></div>';
     }
     h+='<div class="ns"><label>Note for '+(pl?pl.l:'')+'</label>';
     h+='<input type="text" id="pnI" placeholder="e.g. #4 - burns corner" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
@@ -1973,9 +1980,10 @@ function render(){
     // Play Designer: defense gets route palette
     var dpl=dPlayers[selPlayer];
     var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
-    h+='<div class="sel-hdr"><span style="color:#C6A355">'+curDLabel+' — Assignment</span>';
+    h+='<div class="sel-hdr"><span style="color:#C6A355">'+curDLabel+' — Assignment</span><div style="display:flex;gap:4px">';
+    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer])h+='<button class="clr-btn" id="bFlipRoute">Flip</button>';
     if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
-    h+='</div>';
+    h+='</div></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
     // Defender text color picker
@@ -1992,6 +2000,7 @@ function render(){
       for(var rii=0;rii<rks.length;rii++){
         var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
         h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
+        if(rkk.indexOf('cr_')===0){h+='<button class="btn-del" data-delcr="'+rkk.substring(3)+'" style="font-size:10px;padding:0 3px;margin-left:-4px">&times;</button>'}
       }
       h+='</div>';
     }
@@ -2450,6 +2459,18 @@ function bind(){
 
   var bClr=document.getElementById('bClr');
   if(bClr)bClr.addEventListener('click',function(){if(selPlayer){pushUndo();delete card.asgn[selPlayer];delete card.routePts[selPlayer];render()}});
+
+  var bFlipRoute=document.getElementById('bFlipRoute');
+  if(bFlipRoute)bFlipRoute.addEventListener('click',function(){
+    if(!selPlayer||!card.routePts||!card.routePts[selPlayer])return;
+    pushUndo();
+    var pts=card.routePts[selPlayer];
+    var px=pts[0].x;
+    for(var fi=1;fi<pts.length;fi++){
+      pts[fi].x=px+(px-pts[fi].x);
+    }
+    render();
+  });
 
   var pI=document.getElementById('pI');if(pI)pI.addEventListener('input',function(){card.play=this.value;upSB()});
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
@@ -2991,6 +3012,37 @@ function bind(){
     delRoutes[dri].addEventListener('click',(function(idx){return function(){
       routePresets.splice(idx,1);savePresets();render();
     }})(parseInt(delRoutes[dri].getAttribute('data-delroute'))));
+  }
+
+  // Save Custom Route (single player route as reusable preset)
+  var btnSaveCR=document.getElementById('btnSaveCR');
+  if(btnSaveCR)btnSaveCR.addEventListener('click',function(){
+    var nameEl=document.getElementById('crName');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name){alert('Enter a route name');return}
+    var card=cards[activeIdx];
+    if(!selPlayer||!card.routePts||!card.routePts[selPlayer]||card.routePts[selPlayer].length<2)return;
+    var pts=card.routePts[selPlayer];
+    var startPt=pts[0];
+    // Store as relative offsets from player position
+    var offsets=[];
+    for(var oi=1;oi<pts.length;oi++){
+      offsets.push([pts[oi].x-pts[oi-1].x, pts[oi].y-pts[oi-1].y]);
+    }
+    var isRight=startPt.x>CX;
+    var ra=card.asgn[selPlayer];
+    var rtype=(ra&&ROUTES[ra])?ROUTES[ra].t:'pass';
+    customRoutes.push({name:name,offsets:offsets,wasRight:isRight,type:rtype});
+    rebuildCustomRoutes();
+    savePresets();render();
+  });
+
+  // Delete Custom Route
+  var delCRs=document.querySelectorAll('[data-delcr]');
+  for(var dcri=0;dcri<delCRs.length;dcri++){
+    delCRs[dcri].addEventListener('click',(function(idx){return function(){
+      customRoutes.splice(idx,1);rebuildCustomRoutes();savePresets();render();
+    }})(parseInt(delCRs[dcri].getAttribute('data-delcr'))));
   }
 
   // === TEXT TOOL BUTTON ===
