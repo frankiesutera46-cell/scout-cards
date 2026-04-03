@@ -4457,11 +4457,13 @@ function renderShareViewer(data){
   var glossary=data.glossary||null;
   var reports=data.reports||[];
   var playDesigns=data.playDesigns||[];
+  var hasCards=shareCards.length>0;
   var hasPb=playbooks.length>0;
   var hasGlossary=!!glossary;
   var hasReports=reports.length>0;
   var hasPD=playDesigns.length>0;
-  var hasTabs=hasPb||hasGlossary||hasReports||hasPD;
+  var sectionCount=(hasCards?1:0)+(hasPb?1:0)+(hasGlossary?1:0)+(hasReports?1:0)+(hasPD?1:0);
+  var hasTabs=sectionCount>1;
   var SB_URL='https://lstjgirrhyweokamvcid.supabase.co';
   document.title=(tn?tn+' — ':'')+game+' — Juice Box Football';
   // Ensure viewport meta exists for mobile
@@ -4579,7 +4581,8 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   html+='<span class="sv-sub">Game Prep System</span>';
   html+='</div>';
   html+='<div class="sv-right">';
-  html+='<span class="sv-count">'+shareCards.length+' play'+(shareCards.length!==1?'s':'')+'</span>';
+  var totalItems=shareCards.length+playDesigns.length;
+  html+='<span class="sv-count">'+(totalItems?totalItems+' play'+(totalItems!==1?'s':''):'')+'</span>';
   html+='</div></div>';
 
   html+='<div class="sv-wrap">';
@@ -4588,21 +4591,22 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   html+='<p>Tap a card to enlarge · Click Watch Film for Hudl</p>';
   html+='</div>';
 
-  // Tabs
+  // Tabs — determine first active tab
+  var firstTab=hasReports?'reports':hasCards?'cards':hasPD?'playdesigns':hasPb?'playbook':hasGlossary?'glossary':'cards';
   if(hasTabs){
     html+='<div class="sv-tabs">';
-    if(hasReports){html+='<button class="sv-tab active" data-tab="reports">Scouting Report</button>';}
-    html+='<button class="sv-tab'+(hasReports?'':' active')+'" data-tab="cards">Scout Cards</button>';
-    if(hasPD){html+='<button class="sv-tab" data-tab="playdesigns">Play Designs</button>';}
-    if(hasPb){html+='<button class="sv-tab" data-tab="playbook">Playbook</button>';}
-    if(hasGlossary){html+='<button class="sv-tab" data-tab="glossary">Glossary</button>';}
+    if(hasReports){html+='<button class="sv-tab'+(firstTab==='reports'?' active':'')+'" data-tab="reports">Scouting Report</button>';}
+    if(hasCards){html+='<button class="sv-tab'+(firstTab==='cards'?' active':'')+'" data-tab="cards">Scout Cards</button>';}
+    if(hasPD){html+='<button class="sv-tab'+(firstTab==='playdesigns'?' active':'')+'" data-tab="playdesigns">Play Designs</button>';}
+    if(hasPb){html+='<button class="sv-tab'+(firstTab==='playbook'?' active':'')+'" data-tab="playbook">Playbook</button>';}
+    if(hasGlossary){html+='<button class="sv-tab'+(firstTab==='glossary'?' active':'')+'" data-tab="glossary">Glossary</button>';}
     html+='</div>';
   }
 
   // === SCOUT CARDS SECTION ===
   // === SCOUTING REPORTS SECTION ===
   if(hasReports){
-    html+='<div class="sv-section active" id="svReportsSection">';
+    html+='<div class="sv-section'+(firstTab==='reports'?' active':'')+'" id="svReportsSection">';
     html+='<div class="sv-grid">';
     for(var ri=0;ri<reports.length;ri++){
       var rpt=reports[ri];
@@ -4623,7 +4627,8 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   }
 
   // === SCOUT CARDS SECTION ===
-  html+='<div class="sv-section'+(hasReports?'':' active')+'" id="svCardsSection">';
+  if(hasCards){
+  html+='<div class="sv-section'+(firstTab==='cards'?' active':'')+'" id="svCardsSection">';
   html+='<div class="sv-grid">';
   for(var i=0;i<shareCards.length;i++){
     var sc=shareCards[i];
@@ -4640,10 +4645,11 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   }
   html+='</div>';
   html+='</div>';
+  } // end hasCards
 
   // === PLAY DESIGNS SECTION ===
   if(hasPD){
-    html+='<div class="sv-section" id="svPlayDesignsSection">';
+    html+='<div class="sv-section'+(firstTab==='playdesigns'?' active':'')+'" id="svPlayDesignsSection">';
     html+='<div class="sv-grid">';
     for(var pdi=0;pdi<playDesigns.length;pdi++){
       var pd=playDesigns[pdi];
@@ -4660,7 +4666,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
 
   // === PLAYBOOK SECTION ===
   if(hasPb){
-    html+='<div class="sv-section" id="svPlaybookSection">';
+    html+='<div class="sv-section'+(firstTab==='playbook'?' active':'')+'" id="svPlaybookSection">';
     html+='<div class="sv-grid">';
     for(var pi=0;pi<playbooks.length;pi++){
       var pb=playbooks[pi];
@@ -4683,7 +4689,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
   // === GLOSSARY SECTION ===
   if(hasGlossary){
     var glossaryUrl=SB_URL+'/storage/v1/object/public/playbooks/'+encodeURI(glossary.path);
-    html+='<div class="sv-section" id="svGlossarySection">';
+    html+='<div class="sv-section'+(firstTab==='glossary'?' active':'')+'" id="svGlossarySection">';
     html+='<div class="sv-grid">';
     html+='<a class="sv-pb-card" href="'+esc(glossaryUrl)+'" target="_blank" rel="noopener">';
     html+='<div class="sv-pb-thumb">';
@@ -4729,7 +4735,7 @@ html+='.sv-hdr p{font-size:9px;padding:0 4px;line-height:1.4}';
           for(var j=0;j<tabs.length;j++)tabs[j].classList.remove('active');
           tab.classList.add('active');
           var which=tab.getAttribute('data-tab');
-          cardsSection.classList.toggle('active',which==='cards');
+          if(cardsSection)cardsSection.classList.toggle('active',which==='cards');
           if(pbSection)pbSection.classList.toggle('active',which==='playbook');
           if(glossarySection)glossarySection.classList.toggle('active',which==='glossary');
           if(reportsSection)reportsSection.classList.toggle('active',which==='reports');
