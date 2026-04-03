@@ -4924,6 +4924,8 @@ document.addEventListener('keydown',function(e){
 // Check for ?share= URL parameter — render share viewer instead of normal app
 var shareParam=new URLSearchParams(window.location.search).get('share');
 if(shareParam&&supabase){
+  // Hide auth screen immediately for share links
+  document.getElementById('auth-screen').classList.add('hidden');
   supabase.from('shares').select('data').eq('id',shareParam).single().then(function(res){
     if(res.error||!res.data){
       document.body.innerHTML='<div style="text-align:center;padding:80px 20px;font-family:Arial,sans-serif;color:#333"><h2>Share not found</h2><p style="color:#888;margin-top:8px">This link may have expired or been removed.</p><a href="'+window.location.pathname+'" style="display:inline-block;margin-top:16px;color:#1A3C2B;font-weight:600">← Back to Juice Box Football</a></div>';
