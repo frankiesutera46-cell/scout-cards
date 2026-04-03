@@ -2184,7 +2184,20 @@ function bind(){
         var tgt=e.target;
         var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
         if(tbAttr!==null&&tbAttr!==undefined){
-          selTextBox=parseInt(tbAttr);selPlayer=null;
+          var clickedTBIdx=parseInt(tbAttr);
+          // If clicking already-selected text box, open inline edit
+          if(selTextBox===clickedTBIdx){
+            var editTb=getCurTB(card)[clickedTBIdx];
+            if(editTb){
+              startInlineEditMulti(String(clickedTBIdx),editTb.text,function(nv){
+                if(nv===''){getCurTB(card).splice(clickedTBIdx,1);selTextBox=null}
+                else{editTb.text=nv}
+                render();bindDrag();
+              });
+            }
+            e.preventDefault();return;
+          }
+          selTextBox=clickedTBIdx;selPlayer=null;
           var pt2=svgPoint(svg,e);
           var tb=getCurTB(card)[selTextBox];
           dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false};
