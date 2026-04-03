@@ -3234,15 +3234,15 @@ function bind(){
       }
       e.preventDefault();return;
     }
-    // Text box editing (inline)
+    // Text box editing (inline) — check data-tb attr OR currently selected text box
     var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
-    if(tbAttr!==null&&tbAttr!==undefined){
-      var idx=parseInt(tbAttr);
+    var tbIdx=(tbAttr!==null&&tbAttr!==undefined)?parseInt(tbAttr):selTextBox;
+    if(tbIdx!==null&&tbIdx!==undefined){
       var dblTBs=getCurTB(card);
-      var tb=dblTBs[idx];
+      var tb=dblTBs[tbIdx];
       if(tb){
-        startInlineEditMulti(String(idx),tb.text,function(nv){
-          if(nv===''){getCurTB(card).splice(idx,1);selTextBox=null}
+        startInlineEditMulti(String(tbIdx),tb.text,function(nv){
+          if(nv===''){getCurTB(card).splice(tbIdx,1);selTextBox=null}
           else{tb.text=nv}
           render();
         });
