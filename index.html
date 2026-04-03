@@ -1077,6 +1077,7 @@ function buildField(){
 }
 
 // Inline edit: overlay an input on top of SVG text
+var _inlineEditActive=false;
 function startInlineEdit(key,val,callback){
   var existing=document.querySelector('.inline-edit');
   if(existing)existing.remove();
@@ -1110,18 +1111,18 @@ function startInlineEdit(key,val,callback){
     if(done)return;done=true;
     var nv=inp.value;
     if(inp.parentNode)inp.remove();
-    setTimeout(function(){_inlineEditActive=false},100);
+    _inlineEditActive=false;
+    textMode=false;
     callback(nv);
   }
   inp.addEventListener('keydown',function(e2){
     if(e2.key==='Enter'){e2.preventDefault();finish()}
-    if(e2.key==='Escape'){done=true;_inlineEditActive=false;if(inp.parentNode)inp.remove()}
+    if(e2.key==='Escape'){done=true;_inlineEditActive=false;textMode=false;if(inp.parentNode)inp.remove();render()}
   });
   inp.addEventListener('blur',finish);
   inp.addEventListener('mousedown',function(e2){e2.stopPropagation()});
 }
 
-var _inlineEditActive=false;
 function startInlineEditMulti(key,val,callback){
   var existing=document.querySelector('.inline-edit-multi');
   if(existing)existing.remove();
@@ -1154,16 +1155,16 @@ function startInlineEditMulti(key,val,callback){
     if(done)return;done=true;
     var nv=ta.value;
     if(ta.parentNode)ta.remove();
-    // Brief guard so the blur-triggering click doesn't also create a new text box
-    setTimeout(function(){_inlineEditActive=false},100);
+    _inlineEditActive=false;
+    // Deactivate text mode on submit so click-away doesn't create new text box
+    textMode=false;
     callback(nv);
   }
   ta.addEventListener('keydown',function(e2){
     if(e2.key==='Enter'&&(e2.metaKey||e2.ctrlKey)){e2.preventDefault();finish()}
-    if(e2.key==='Escape'){done=true;_inlineEditActive=false;if(ta.parentNode)ta.remove()}
+    if(e2.key==='Escape'){done=true;_inlineEditActive=false;textMode=false;if(ta.parentNode)ta.remove();render()}
   });
   ta.addEventListener('blur',finish);
-  // Prevent mousedown inside textarea from bubbling to SVG
   ta.addEventListener('mousedown',function(e2){e2.stopPropagation()});
 }
 
@@ -2188,7 +2189,7 @@ function bind(){
     svg.addEventListener('mousedown',function(e){
       // Text mode: click to create text box
       if(textMode){
-        if(_inlineEditActive){e.preventDefault();return}
+        if(document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit')){e.preventDefault();return}
         var pt=svgPoint(svg,e);
         // Check if clicking existing text box
         var tgt=e.target;
