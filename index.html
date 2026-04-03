@@ -1838,8 +1838,11 @@ function render(){
   h+='</div>';
   if(appMode==='playdesign'){
     h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:4px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
-    h+='<button class="btn btn-sec" id="btnImportPlay" style="width:100%;margin-bottom:8px;font-size:10px;padding:6px;color:#3b82f6;border-color:rgba(59,130,246,.4)">&#x1F4F7; Import Play from Image</button>';
-    h+='<input type="file" id="importPlayFile" accept="image/*,.pdf" style="display:none"/>';
+    var importEmails=['frankiesutera46@gmail.com','frankiesuteraphoto@gmail.com'];
+    if(currentUser&&importEmails.indexOf(currentUser.email)>=0){
+      h+='<button class="btn btn-sec" id="btnImportPlay" style="width:100%;margin-bottom:8px;font-size:10px;padding:6px;color:#3b82f6;border-color:rgba(59,130,246,.4)">&#x1F4F7; Import Play from Image</button>';
+      h+='<input type="file" id="importPlayFile" accept="image/*,.pdf" style="display:none"/>';
+    }
   }
 
   if(scriptMode){
@@ -3093,7 +3096,7 @@ function bind(){
           reader.readAsDataURL(file);
         });
         // Call edge function
-        var res=await supabase.functions.invoke('analyze-play',{body:{image:base64}});
+        var res=await supabase.functions.invoke('analyze-play',{body:{image:base64,userEmail:currentUser?currentUser.email:''}});
         if(res.error)throw new Error(res.error.message||'Analysis failed');
         var playData=res.data;
         if(playData.error)throw new Error(playData.error);
