@@ -312,13 +312,15 @@ function initAuth(){
     supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});
   });
 
+  var initialLoadDone=false;
   supabase.auth.onAuthStateChange(function(event,session){
     if(session&&session.user){
       currentUser=session.user;
       authScreen.classList.add('hidden');
-      loadFromCloud();
+      if(!initialLoadDone){initialLoadDone=true;loadFromCloud()}
     }else{
       currentUser=null;
+      initialLoadDone=false;
       authScreen.classList.remove('hidden');
     }
   });
@@ -408,6 +410,16 @@ function autoSave(){
     games[activeGameIdx].name=gameTitle;saveToCloud();
   },2000);
 }
+
+// Flush any pending save immediately when leaving the tab
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&autoSaveTimer){
+    clearTimeout(autoSaveTimer);autoSaveTimer=null;
+    if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+    else{games[activeGameIdx].cards=cards}
+    games[activeGameIdx].name=gameTitle;saveToCloud();
+  }
+});
 
 function signOut(){
   if(!supabase)return;
