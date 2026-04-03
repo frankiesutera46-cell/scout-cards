@@ -773,17 +773,18 @@ var offPresets=[];
 var defPresets=[];
 var routePresets=[];
 var customRoutes=[];
+var savedPlays=[];
 
 function loadPresets(){
   try{
     var raw=localStorage.getItem('scoutPresets');
-    if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[];customRoutes=d.croutes||[]}
+    if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[];customRoutes=d.croutes||[];savedPlays=d.savedPlays||[]}
     // Register custom routes into ROUTES and RGROUPS
     rebuildCustomRoutes();
   }catch(e){}
 }
 function savePresets(){
-  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes}))}catch(e){}
+  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes,savedPlays:savedPlays}))}catch(e){}
 }
 function rebuildCustomRoutes(){
   // Remove old custom entries
@@ -1793,6 +1794,35 @@ function render(){
   h+='<div style="margin-top:24px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.3);letter-spacing:.1em;text-transform:uppercase">Juice Box Football &mdash; juiceboxfootball.cc</div>';
   h+='</div></div>';
 
+  // Saved Plays Modal
+  h+='<div id="savedPlaysModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
+  h+='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Saved Plays</span><button id="savedPlaysClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-bottom:16px;letter-spacing:.05em">Save plays to reuse across weeks. Click a play to load it.</div>';
+  h+='<div id="savedPlaysList">';
+  if(savedPlays.length===0){
+    h+='<div style="text-align:center;padding:30px;color:rgba(58,58,56,.35);font-family:\'JetBrains Mono\',monospace;font-size:11px">No saved plays yet. Use the &#x1F4BE; button in the sidebar to save the current play.</div>';
+  }else{
+    for(var spi=0;spi<savedPlays.length;spi++){
+      var sp=savedPlays[spi];
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid rgba(58,58,56,.1);border-radius:3px;margin-bottom:6px;cursor:pointer;transition:.15s" data-spload="'+spi+'" onmouseover="this.style.borderColor=\'#C6A355\'" onmouseout="this.style.borderColor=\'rgba(58,58,56,.1)\'">';
+      h+='<div style="flex:1;min-width:0">';
+      h+='<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:13px;color:#1A3C2B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(sp.name)+'</div>';
+      var spMeta=[];
+      if(sp.data&&sp.data.fk){var fmn=(FORMATIONS[sp.data.fk]||{}).name;if(fmn)spMeta.push(fmn)}
+      if(sp.data&&sp.data.hash)spMeta.push(sp.data.hash);
+      var asgnCount=sp.data&&sp.data.asgn?Object.keys(sp.data.asgn).length:0;
+      if(asgnCount)spMeta.push(asgnCount+' route'+(asgnCount!==1?'s':''));
+      if(sp.savedAt){var d=new Date(sp.savedAt);spMeta.push(d.toLocaleDateString())}
+      h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.4);margin-top:2px">'+esc(spMeta.join(' \u00B7 '))+'</div>';
+      h+='</div>';
+      h+='<button data-spdel="'+spi+'" style="background:none;border:none;color:rgba(58,58,56,.3);cursor:pointer;font-size:14px;padding:4px 6px;flex-shrink:0" title="Delete">&times;</button>';
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+  h+='</div></div>';
+
   h+='<div class="layout">';
 
   // Sidebar
@@ -1800,8 +1830,15 @@ function render(){
   h+='<button class="btn btn-add" id="btnA">+ New</button>';
   h+='<button class="btn btn-sec" id="btnD" title="Duplicate">&#x29C9;</button>';
   h+='<button class="btn btn-sec" id="btnDF" title="Duplicate &amp; Flip">&#x29C9; &#x21C4;</button>';
-  h+='<button class="script-toggle'+(scriptMode?' on':'')+'" id="btnScript">&#x1F4CB; Script</button>';
+  if(appMode==='playdesign'){
+    h+='<button class="btn btn-sec" id="btnSavePlay" title="Save to Library" style="color:#C6A355;border-color:rgba(198,163,85,.4)">&#x1F4BE;</button>';
+  } else {
+    h+='<button class="script-toggle'+(scriptMode?' on':'')+'" id="btnScript">&#x1F4CB; Script</button>';
+  }
   h+='</div>';
+  if(appMode==='playdesign'){
+    h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:8px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
+  }
 
   if(scriptMode){
     // Practice Script Builder view
@@ -2976,6 +3013,64 @@ function bind(){
 
   var btnSignOut=document.getElementById('btnSignOut');
   if(btnSignOut)btnSignOut.addEventListener('click',function(){signOut()});
+
+  // ===== SAVED PLAYS =====
+  var btnSavePlay=document.getElementById('btnSavePlay');
+  if(btnSavePlay)btnSavePlay.addEventListener('click',function(){
+    var card=cards[activeIdx];
+    var defName=card.play||'Untitled Play';
+    var name=prompt('Save play as:',defName);
+    if(!name)return;
+    // Deep copy the card data
+    var playData=JSON.parse(JSON.stringify(card));
+    delete playData.id; // Remove card-specific id
+    savedPlays.push({name:name,data:playData,savedAt:Date.now()});
+    savePresets();
+    render();
+  });
+  var btnSavedPlays=document.getElementById('btnSavedPlays');
+  var savedPlaysModal=document.getElementById('savedPlaysModal');
+  if(btnSavedPlays&&savedPlaysModal){
+    btnSavedPlays.addEventListener('click',function(){savedPlaysModal.style.display='flex'});
+    document.getElementById('savedPlaysClose').addEventListener('click',function(){savedPlaysModal.style.display='none'});
+    savedPlaysModal.addEventListener('click',function(e){if(e.target===savedPlaysModal)savedPlaysModal.style.display='none'});
+    // Load play
+    var spLoadBtns=document.querySelectorAll('[data-spload]');
+    for(var sli=0;sli<spLoadBtns.length;sli++){
+      (function(btn){
+        btn.addEventListener('click',function(e){
+          if(e.target.hasAttribute('data-spdel'))return; // Don't load when clicking delete
+          var idx=parseInt(btn.getAttribute('data-spload'));
+          var sp=savedPlays[idx];
+          if(!sp||!sp.data)return;
+          pushUndo();
+          var newCard=JSON.parse(JSON.stringify(sp.data));
+          newCard.id=nid++;
+          cards.push(newCard);
+          activeIdx=cards.length-1;
+          selPlayer=null;selTextBox=null;selLine=null;
+          savedPlaysModal.style.display='none';
+          autoSave();
+          render();
+        });
+      })(spLoadBtns[sli]);
+    }
+    // Delete saved play
+    var spDelBtns=document.querySelectorAll('[data-spdel]');
+    for(var sdi2=0;sdi2<spDelBtns.length;sdi2++){
+      (function(btn){
+        btn.addEventListener('click',function(e){
+          e.stopPropagation();
+          var idx=parseInt(btn.getAttribute('data-spdel'));
+          if(!confirm('Delete saved play "'+savedPlays[idx].name+'"?'))return;
+          savedPlays.splice(idx,1);
+          savePresets();
+          savedPlaysModal.style.display='none';
+          render();
+        });
+      })(spDelBtns[sdi2]);
+    }
+  }
 
   // ===== PRESET BINDINGS =====
   // Save Offensive Formation
