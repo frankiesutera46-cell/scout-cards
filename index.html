@@ -957,10 +957,15 @@ function getCurPosStore(isDef){
 
 // Unified helper: get the correct lines array key for current perspective
 function getCurLinesKey(){
-  if(appMode==='playdesign') return viewPerspective==='off'?'linesOffPd':'lines';
+  if(appMode==='playdesign') return viewPerspective==='off'?'linesOffPd':'linesPd';
   return viewPerspective==='off'?'linesOff':'lines';
 }
 function getCurLines(card){var k=getCurLinesKey();return card[k]||(card[k]=[])}
+function getCurTBKey(){
+  if(appMode==='playdesign') return 'pdTextBoxes';
+  return 'textBoxes';
+}
+function getCurTB(card){var k=getCurTBKey();if(!card[k])card[k]=[];return card[k]}
 
 // ===== SVG FIELD =====
 // Hash positions (stored globally for use in formation offsets)
@@ -1471,9 +1476,10 @@ function buildWaypointHandles(card,players){
 // ===== TEXT BOXES =====
 function buildTextBoxes(card){
   var s='';
-  if(!card.textBoxes)return s;
-  for(var i=0;i<card.textBoxes.length;i++){
-    var tb=card.textBoxes[i];
+  var tbs=getCurTB(card);
+  if(!tbs||!tbs.length)return s;
+  for(var i=0;i<tbs.length;i++){
+    var tb=tbs[i];
     if(!tb.text)continue;
     var isSel=(selTextBox===i);
     var col=tb.color||'#222';
@@ -1922,8 +1928,9 @@ function render(){
 
   // Right panel
   h+='<div class="rp">';
-  if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]){
-    var stb=card.textBoxes[selTextBox];
+  var curTBs=getCurTB(card);
+  if(selTextBox!==null&&curTBs&&curTBs[selTextBox]){
+    var stb=curTBs[selTextBox];
     h+='<div class="sel-hdr"><span style="color:#3b82f6">Text Box</span>';
     h+='<button class="clr-btn" id="btnDelTB">Delete</button></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Color</label>';
@@ -2128,22 +2135,23 @@ function bind(){
         if(tbAttr!==null&&tbAttr!==undefined){
           selTextBox=parseInt(tbAttr);selPlayer=null;
           var pt2=svgPoint(svg,e);
-          var tb=card.textBoxes[selTextBox];
+          var tb=getCurTB(card)[selTextBox];
           dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false};
           render();bindDrag();
           e.preventDefault();return;
         }
         // Create text box at click point and immediately inline edit
-        if(!card.textBoxes)card.textBoxes=[];
-        card.textBoxes.push({id:tbNid++,x:pt.x,y:pt.y,text:'Text',color:'#222',size:12});
-        var newIdx=card.textBoxes.length-1;
+        var curTBs2=getCurTB(card);
+        curTBs2.push({id:tbNid++,x:pt.x,y:pt.y,text:'Text',color:'#222',size:12});
+        var newIdx=curTBs2.length-1;
         selTextBox=newIdx;selPlayer=null;
         render();bindDrag();
         // Defer inline edit so the element renders first
         setTimeout(function(){
           startInlineEdit('tb_'+newIdx,'' ,function(nv){
-            if(!nv||nv===''){card.textBoxes.splice(newIdx,1);selTextBox=null}
-            else{card.textBoxes[newIdx].text=nv}
+            var curTBs3=getCurTB(card);
+            if(!nv||nv===''){curTBs3.splice(newIdx,1);selTextBox=null}
+            else{curTBs3[newIdx].text=nv}
             render();bindDrag();
           });
         },50);
@@ -2293,7 +2301,7 @@ function bind(){
       if(tbAttr2!==null&&tbAttr2!==undefined){
         selTextBox=parseInt(tbAttr2);selPlayer=null;selLabel=null;
         var pt3=svgPoint(svg,e);
-        var tb2=card.textBoxes[selTextBox];
+        var tb2=getCurTB(card)[selTextBox];
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false};
         render();bindDrag();
         e.preventDefault();return;
@@ -2411,9 +2419,10 @@ function bind(){
     var card=cards[activeIdx];
     var clines2=getCurLines(card);
     var hasLines=clines2.length>0;
-    var hasTextBoxes=card.textBoxes&&card.textBoxes.length>0;
+    var curTBsCl=getCurTB(card);
+    var hasTextBoxes=curTBsCl.length>0;
     if(hasLines||hasTextBoxes){
-      if(confirm('Clear all drawings and text boxes on this card?')){pushUndo();card[getCurLinesKey()]=[];card.textBoxes=[];render()}
+      if(confirm('Clear all drawings and text boxes on this card?')){pushUndo();card[getCurLinesKey()]=[];card[getCurTBKey()]=[];render()}
     }
   });
   var dStyleSel=document.getElementById('dStyle');
@@ -2605,7 +2614,8 @@ function bind(){
     var clines=getCurLines(card);
     for(var li=0;li<clines.length;li++){var pts=clines[li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}
     // Mirror text boxes
-    if(card.textBoxes){for(var ti=0;ti<card.textBoxes.length;ti++){card.textBoxes[ti].x=CX+(CX-card.textBoxes[ti].x)}}
+    var flipTBs=getCurTB(card);
+    for(var ti=0;ti<flipTBs.length;ti++){flipTBs[ti].x=CX+(CX-flipTBs[ti].x)}
     // Mirror label positions
     if(card.lpos){var lks=Object.keys(card.lpos);for(var lki=0;lki<lks.length;lki++){card.lpos[lks[lki]].x=CX+(CX-card.lpos[lks[lki]].x)}}
     selPlayer=null;render();
@@ -2628,11 +2638,13 @@ function bind(){
     d.asgn=JSON.parse(JSON.stringify(src.asgn));d.pn=JSON.parse(JSON.stringify(src.pn));
     if(src.opos)d.opos=JSON.parse(JSON.stringify(src.opos));
     if(src.dpos)d.dpos=JSON.parse(JSON.stringify(src.dpos));
-    if(src.lines&&src.lines.length)d.lines=JSON.parse(JSON.stringify(src.lines));
+    var dupLK=getCurLinesKey();
+    if(src[dupLK]&&src[dupLK].length)d[dupLK]=JSON.parse(JSON.stringify(src[dupLK]));
     if(src.lpos)d.lpos=JSON.parse(JSON.stringify(src.lpos));
     if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
     if(src.routePts&&Object.keys(src.routePts).length)d.routePts=JSON.parse(JSON.stringify(src.routePts));
-    if(src.textBoxes&&src.textBoxes.length)d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));
+    var srcTBKey=getCurTBKey();
+    if(src[srcTBKey]&&src[srcTBKey].length)d[srcTBKey]=JSON.parse(JSON.stringify(src[srcTBKey]));
     if(src.tags&&src.tags.length)d.tags=src.tags.slice();
     cards.splice(activeIdx+1,0,d);activeIdx++;render();
   });
@@ -2654,12 +2666,14 @@ function bind(){
     d.dpos={};var dks2=Object.keys(renderedDef);
     for(var i=0;i<dks2.length;i++){d.dpos[dks2[i]]={x:CX+(CX-renderedDef[dks2[i]].x),y:renderedDef[dks2[i]].y}}
     // Mirror drawings
-    if(src.lines&&src.lines.length){d.lines=JSON.parse(JSON.stringify(src.lines));for(var li=0;li<d.lines.length;li++){var pts=d.lines[li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}}
+    var dfLK=getCurLinesKey();
+    if(src[dfLK]&&src[dfLK].length){d[dfLK]=JSON.parse(JSON.stringify(src[dfLK]));for(var li=0;li<d[dfLK].length;li++){var pts=d[dfLK][li].pts;if(pts){for(var pi=0;pi<pts.length;pi++){pts[pi].x=CX+(CX-pts[pi].x)}}}}
     if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
     // Mirror route waypoints
     if(src.routePts&&Object.keys(src.routePts).length){d.routePts=JSON.parse(JSON.stringify(src.routePts));var rks=Object.keys(d.routePts);for(var ri=0;ri<rks.length;ri++){var rp=d.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x=CX+(CX-rp[rpi].x)}}}}
     // Mirror text boxes
-    if(src.textBoxes&&src.textBoxes.length){d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));for(var ti=0;ti<d.textBoxes.length;ti++){d.textBoxes[ti].x=CX+(CX-d.textBoxes[ti].x)}}
+    var dfTBKey=getCurTBKey();
+    if(src[dfTBKey]&&src[dfTBKey].length){d[dfTBKey]=JSON.parse(JSON.stringify(src[dfTBKey]));for(var ti=0;ti<d[dfTBKey].length;ti++){d[dfTBKey][ti].x=CX+(CX-d[dfTBKey][ti].x)}}
     if(src.tags&&src.tags.length)d.tags=src.tags.slice();
     // Mirror label positions
     if(src.lpos){d.lpos=JSON.parse(JSON.stringify(src.lpos));var lks=Object.keys(d.lpos);for(var lki=0;lki<lks.length;lki++){d.lpos[lks[lki]].x=CX+(CX-d.lpos[lks[lki]].x)}}
@@ -3140,10 +3154,11 @@ function bind(){
     var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
     if(tbAttr!==null&&tbAttr!==undefined){
       var idx=parseInt(tbAttr);
-      var tb=card.textBoxes[idx];
+      var dblTBs=getCurTB(card);
+      var tb=dblTBs[idx];
       if(tb){
         startInlineEdit('tb_'+idx,tb.text,function(nv){
-          if(nv===''){card.textBoxes.splice(idx,1);selTextBox=null}
+          if(nv===''){getCurTB(card).splice(idx,1);selTextBox=null}
           else{tb.text=nv}
           render();
         });
@@ -3251,18 +3266,21 @@ function bind(){
   // === TEXT BOX: delete from right panel ===
   var btnDelTB=document.getElementById('btnDelTB');
   if(btnDelTB)btnDelTB.addEventListener('click',function(){
-    if(selTextBox!==null&&card.textBoxes[selTextBox]){
-      card.textBoxes.splice(selTextBox,1);selTextBox=null;render();
+    var delTBs=getCurTB(card);
+    if(selTextBox!==null&&delTBs[selTextBox]){
+      delTBs.splice(selTextBox,1);selTextBox=null;render();
     }
   });
   // Text box color/size from right panel
   var tbColorSel=document.getElementById('tbColorSel');
   if(tbColorSel)tbColorSel.addEventListener('change',function(){
-    if(selTextBox!==null&&card.textBoxes[selTextBox]){card.textBoxes[selTextBox].color=this.value;render()}
+    var cTBs=getCurTB(card);
+    if(selTextBox!==null&&cTBs[selTextBox]){cTBs[selTextBox].color=this.value;render()}
   });
   var tbSizeSel=document.getElementById('tbSizeSel');
   if(tbSizeSel)tbSizeSel.addEventListener('change',function(){
-    if(selTextBox!==null&&card.textBoxes[selTextBox]){card.textBoxes[selTextBox].size=parseInt(this.value);render()}
+    var sTBs=getCurTB(card);
+    if(selTextBox!==null&&sTBs[selTextBox]){sTBs[selTextBox].size=parseInt(this.value);render()}
   });
 }
 
@@ -3365,7 +3383,8 @@ function bindDrag(){
       var dy=pt.y-dragInfo.startY;
       var newSz=Math.round(Math.max(6,Math.min(40,dragInfo.startSize+dy*0.15)));
       if(dragInfo.isTbResize){
-        if(card.textBoxes[dragInfo.idx])card.textBoxes[dragInfo.idx].size=newSz;
+        var rzTBs=getCurTB(card);
+        if(rzTBs[dragInfo.idx])rzTBs[dragInfo.idx].size=newSz;
       }else{
         if(!card.lsz)card.lsz={};
         card.lsz[dragInfo.key]=newSz;
@@ -3447,7 +3466,7 @@ function bindDrag(){
 
     // Text box drag
     if(dragInfo.isTextBox){
-      var tb=card.textBoxes[dragInfo.idx];
+      var tb=getCurTB(card)[dragInfo.idx];
       if(tb){
         tb.x=nx;tb.y=ny;
         var tbEls=svg.querySelectorAll('[data-tb="'+dragInfo.idx+'"]');
@@ -4654,9 +4673,10 @@ document.addEventListener('keydown',function(e){
       selLine=null;
       render();e.preventDefault();return;
     }
-    if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]!==undefined){
+    var kbTBsDel=getCurTB(card);
+    if(selTextBox!==null&&kbTBsDel[selTextBox]!==undefined){
       pushUndo();
-      card.textBoxes.splice(selTextBox,1);
+      kbTBsDel.splice(selTextBox,1);
       selTextBox=null;
       render();e.preventDefault();return;
     }
@@ -4671,11 +4691,12 @@ document.addEventListener('keydown',function(e){
   // Cmd/Ctrl+C: copy selected line, text box, or whole card
   if((e.metaKey||e.ctrlKey)&&e.key==='c'){
     var cpLines=getCurLines(card);
+    var kbTBsCopy=getCurTB(card);
     if(selLine!==null&&cpLines[selLine]){
       clipboardLine=JSON.parse(JSON.stringify(cpLines[selLine]));
       clipboardCard=null;clipboardTextBox=null;
-    } else if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]){
-      clipboardTextBox=JSON.parse(JSON.stringify(card.textBoxes[selTextBox]));
+    } else if(selTextBox!==null&&kbTBsCopy[selTextBox]){
+      clipboardTextBox=JSON.parse(JSON.stringify(kbTBsCopy[selTextBox]));
       clipboardCard=null;clipboardLine=null;
     } else {
       clipboardCard=JSON.parse(JSON.stringify(card));
@@ -4699,9 +4720,9 @@ document.addEventListener('keydown',function(e){
     if(clipboardTextBox){
       var nt=JSON.parse(JSON.stringify(clipboardTextBox));
       nt.x+=10;nt.y+=10;
-      if(!card.textBoxes)card.textBoxes=[];
-      card.textBoxes.push(nt);
-      selTextBox=card.textBoxes.length-1;selPlayer=null;selLine=null;
+      var pasteTBs=getCurTB(card);
+      pasteTBs.push(nt);
+      selTextBox=pasteTBs.length-1;selPlayer=null;selLine=null;
       render();e.preventDefault();return;
     }
     if(clipboardCard){
