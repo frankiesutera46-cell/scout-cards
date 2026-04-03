@@ -2187,9 +2187,11 @@ function bind(){
   var svg=document.getElementById('fSvg');
   if(svg){
     svg.addEventListener('mousedown',function(e){
+      // If an inline editor is open, close it on any click on the field
+      var activeEditor=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
+      if(activeEditor){activeEditor.blur();e.preventDefault();return}
       // Text mode: click to create text box
       if(textMode){
-        if(document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit')){e.preventDefault();return}
         var pt=svgPoint(svg,e);
         // Check if clicking existing text box
         var tgt=e.target;
