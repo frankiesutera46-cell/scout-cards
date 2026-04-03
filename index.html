@@ -963,8 +963,8 @@ function getCurLinesKey(){
 }
 function getCurLines(card){var k=getCurLinesKey();return card[k]||(card[k]=[])}
 function getCurTBKey(){
-  if(appMode==='playdesign') return 'pdTextBoxes';
-  return 'textBoxes';
+  if(appMode==='playdesign') return viewPerspective==='off'?'pdTextBoxesOff':'pdTextBoxes';
+  return viewPerspective==='off'?'textBoxesOff':'textBoxes';
 }
 function getCurTB(card){var k=getCurTBKey();if(!card[k])card[k]=[];return card[k]}
 
