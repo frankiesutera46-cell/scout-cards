@@ -1837,7 +1837,9 @@ function render(){
   }
   h+='</div>';
   if(appMode==='playdesign'){
-    h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:8px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
+    h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:4px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
+    h+='<button class="btn btn-sec" id="btnImportPlay" style="width:100%;margin-bottom:8px;font-size:10px;padding:6px;color:#3b82f6;border-color:rgba(59,130,246,.4)">&#x1F4F7; Import Play from Image</button>';
+    h+='<input type="file" id="importPlayFile" accept="image/*,.pdf" style="display:none"/>';
   }
 
   if(scriptMode){
@@ -3070,6 +3072,91 @@ function bind(){
         });
       })(spDelBtns[sdi2]);
     }
+  }
+
+  // ===== IMPORT PLAY FROM IMAGE =====
+  var btnImportPlay=document.getElementById('btnImportPlay');
+  var importPlayFile=document.getElementById('importPlayFile');
+  if(btnImportPlay&&importPlayFile){
+    btnImportPlay.addEventListener('click',function(){importPlayFile.click()});
+    importPlayFile.addEventListener('change',async function(){
+      var file=this.files[0];
+      if(!file)return;
+      btnImportPlay.disabled=true;
+      btnImportPlay.textContent='Analyzing play...';
+      btnImportPlay.style.opacity='0.6';
+      try{
+        // Convert to base64
+        var base64=await new Promise(function(resolve){
+          var reader=new FileReader();
+          reader.onload=function(){resolve(reader.result)};
+          reader.readAsDataURL(file);
+        });
+        // Call edge function
+        var res=await supabase.functions.invoke('analyze-play',{body:{image:base64}});
+        if(res.error)throw new Error(res.error.message||'Analysis failed');
+        var playData=res.data;
+        if(playData.error)throw new Error(playData.error);
+        // Build a new play card from the analysis
+        var newCard=mkPlayCard();
+        newCard.play=playData.playName||'Imported Play';
+        // Set formation
+        if(playData.formation&&FORMATIONS[playData.formation]){
+          newCard.fk=playData.formation;
+        }
+        // Get base positions for the formation
+        var basePlayers=(FORMATIONS[newCard.fk]||FORMATIONS['doubR']).p();
+        // Apply custom player positions from the analysis
+        if(playData.players&&playData.players.length){
+          var posKey=viewPerspective==='off'?'pdOposOff':'pdOpos';
+          if(!newCard[posKey])newCard[posKey]={};
+          for(var pi=0;pi<playData.players.length;pi++){
+            var pp=playData.players[pi];
+            if(!pp.key||pp.side==='defense')continue;
+            // Convert percentage coords to SVG coords
+            var svgX=pp.xPct*FW;
+            var svgY=pp.yPct*FH;
+            // Only override if the position differs significantly from base
+            if(basePlayers[pp.key]){
+              var bx=basePlayers[pp.key].x, by=basePlayers[pp.key].y;
+              if(Math.abs(svgX-bx)>20||Math.abs(svgY-by)>20){
+                newCard[posKey][pp.key]={x:svgX,y:svgY};
+              }
+            }
+          }
+        }
+        // Apply routes
+        if(playData.routes&&playData.routes.length){
+          for(var ri=0;ri<playData.routes.length;ri++){
+            var rt=playData.routes[ri];
+            if(!rt.playerKey)continue;
+            // Set route assignment
+            if(rt.routeType&&ROUTES[rt.routeType]){
+              newCard.asgn[rt.playerKey]=rt.routeType;
+            }
+            // Set waypoints if provided
+            if(rt.waypoints&&rt.waypoints.length>=2){
+              var wpts=[];
+              for(var wi=0;wi<rt.waypoints.length;wi++){
+                wpts.push({x:rt.waypoints[wi].xPct*FW, y:rt.waypoints[wi].yPct*FH});
+              }
+              if(!newCard.routePts)newCard.routePts={};
+              newCard.routePts[rt.playerKey]=wpts;
+            }
+          }
+        }
+        // Add the card
+        cards.push(newCard);
+        activeIdx=cards.length-1;
+        selPlayer=null;selTextBox=null;selLine=null;
+        autoSave();
+        render();
+      }catch(err){
+        alert('Import failed: '+err.message+'\n\nMake sure the Supabase Edge Function is deployed and ANTHROPIC_API_KEY is set.');
+      }
+      importPlayFile.value='';
+      // Button text will be reset by render()
+    });
   }
 
   // ===== PRESET BINDINGS =====
