@@ -1080,6 +1080,8 @@ function buildField(){
 function startInlineEdit(key,val,callback){
   var existing=document.querySelector('.inline-edit');
   if(existing)existing.remove();
+  var existing2=document.querySelector('.inline-edit-multi');
+  if(existing2)existing2.remove();
   var svg=document.getElementById('fSvg');
   if(!svg)return;
   var wrap=svg.closest('.field-wrap');
@@ -1088,7 +1090,6 @@ function startInlineEdit(key,val,callback){
   var tgt=svg.querySelector('[data-dp="t_'+key+'"]');
   if(!tgt&&key.indexOf('tb_')===0)tgt=svg.querySelector('[data-tb="'+key.substring(3)+'"]');
   if(!tgt)return;
-  var svgRect=svg.getBoundingClientRect();
   var tgtRect=tgt.getBoundingClientRect();
   var inp=document.createElement('input');
   inp.type='text';
@@ -1101,6 +1102,7 @@ function startInlineEdit(key,val,callback){
   inp.style.height=tgtRect.height+'px';
   inp.style.fontSize=(tgtRect.height*0.7)+'px';
   wrap.appendChild(inp);
+  _inlineEditActive=true;
   inp.focus();
   inp.select();
   var done=false;
@@ -1108,15 +1110,18 @@ function startInlineEdit(key,val,callback){
     if(done)return;done=true;
     var nv=inp.value;
     if(inp.parentNode)inp.remove();
+    setTimeout(function(){_inlineEditActive=false},100);
     callback(nv);
   }
   inp.addEventListener('keydown',function(e2){
     if(e2.key==='Enter'){e2.preventDefault();finish()}
-    if(e2.key==='Escape'){done=true;if(inp.parentNode)inp.remove()}
+    if(e2.key==='Escape'){done=true;_inlineEditActive=false;if(inp.parentNode)inp.remove()}
   });
   inp.addEventListener('blur',finish);
+  inp.addEventListener('mousedown',function(e2){e2.stopPropagation()});
 }
 
+var _inlineEditActive=false;
 function startInlineEditMulti(key,val,callback){
   var existing=document.querySelector('.inline-edit-multi');
   if(existing)existing.remove();
@@ -1128,7 +1133,6 @@ function startInlineEditMulti(key,val,callback){
   if(!wrap)return;
   var tgt=svg.querySelector('[data-tb="'+key+'"]');
   if(!tgt)return;
-  var svgRect=svg.getBoundingClientRect();
   var tgtRect=tgt.getBoundingClientRect();
   var ta=document.createElement('textarea');
   ta.className='inline-edit-multi';
@@ -1142,6 +1146,7 @@ function startInlineEditMulti(key,val,callback){
   ta.style.height=Math.max(40,lines.length*20+16)+'px';
   ta.style.fontSize=(tgtRect.height>20?14:Math.max(11,tgtRect.height*0.6))+'px';
   wrap.appendChild(ta);
+  _inlineEditActive=true;
   ta.focus();
   ta.select();
   var done=false;
@@ -1149,13 +1154,17 @@ function startInlineEditMulti(key,val,callback){
     if(done)return;done=true;
     var nv=ta.value;
     if(ta.parentNode)ta.remove();
+    // Brief guard so the blur-triggering click doesn't also create a new text box
+    setTimeout(function(){_inlineEditActive=false},100);
     callback(nv);
   }
   ta.addEventListener('keydown',function(e2){
     if(e2.key==='Enter'&&(e2.metaKey||e2.ctrlKey)){e2.preventDefault();finish()}
-    if(e2.key==='Escape'){done=true;if(ta.parentNode)ta.remove()}
+    if(e2.key==='Escape'){done=true;_inlineEditActive=false;if(ta.parentNode)ta.remove()}
   });
   ta.addEventListener('blur',finish);
+  // Prevent mousedown inside textarea from bubbling to SVG
+  ta.addEventListener('mousedown',function(e2){e2.stopPropagation()});
 }
 
 // Build draggable text labels for play name, D&D, notes on the field
@@ -2179,6 +2188,7 @@ function bind(){
     svg.addEventListener('mousedown',function(e){
       // Text mode: click to create text box
       if(textMode){
+        if(_inlineEditActive){e.preventDefault();return}
         var pt=svgPoint(svg,e);
         // Check if clicking existing text box
         var tgt=e.target;
