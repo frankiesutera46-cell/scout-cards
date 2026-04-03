@@ -93,6 +93,7 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .field-col .field-wrap{flex:1;min-height:0}
 .field-col .field-wrap svg{max-height:calc(100vh - 340px)}
 .inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
+.inline-edit-multi{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:4px 6px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:3px;min-width:100px;min-height:40px;resize:both;line-height:1.3}
 .pd-notes{display:flex;gap:12px;padding:0 12px 8px;background:#EEEEEC;flex-shrink:0}
 .pd-notes-col{flex:1}
 .pd-notes-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;border:2px solid #222;padding:4px 8px;text-align:center;background:#fff;letter-spacing:.05em;text-transform:uppercase}
@@ -1116,6 +1117,47 @@ function startInlineEdit(key,val,callback){
   inp.addEventListener('blur',finish);
 }
 
+function startInlineEditMulti(key,val,callback){
+  var existing=document.querySelector('.inline-edit-multi');
+  if(existing)existing.remove();
+  var existing2=document.querySelector('.inline-edit');
+  if(existing2)existing2.remove();
+  var svg=document.getElementById('fSvg');
+  if(!svg)return;
+  var wrap=svg.closest('.field-wrap');
+  if(!wrap)return;
+  var tgt=svg.querySelector('[data-tb="'+key+'"]');
+  if(!tgt)return;
+  var svgRect=svg.getBoundingClientRect();
+  var tgtRect=tgt.getBoundingClientRect();
+  var ta=document.createElement('textarea');
+  ta.className='inline-edit-multi';
+  ta.value=(val||'').replace(/\\n/g,'\n');
+  var wrapRect=wrap.getBoundingClientRect();
+  ta.style.left=(tgtRect.left-wrapRect.left)+'px';
+  ta.style.top=(tgtRect.top-wrapRect.top)+'px';
+  var lines=(val||'').split('\n');
+  var maxLen=0;for(var li=0;li<lines.length;li++){if(lines[li].length>maxLen)maxLen=lines[li].length}
+  ta.style.width=Math.max(140,maxLen*8+30)+'px';
+  ta.style.height=Math.max(40,lines.length*20+16)+'px';
+  ta.style.fontSize=(tgtRect.height>20?14:Math.max(11,tgtRect.height*0.6))+'px';
+  wrap.appendChild(ta);
+  ta.focus();
+  ta.select();
+  var done=false;
+  function finish(){
+    if(done)return;done=true;
+    var nv=ta.value;
+    if(ta.parentNode)ta.remove();
+    callback(nv);
+  }
+  ta.addEventListener('keydown',function(e2){
+    if(e2.key==='Enter'&&(e2.metaKey||e2.ctrlKey)){e2.preventDefault();finish()}
+    if(e2.key==='Escape'){done=true;if(ta.parentNode)ta.remove()}
+  });
+  ta.addEventListener('blur',finish);
+}
+
 // Build draggable text labels for play name, D&D, notes on the field
 var LABEL_DEF_SZ={fmhash:14,play:14,dd:14,notes:11};
 function labelSz(card,key){if(!card.lsz)card.lsz={};return card.lsz[key]||(LABEL_DEF_SZ[key]||9)}
@@ -1484,11 +1526,20 @@ function buildTextBoxes(card){
     var isSel=(selTextBox===i);
     var col=tb.color||'#222';
     var sz=tb.size||12;
-    var tw=Math.max(40,tb.text.length*(sz*0.6));
-    var bx=tb.x-tw/2-4,by=tb.y-sz-2,bw=tw+8,bh=sz+8;
+    var lines=tb.text.split('\n');
+    var lineH=sz*1.3;
+    var maxLineLen=0;
+    for(var li=0;li<lines.length;li++){if(lines[li].length>maxLineLen)maxLineLen=lines[li].length}
+    var tw=Math.max(40,maxLineLen*(sz*0.6));
+    var totalH=lines.length*lineH;
+    var bx=tb.x-tw/2-4,by=tb.y-sz-2,bw=tw+8,bh=totalH+8;
     // Background rect for drag target
     s+='<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" fill="'+(isSel?'rgba(26,60,43,0.08)':'transparent')+'" stroke="'+(isSel?'#1A3C2B':'none')+'" stroke-width="'+(isSel?'1':'0')+'" stroke-dasharray="'+(isSel?'3,2':'')+'" rx="3" data-tb="'+i+'" style="cursor:move"/>';
-    s+='<text x="'+tb.x+'" y="'+(tb.y)+'" text-anchor="middle" fill="'+col+'" font-size="'+sz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(tb.text)+'</text>';
+    s+='<text x="'+tb.x+'" y="'+tb.y+'" text-anchor="middle" fill="'+col+'" font-size="'+sz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">';
+    for(var li=0;li<lines.length;li++){
+      s+='<tspan x="'+tb.x+'" dy="'+(li===0?'0':lineH)+'">'+esc(lines[li])+'</tspan>';
+    }
+    s+='</text>';
     if(isSel){
       var hx=bx+bw+2,hy=by+bh+2;
       s+='<rect x="'+(hx-4)+'" y="'+(hy-4)+'" width="8" height="8" fill="#1A3C2B" rx="1" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize"/>';
@@ -2148,7 +2199,7 @@ function bind(){
         render();bindDrag();
         // Defer inline edit so the element renders first
         setTimeout(function(){
-          startInlineEdit('tb_'+newIdx,'' ,function(nv){
+          startInlineEditMulti(String(newIdx),'' ,function(nv){
             var curTBs3=getCurTB(card);
             if(!nv||nv===''){curTBs3.splice(newIdx,1);selTextBox=null}
             else{curTBs3[newIdx].text=nv}
@@ -3138,6 +3189,13 @@ function bind(){
         startInlineEdit('notes',card.notes||'',function(nv){
           card.notes=nv;var nEl=document.getElementById('nI');if(nEl)nEl.value=nv;render();
         });
+      }else if(lk==='header'){
+        var autoH2='';
+        if(appMode==='playdesign'){autoH2=(card._offPreset!=null)?'Preset':'Formation'}
+        else{var fn2=(FORMATIONS[card.fk]||{}).name||card.fk;var hn2=HASH_LABELS[card.hash]||card.hash;autoH2=fn2+' — '+hn2}
+        startInlineEdit('header',card.headerText||autoH2,function(nv){
+          card.headerText=nv;render();
+        });
       }else if(lk==='fmhash'){
         selLabel='fmhash';render();
       }else if(lk.indexOf('pn_')===0){
@@ -3157,7 +3215,7 @@ function bind(){
       var dblTBs=getCurTB(card);
       var tb=dblTBs[idx];
       if(tb){
-        startInlineEdit('tb_'+idx,tb.text,function(nv){
+        startInlineEditMulti(String(idx),tb.text,function(nv){
           if(nv===''){getCurTB(card).splice(idx,1);selTextBox=null}
           else{tb.text=nv}
           render();
