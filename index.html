@@ -2198,22 +2198,11 @@ function bind(){
         var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
         if(tbAttr!==null&&tbAttr!==undefined){
           var clickedTBIdx=parseInt(tbAttr);
-          // If clicking already-selected text box, open inline edit
-          if(selTextBox===clickedTBIdx){
-            var editTb=getCurTB(card)[clickedTBIdx];
-            if(editTb){
-              startInlineEditMulti(String(clickedTBIdx),editTb.text,function(nv){
-                if(nv===''){getCurTB(card).splice(clickedTBIdx,1);selTextBox=null}
-                else{editTb.text=nv}
-                render();bindDrag();
-              });
-            }
-            e.preventDefault();return;
-          }
+          var wasAlreadySel2=(selTextBox===clickedTBIdx);
           selTextBox=clickedTBIdx;selPlayer=null;
           var pt2=svgPoint(svg,e);
           var tb=getCurTB(card)[selTextBox];
-          dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false};
+          dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false,editOnRelease:wasAlreadySel2};
           render();bindDrag();
           e.preventDefault();return;
         }
@@ -2377,22 +2366,11 @@ function bind(){
       var tbAttr2=tgt2.getAttribute&&tgt2.getAttribute('data-tb');
       if(tbAttr2!==null&&tbAttr2!==undefined){
         var clickedTBIdx2=parseInt(tbAttr2);
-        // Double-click detection: if clicking already-selected text box, open editor
-        if(selTextBox===clickedTBIdx2){
-          var editTb2=getCurTB(card)[clickedTBIdx2];
-          if(editTb2){
-            startInlineEditMulti(String(clickedTBIdx2),editTb2.text,function(nv){
-              if(nv===''){getCurTB(card).splice(clickedTBIdx2,1);selTextBox=null}
-              else{editTb2.text=nv}
-              render();bindDrag();
-            });
-          }
-          e.preventDefault();return;
-        }
+        var wasAlreadySel=(selTextBox===clickedTBIdx2);
         selTextBox=clickedTBIdx2;selPlayer=null;selLabel=null;
         var pt3=svgPoint(svg,e);
         var tb2=getCurTB(card)[selTextBox];
-        dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false};
+        dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false,editOnRelease:wasAlreadySel};
         render();bindDrag();
         e.preventDefault();return;
       }
@@ -3709,7 +3687,21 @@ function bindDrag(){
     }
     if(dragInfo){
       var wasMoved=dragInfo.moved;
+      var shouldEdit=dragInfo.editOnRelease&&!wasMoved;
+      var editIdx=dragInfo.idx;
       dragInfo=null;
+      if(shouldEdit){
+        var card2=cards[activeIdx];
+        var editTb3=getCurTB(card2)[editIdx];
+        if(editTb3){
+          startInlineEditMulti(String(editIdx),editTb3.text,function(nv){
+            if(nv===''){getCurTB(cards[activeIdx]).splice(editIdx,1);selTextBox=null}
+            else{editTb3.text=nv}
+            render();bindDrag();
+          });
+        }
+        return;
+      }
       if(wasMoved)render();
     }
   };
