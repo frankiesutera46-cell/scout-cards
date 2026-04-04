@@ -795,29 +795,90 @@ var COL_MOTION = '#9333ea';
 
 // ===== FORMATIONS (Offense) =====
 // side types: 'c'=center, 'ol'=guard/tackle, 'qb', 'wr', 'rb', 'te'
+// Coordinates from FORMATIONS-REFERENCE.md (0-100 scale converted to SVG)
 function olBase(){return{C:{x:CX,y:OL_Y,l:'C',side:'c'},LG:{x:CX-OL_SP,y:OL_Y,l:'LG',side:'ol'},RG:{x:CX+OL_SP,y:OL_Y,l:'RG',side:'ol'},LT:{x:CX-OL_SP*2,y:OL_Y,l:'LT',side:'ol'},RT:{x:CX+OL_SP*2,y:OL_Y,l:'RT',side:'ol'}}}
+// Tight OL splits for jumbo/goal line
+function olTight(){return{C:{x:CX,y:OL_Y,l:'C',side:'c'},LG:{x:CX-OL_SP*.9,y:OL_Y,l:'LG',side:'ol'},RG:{x:CX+OL_SP*.9,y:OL_Y,l:'RG',side:'ol'},LT:{x:CX-OL_SP*1.8,y:OL_Y,l:'LT',side:'ol'},RT:{x:CX+OL_SP*1.8,y:OL_Y,l:'RT',side:'ol'}}}
+// Reference coordinate conversion: ref 0-100 → SVG pixels
+var _YS=70/17; // Y scale factor (ref 58→OL_Y, ref 75→OL_Y+70)
+function _rx(v){return Math.round(v/100*FW)}
+function _ry(v){return Math.round(OL_Y+(v-58)*_YS)}
+function _p(px,py,l,s){return{x:_rx(px),y:_ry(py),l:l,side:s}}
 var FORMATIONS={
-'doubR':{name:'Doubles Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-150,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'doubL':{name:'Doubles Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-150,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'3x1R':{name:'3x1 Trips R',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:FW-200,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-140,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'3x1L':{name:'3x1 Trips L',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:200,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:140,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'treyR':{name:'Trey Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:FW-150,y:OL_Y+18,l:'H',side:'wr'};o.Z={x:FW-65,y:OL_Y+18,l:'Z',side:'wr'};return o}},
-'treyL':{name:'Trey Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.Y={x:CX-OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:150,y:OL_Y+18,l:'H',side:'wr'};o.X={x:65,y:OL_Y+18,l:'X',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'deuceR':{name:'Deuce Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.Z={x:FW-65,y:OL_Y+18,l:'Z',side:'wr'};return o}},
-'deuceL':{name:'Deuce Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y+18,l:'X',side:'wr'};o.Y={x:CX-OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:FW-170,y:OL_Y+18,l:'H',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
-'empty':{name:'Empty 3x2',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.F={x:FW-170,y:OL_Y+18,l:'F',side:'wr'};o.Y={x:FW-120,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+// — SHOTGUN —
+'doubR':{name:'Doubles Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'doubL':{name:'Doubles Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.H=_p(75,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'3x1R':{name:'Trips Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(75,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'3x1L':{name:'Trips Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'treyR':{name:'Trey Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(72,61,'H','te');o.X=_p(10,58,'X','wr');o.Z=_p(88,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'treyL':{name:'Trey Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.H=_p(28,61,'H','te');o.X=_p(90,58,'X','wr');o.Z=_p(12,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'deuceR':{name:'Deuce Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.H=_p(25,61,'H','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'deuceL':{name:'Deuce Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.X=_p(90,58,'X','wr');o.H=_p(75,61,'H','wr');o.Z=_p(10,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'empty':{name:'Empty 3x2',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.H=_p(25,61,'H','wr');o.Z=_p(90,58,'Z','wr');o.W=_p(75,61,'W','wr');o.F=_p(65,61,'F','wr');o.QB=_p(50,75,'QB','qb');return o}},
+'empty23':{name:'Empty 2x3',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.H=_p(25,61,'H','wr');o.F=_p(35,61,'F','wr');o.Z=_p(90,58,'Z','wr');o.W=_p(75,61,'W','wr');o.QB=_p(50,75,'QB','qb');return o}},
+'bunchR':{name:'Bunch Rt',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.Z=_p(78,58,'Z','wr');o.H=_p(74,62,'H','wr');o.Y=_p(78,65,'Y','te');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'bunchL':{name:'Bunch Lt',p:function(){var o=olBase();o.X=_p(90,58,'X','wr');o.Z=_p(22,58,'Z','wr');o.H=_p(26,62,'H','wr');o.Y=_p(22,65,'Y','te');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'spread':{name:'Spread 2x2',p:function(){var o=olBase();o.X=_p(8,58,'X','wr');o.H=_p(25,61,'H','wr');o.Z=_p(92,61,'Z','wr');o.W=_p(75,58,'W','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'twinsR':{name:'Twins Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(82,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'quadsR':{name:'Quads Rt',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.Z=_p(90,58,'Z','wr');o.W=_p(82,61,'W','wr');o.H=_p(74,61,'H','wr');o.F=_p(66,61,'F','wr');o.QB=_p(50,75,'QB','qb');return o}},
+'stackR':{name:'Stack Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(85,58,'Z','wr');o.H=_p(85,63,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'nubR':{name:'Nub Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(35,58,'H','te');o.X=_p(10,58,'X','wr');o.Z=_p(22,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+// — PISTOL —
+'pistol':{name:'Pistol 2x2',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,70,'QB','qb');o.RB=_p(50,80,'RB','rb');return o}},
+'pist3x1':{name:'Pistol Trips',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(75,61,'H','wr');o.QB=_p(50,70,'QB','qb');o.RB=_p(50,80,'RB','rb');return o}},
+'pistWing':{name:'Pistol Wing',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(68,62,'H','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,70,'QB','qb');o.RB=_p(50,80,'RB','rb');return o}},
+// — UNDER CENTER —
+'iform':{name:'I-Form Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,63,'QB','qb');o.FB=_p(50,72,'FB','rb');o.RB=_p(50,80,'RB','rb');return o}},
+'proSet':{name:'Pro Set',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,63,'QB','qb');o.RB=_p(44,73,'RB','rb');o.FB=_p(56,73,'FB','rb');return o}},
+'aceR':{name:'Ace Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,63,'QB','qb');o.RB=_p(50,75,'RB','rb');return o}},
+'wingR':{name:'Wing Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(68,62,'H','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,63,'QB','qb');o.RB=_p(50,75,'RB','rb');return o}},
+'wingL':{name:'Wing Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.H=_p(32,62,'H','te');o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.QB=_p(50,63,'QB','qb');o.RB=_p(50,75,'RB','rb');return o}},
+'wingT':{name:'Wing-T Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(68,62,'H','te');o.X=_p(10,58,'X','wr');o.QB=_p(50,63,'QB','qb');o.FB=_p(50,73,'FB','rb');o.RB=_p(44,73,'RB','rb');return o}},
+// — HEAVY / SPECIAL —
+'unbal':{name:'Unbalanced Rt',p:function(){var o={C:{x:_rx(52),y:OL_Y,l:'C',side:'c'},LG:{x:_rx(47),y:OL_Y,l:'LG',side:'ol'},RG:{x:_rx(57),y:OL_Y,l:'RG',side:'ol'},LT:{x:_rx(42),y:OL_Y,l:'LT',side:'ol'},RT:{x:_rx(62),y:OL_Y,l:'RT',side:'ol'}};o.Y=_p(67,58,'Y','te');o.H=_p(72,58,'H','te');o.X=_p(8,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(52,75,'QB','qb');o.RB=_p(46,75,'RB','rb');return o}},
+'jumbo':{name:'Jumbo',p:function(){var o=olTight();o.Y=_p(67,58,'Y','te');o.TE2=_p(33,58,'TE2','te');o.Z=_p(85,61,'Z','wr');o.QB=_p(50,63,'QB','qb');o.FB=_p(50,70,'FB','rb');o.RB=_p(50,78,'RB','rb');return o}},
+'flexbone':{name:'Flexbone',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.Z=_p(90,58,'Z','wr');o.QB=_p(50,63,'QB','qb');o.FB=_p(50,72,'FB','rb');o.A=_p(38,62,'A','rb');o.B=_p(62,62,'B','rb');return o}},
+'wildcat':{name:'Wildcat',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.RB=_p(50,65,'RB','rb');o.QB=_p(38,62,'QB','qb');o.FB=_p(50,75,'FB','rb');return o}},
 };
 
 // ===== DEFENSIVE FRONTS =====
+// Coordinates from FORMATIONS-REFERENCE.md
 var DEF_FRONTS={
 'none':{name:'No Defense',p:function(){return{}}},
 '43over':{name:'4-3 Over',p:function(){return{
-  E1:{x:CX-OL_SP*2.1,y:LOS_Y-10,l:'E',side:'dl'},N:{x:CX-OL_SP*0.7,y:LOS_Y-10,l:'N',side:'dl'},
-  T:{x:CX+OL_SP*1.2,y:LOS_Y-10,l:'T',side:'dl'},E2:{x:CX+OL_SP*2.4,y:LOS_Y-10,l:'E',side:'dl'},
-  W:{x:CX-OL_SP*3.5,y:LOS_Y-4.5*YPX,l:'W',side:'lb'},M:{x:CX+OL_SP*0.2,y:LOS_Y-4.5*YPX,l:'M',side:'lb'},
-  S:{x:CX+OL_SP*4,y:LOS_Y-4.5*YPX,l:'$',side:'lb'},
-  CB1:{x:89,y:LOS_Y-6*YPX,l:'C',side:'db'},CB2:{x:FW-77,y:LOS_Y-6*YPX,l:'C',side:'db'},
-  BS:{x:193,y:LOS_Y-11.5*YPX,l:'BS',side:'db'},FS:{x:536,y:LOS_Y-11.5*YPX,l:'FS',side:'db'}
+  E1:_p(35,55,'E','dl'),N:_p(52,55,'N','dl'),T:_p(47,55,'T','dl'),E2:_p(65,55,'E','dl'),
+  W:_p(38,48,'W','lb'),M:_p(50,48,'M','lb'),S:_p(60,48,'$','lb'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(60,30,'FS','db')
+}}},
+'43under':{name:'4-3 Under',p:function(){return{
+  E1:_p(38,55,'E','dl'),N:_p(48,55,'N','dl'),T:_p(55,55,'T','dl'),E2:_p(65,55,'E','dl'),
+  W:_p(35,48,'W','lb'),M:_p(50,48,'M','lb'),S:_p(62,48,'$','lb'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(60,30,'FS','db')
+}}},
+'tite':{name:'Tite',p:function(){return{
+  E1:_p(38,55,'E','dl'),N:_p(50,55,'N','dl'),E2:_p(62,55,'E','dl'),
+  W:_p(33,48,'W','lb'),M:_p(50,48,'M','lb'),S:_p(67,48,'$','lb'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(60,30,'FS','db')
+}}},
+'odd':{name:'3-4 / Odd',p:function(){return{
+  E1:_p(37,55,'E','dl'),N:_p(50,55,'N','dl'),E2:_p(63,55,'E','dl'),
+  OLB1:_p(32,52,'W','lb'),OLB2:_p(68,52,'$','lb'),M1:_p(50,48,'M','lb'),M2:_p(55,48,'M','lb'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(55,30,'FS','db')
+}}},
+'bear':{name:'Bear',p:function(){return{
+  E1:_p(35,55,'E','dl'),T1:_p(43,55,'T','dl'),N:_p(50,55,'N','dl'),T2:_p(57,55,'T','dl'),E2:_p(65,55,'E','dl'),
+  S:_p(70,52,'$','lb'),M:_p(50,46,'M','lb'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(55,30,'FS','db')
+}}},
+'nickel':{name:'Nickel 4-2-5',p:function(){return{
+  E1:_p(35,55,'E','dl'),T:_p(47,55,'T','dl'),N:_p(53,55,'N','dl'),E2:_p(65,55,'E','dl'),
+  M:_p(50,48,'M','lb'),W:_p(40,48,'W','lb'),NB:_p(25,48,'NB','db'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(55,30,'FS','db')
+}}},
+'dime':{name:'Dime 4-1-6',p:function(){return{
+  E1:_p(35,55,'E','dl'),T:_p(47,55,'T','dl'),N:_p(53,55,'N','dl'),E2:_p(65,55,'E','dl'),
+  M:_p(50,48,'M','lb'),NB:_p(25,48,'NB','db'),DB:_p(75,48,'DB','db'),
+  CB1:_p(10,45,'C','db'),CB2:_p(90,45,'C','db'),BS:_p(40,30,'BS','db'),FS:_p(55,30,'FS','db')
 }}},
 };
 
