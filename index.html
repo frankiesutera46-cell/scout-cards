@@ -806,10 +806,10 @@ function _ry(v){return Math.round(OL_Y+(v-58)*_YS)}
 function _p(px,py,l,s){return{x:_rx(px),y:_ry(py),l:l,side:s}}
 var FORMATIONS={
 // — SHOTGUN —
-'doubR':{name:'Doubles Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
-'doubL':{name:'Doubles Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.H=_p(75,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
-'3x1R':{name:'Trips Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(75,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
-'3x1L':{name:'Trips Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.H=_p(25,61,'H','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'doubR':{name:'Doubles Rt',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.H=_p(25,61,'H','wr');o.Y=_p(75,61,'Y','wr');o.Z=_p(90,58,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
+'doubL':{name:'Doubles Lt',p:function(){var o=olBase();o.X=_p(90,58,'X','wr');o.H=_p(75,61,'H','wr');o.Y=_p(25,61,'Y','wr');o.Z=_p(10,58,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'3x1R':{name:'Trips Rt',p:function(){var o=olBase();o.X=_p(10,58,'X','wr');o.Z=_p(90,61,'Z','wr');o.H=_p(75,61,'H','wr');o.Y=_p(65,61,'Y','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
+'3x1L':{name:'Trips Lt',p:function(){var o=olBase();o.X=_p(90,58,'X','wr');o.Z=_p(10,61,'Z','wr');o.H=_p(25,61,'H','wr');o.Y=_p(35,61,'Y','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
 'treyR':{name:'Trey Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.H=_p(72,61,'H','te');o.X=_p(10,58,'X','wr');o.Z=_p(88,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(44,75,'RB','rb');return o}},
 'treyL':{name:'Trey Lt',p:function(){var o=olBase();o.Y=_p(35,58,'Y','te');o.H=_p(28,61,'H','te');o.X=_p(90,58,'X','wr');o.Z=_p(12,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
 'deuceR':{name:'Deuce Rt',p:function(){var o=olBase();o.Y=_p(65,58,'Y','te');o.X=_p(10,58,'X','wr');o.H=_p(25,61,'H','wr');o.Z=_p(90,61,'Z','wr');o.QB=_p(50,75,'QB','qb');o.RB=_p(56,75,'RB','rb');return o}},
