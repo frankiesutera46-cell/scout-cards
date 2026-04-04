@@ -222,6 +222,11 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .auth-card .auth-btn-google{width:100%;padding:10px;border:1px solid rgba(58,58,56,.15);border-radius:2px;background:#fff;color:#3A3A38;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-bottom:10px}
 .auth-card .auth-btn-google:hover{background:rgba(26,60,43,.03);border-color:rgba(26,60,43,.25)}
 .auth-card .auth-btn-google svg{width:18px;height:18px}
+.auth-card .auth-btn-demo{width:100%;padding:11px;border:2px solid #C6A355;border-radius:2px;background:transparent;color:#C6A355;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.05em;cursor:pointer;transition:all .15s;margin-top:0}
+.auth-card .auth-btn-demo:hover{background:#C6A355;color:#1A3C2B}
+.demo-banner{background:#C6A355;color:#1A3C2B;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-align:center;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:12px;letter-spacing:0.03em}
+.demo-banner button{background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:background .15s}
+.demo-banner button:hover{background:#244d38}
 .topbar .user-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(247,247,245,.5);letter-spacing:0.05em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .sign-out{background:transparent;border:1px solid rgba(247,247,245,.2);color:rgba(247,247,245,.6);font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;letter-spacing:0.05em;transition:.15s}
 .topbar .sign-out:hover{border-color:rgba(247,247,245,.5);color:#F7F7F5}
@@ -253,6 +258,8 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
       <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Continue with Google
     </button>
+    <div class="auth-divider">or</div>
+    <button class="auth-btn-demo" id="authDemo">Try Demo — No Sign Up Required</button>
   </div>
 </div>
 
@@ -267,6 +274,7 @@ var supabase=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_
 var currentUser=null;
 var savingToCloud=false;
 var autoSaveTimer=null;
+var demoMode=false;
 
 function initAuth(){
   if(!supabase){console.warn('Supabase not loaded, using localStorage only');showApp();return}
@@ -312,6 +320,8 @@ function initAuth(){
     supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});
   });
 
+  document.getElementById('authDemo').addEventListener('click',function(){enterDemoMode()});
+
   var initialLoadDone=false;
   supabase.auth.onAuthStateChange(function(event,session){
     if(session&&session.user){
@@ -337,6 +347,56 @@ function initAuth(){
 
 function showApp(){
   document.getElementById('auth-screen').classList.add('hidden');
+}
+
+function getDemoData(){
+  var c1=mkCard();c1.fk='doubR';c1.play='Mesh';c1.dd='1st & 10';c1.hash='M';c1.dfk='43over';
+  c1.asgn={X:'dig',Z:'out',H:'drag',Y:'flat',RB:'bpass'};
+  c1.notes='Watch X on the dig — breaks at 12yds. H drags underneath for the check-down.';
+  c1.tags=['Pass'];
+
+  var c2=mkCard();c2.fk='3x1R';c2.play='Flood Rt';c2.dd='2nd & 6';c2.hash='R';c2.dfk='43over';
+  c2.asgn={X:'comeback',Z:'corner',H:'flat',Y:'bpass',RB:'swing'};
+  c2.notes='3-level flood — corner/flat/swing. Read Cover 3 corner.';
+  c2.tags=['Pass'];
+
+  var c3=mkCard();c3.fk='doubR';c3.play='Inside Zone';c3.dd='1st & 10';c3.hash='L';c3.dfk='43over';
+  c3.asgn={X:'bpass',Z:'bpass',H:'bpass',Y:'bdrive',RB:'riz'};
+  c3.notes='Zone right — RB reads the 3-tech. Backside DE is the give/pull key.';
+  c3.tags=['Run'];
+
+  var c4=mkCard();c4.fk='treyR';c4.play='Power';c4.dd='2nd & 3';c4.hash='M';c4.dfk='43over';
+  c4.asgn={X:'bpass',Z:'bpass',H:'bdrive',Y:'bdrive',RB:'rpwr'};
+  c4.notes='Guard pulls, TE kicks DE. Downhill run to the strong side.';
+  c4.tags=['Run'];
+
+  var c5=mkCard();c5.fk='3x1R';c5.play='Smash';c5.dd='3rd & 7';c5.hash='R';c5.dfk='43over';
+  c5.asgn={X:'hitch',Z:'corner',H:'slant',Y:'bpass',RB:'flat'};
+  c5.notes='Smash concept — hitch/corner to the boundary. QB reads CB.';
+  c5.tags=['Pass'];
+
+  var c6=mkCard();c6.fk='deuceR';c6.play='Counter';c6.dd='1st & 10';c6.hash='M';c6.dfk='43over';
+  c6.asgn={X:'bpass',Z:'bpass',H:'bpass',Y:'bdrive',RB:'rctr'};
+  c6.notes='Guard and tackle pull. RB takes counter step then follows pullers.';
+  c6.tags=['Run'];
+
+  var g1=mkGame('Demo — Week 1 vs Central');g1.cards=[c1,c2,c3];
+  var g2=mkGame('Demo — Week 2 vs Eastside');g2.cards=[c4,c5,c6];
+  return{games:[g1,g2],activeGame:0};
+}
+
+function enterDemoMode(){
+  demoMode=true;
+  loadGamesFromData(getDemoData());
+  document.getElementById('auth-screen').classList.add('hidden');
+  render();
+}
+
+function exitDemoToAuth(){
+  demoMode=false;
+  games=[mkGame('Week 1')];activeGameIdx=0;
+  cards=games[0].cards;activeIdx=0;gameTitle='Week 1';
+  document.getElementById('auth-screen').classList.remove('hidden');
 }
 
 function loadGamesFromData(d){
@@ -1580,6 +1640,8 @@ function render(){
   var dPlayers=getDefPlayers(card);
   var h='';
 
+  // Demo banner
+  if(demoMode){h+='<div class="demo-banner">You\'re in Demo Mode \u2014 Sign up to save your work! <button id="demoBannerSignUp">Sign Up Free</button></div>';}
   // Topbar
   h+='<div class="topbar">';
   // Row 1: Brand, week, title, user
@@ -1595,7 +1657,8 @@ function render(){
   h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
   h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
   h+='<div class="right">';
-  if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
+  if(demoMode){h+='<span class="user-info" style="color:#C6A355">Demo Mode</span><button class="sign-out" id="btnExitDemo" style="color:#C6A355;border-color:rgba(198,163,85,.4)">Sign Up</button>';}
+  else if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
   // Row 2: Actions
   h+='<div class="topbar-row2">';
@@ -2875,7 +2938,7 @@ function bind(){
     pbUploadBtn.addEventListener('click',function(){pbUploadFile.click()});
     pbUploadFile.addEventListener('change',async function(){
       if(!this.files.length)return;
-      if(!supabase||!currentUser){document.getElementById('pbUploadStatus').textContent='Sign in to upload';return}
+      if(!supabase||!currentUser){document.getElementById('pbUploadStatus').textContent='Sign up to unlock uploads';return}
       var status=document.getElementById('pbUploadStatus');
       pbUploadBtn.disabled=true;
       for(var fi=0;fi<this.files.length;fi++){
@@ -2925,7 +2988,7 @@ function bind(){
       glossaryUploadBtn.addEventListener('click',function(){glossaryFile.click()});
       glossaryFile.addEventListener('change',async function(){
         if(!this.files.length)return;
-        if(!supabase||!currentUser){document.getElementById('glossaryStatus').textContent='Sign in to upload';return}
+        if(!supabase||!currentUser){document.getElementById('glossaryStatus').textContent='Sign up to unlock uploads';return}
         var file=this.files[0];
         var status=document.getElementById('glossaryStatus');
         status.textContent='Uploading glossary...';
@@ -2971,7 +3034,7 @@ function bind(){
     srUploadBtn.addEventListener('click',function(){srUploadFile.click()});
     srUploadFile.addEventListener('change',async function(){
       if(!this.files.length)return;
-      if(!supabase||!currentUser){document.getElementById('srUploadStatus').textContent='Sign in to upload';return}
+      if(!supabase||!currentUser){document.getElementById('srUploadStatus').textContent='Sign up to unlock uploads';return}
       var status=document.getElementById('srUploadStatus');
       var sr=getScoutReports();
       for(var fi=0;fi<this.files.length;fi++){
@@ -3025,6 +3088,10 @@ function bind(){
 
   var btnSignOut=document.getElementById('btnSignOut');
   if(btnSignOut)btnSignOut.addEventListener('click',function(){signOut()});
+  var btnExitDemo=document.getElementById('btnExitDemo');
+  if(btnExitDemo)btnExitDemo.addEventListener('click',function(){exitDemoToAuth()});
+  var demoBannerBtn=document.getElementById('demoBannerSignUp');
+  if(demoBannerBtn)demoBannerBtn.addEventListener('click',function(){exitDemoToAuth()});
 
   // ===== SAVED PLAYS =====
   var btnSavePlay=document.getElementById('btnSavePlay');
@@ -4326,7 +4393,7 @@ async function exportPlayGrid(perPage){
 // ===== SHARE TO PLAYERS =====
 function shareToPlayers(){
   if(!supabase){alert('Supabase not loaded');return}
-  if(!currentUser){alert('Sign in first');return}
+  if(!currentUser){alert(demoMode?'Sign up to unlock sharing! Your work will be saved to the cloud.':'Sign in first');return}
   // Show share modal
   var existing=document.getElementById('shareModal');
   if(existing)existing.remove();
