@@ -3372,6 +3372,7 @@ function bind(){
       pbUploadFile.value='';
       playbooksModal.style.display='none';
       render();
+      updateActiveShareMeta();
     });
     // Delete buttons
     var delBtns=document.querySelectorAll('.pb-del-btn');
@@ -3390,6 +3391,7 @@ function bind(){
           savePlaybooks();
           playbooksModal.style.display='none';
           render();
+          updateActiveShareMeta();
         });
       })(delBtns[di]);
     }
@@ -3413,6 +3415,7 @@ function bind(){
           saveGlossary();
           playbooksModal.style.display='none';
           render();
+          updateActiveShareMeta();
         }else{
           status.textContent='Upload failed: '+upRes.error.message;
         }
@@ -3430,6 +3433,7 @@ function bind(){
         saveGlossary();
         playbooksModal.style.display='none';
         render();
+        updateActiveShareMeta();
       });
     }
   }
@@ -3467,6 +3471,7 @@ function bind(){
       autoSave();
       reportsModal.style.display='none';
       render();
+      updateActiveShareMeta();
     });
     // Delete buttons
     var srDelBtns=document.querySelectorAll('.sr-del-btn');
@@ -3485,6 +3490,7 @@ function bind(){
           autoSave();
           reportsModal.style.display='none';
           render();
+          updateActiveShareMeta();
         });
       })(srDelBtns[sdi]);
     }
@@ -4803,6 +4809,33 @@ async function exportPlayGrid(perPage){
   win.document.write(html);win.document.close();
 }
 
+// ===== AUTO-UPDATE ACTIVE SHARE =====
+// When playbooks/glossary/reports change, update the existing share link if one exists
+async function updateActiveShareMeta(){
+  if(!supabase||!currentUser)return;
+  var game=games[activeGameIdx];
+  if(!game||!game.shareId)return;
+  // Build fresh playbook/glossary/report meta
+  var playbookMeta=[];
+  for(var i=0;i<userPlaybooks.length;i++){
+    playbookMeta.push({name:userPlaybooks[i].name,path:userPlaybooks[i].path,thumb:userPlaybooks[i].thumb||''});
+  }
+  var glossaryMeta=glossaryPdf?{name:glossaryPdf.name,path:glossaryPdf.path,thumb:glossaryPdf.thumb||''}:null;
+  var reportsMeta=[];
+  var srList=getScoutReports();
+  for(var i=0;i<srList.length;i++){
+    reportsMeta.push({name:srList[i].name,path:srList[i].path,thumb:srList[i].thumb||''});
+  }
+  // Fetch existing share data, patch the meta fields, and update
+  var existing=await supabase.from('shares').select('data').eq('id',game.shareId).single();
+  if(existing.error||!existing.data)return;
+  var d=existing.data.data;
+  d.playbooks=playbookMeta;
+  d.glossary=glossaryMeta;
+  d.reports=reportsMeta;
+  await supabase.from('shares').update({data:d,game_name:gameTitle}).eq('id',game.shareId);
+}
+
 // ===== SHARE TO PLAYERS =====
 function shareToPlayers(){
   if(!supabase){alert('Supabase not loaded');return}
@@ -4846,7 +4879,9 @@ function shareToPlayers(){
   mh+='</div>';
   // Status area
   mh+='<div id="shareStatus" style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.5);margin-bottom:12px;min-height:18px"></div>';
-  mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">Create Share Link</button>';
+  var hasExistingShare=!!games[activeGameIdx].shareId;
+  mh+='<button id="shareConfirmBtn" style="width:100%;padding:10px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em;text-transform:uppercase">'+(hasExistingShare?'Update Share Link':'Create Share Link')+'</button>';
+  if(hasExistingShare){mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.45);margin-top:6px;text-align:center">This will update your existing link &mdash; no need to send a new one</div>'}
   mh+='</div>';
   m.innerHTML=mh;
   document.body.appendChild(m);
@@ -4918,18 +4953,31 @@ function shareToPlayers(){
       var payload={game:gameTitle,cards:shareCards,playDesigns:sharePlayDesigns,branding:{teamName:teamBranding.teamName,logoUrl:teamBranding.logoUrl,primaryColor:teamBranding.primaryColor},playbooks:playbookMeta,glossary:glossaryMeta,reports:reportsMeta};
 
       status.textContent='Saving to cloud...';
-      var res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
+      var existingShareId=games[activeGameIdx].shareId||null;
+      var res;
+      if(existingShareId){
+        // Update existing share — same link stays valid
+        res=await supabase.from('shares').update({game_name:gameTitle,data:payload}).eq('id',existingShareId).select('id').single();
+      }
+      if(!existingShareId||res.error){
+        // Create new share
+        res=await supabase.from('shares').insert({user_id:currentUser.id,game_name:gameTitle,data:payload}).select('id').single();
+      }
       if(res.error){
         if(res.error.message&&res.error.message.indexOf('does not exist')>=0){
           alert('Share table not set up. Check Supabase SQL setup.');
         }else{alert('Share failed: '+res.error.message)}
         btn.disabled=false;btn.textContent='CREATE SHARE LINK';return;
       }
+      // Store share ID on the game so future shares update the same link
+      games[activeGameIdx].shareId=res.data.id;
+      autoSave();
 
       var shareUrl='https://juiceboxfootball.cc?share='+res.data.id;
+      var isUpdate=!!existingShareId;
       try{navigator.clipboard.writeText(shareUrl)}catch(e){}
       m.remove();
-      prompt('Share link copied! Send this to your players:',shareUrl);
+      prompt(isUpdate?'Share link updated! Same link still works:':'Share link copied! Send this to your players:',shareUrl);
     }catch(err){
       alert('Share error: '+err.message);
       btn.disabled=false;btn.textContent='CREATE SHARE LINK';
