@@ -1262,6 +1262,41 @@ function getOffPlayers(card){
   if(card.opos){var ks2=Object.keys(card.opos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.opos[ks2[i]].x;p[ks2[i]].y=card.opos[ks2[i]].y}}}
   return p;
 }
+// Align safeties to offensive formation: inside shade of slot WR, or 10yd/1yd outside tackle if no slot
+function alignSafeties(defP, card){
+  var off=getOffPlayers(card);
+  if(!off||Object.keys(off).length===0)return;
+  var sks=['FS','BS'];
+  for(var si=0;si<sks.length;si++){
+    var sk=sks[si];
+    if(!defP[sk])continue;
+    var onRight=defP[sk].x>=CX;
+    // Find WR/TE on this safety's side, near LOS (not deep backfield)
+    var recv=[];
+    var oks=Object.keys(off);
+    for(var i=0;i<oks.length;i++){
+      var pl=off[oks[i]];
+      if((pl.side==='wr'||pl.side==='te')&&pl.y<=OL_Y+40){
+        if((onRight&&pl.x>=CX)||(!onRight&&pl.x<CX)) recv.push(pl);
+      }
+    }
+    // Sort by distance from center (innermost first)
+    recv.sort(function(a,b){return Math.abs(a.x-CX)-Math.abs(b.x-CX)});
+    if(recv.length>=2){
+      // Slot exists — inside shade (toward center) of innermost receiver
+      var slot=recv[0];
+      defP[sk].x=slot.x+(slot.x>=CX?-10:10);
+    } else {
+      // No slot — 10 yards off, 1 yard outside the tackle
+      var tackle=onRight?off.RT:off.LT;
+      if(tackle){
+        defP[sk].x=tackle.x+(onRight?Math.round(YPX):-Math.round(YPX));
+        defP[sk].y=Math.round(LOS_Y-10*YPX-6);
+      }
+    }
+  }
+}
+
 function getDefPlayers(card){
   var df=DEF_FRONTS[card.dfk];if(!df)return{};
   var p=df.p();
@@ -1275,6 +1310,8 @@ function getDefPlayers(card){
       if(p[ks[i]].x>SR-15) p[ks[i]].x=SR-15;
     }
   }
+  // Align safeties to offensive formation
+  alignSafeties(p, card);
   // Override with custom positions
   if(card.dpos){var ks2=Object.keys(card.dpos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.dpos[ks2[i]].x;p[ks2[i]].y=card.dpos[ks2[i]].y}}}
   return p;
@@ -1337,6 +1374,7 @@ function getScoutFlippedDef(card){
   var p=df.p();
   var ho=getHashOffset(card);
   if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
+  alignSafeties(p, card);
   var out={};var ks=Object.keys(p);
   for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:PD_LOS_Y+(LOS_Y-b.y),l:b.l,side:b.side}}
   if(card.dposOff){var cks=Object.keys(card.dposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.dposOff[cks[j]].x;out[cks[j]].y=card.dposOff[cks[j]].y}}}
