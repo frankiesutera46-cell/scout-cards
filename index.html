@@ -849,12 +849,12 @@ function _dp(px,yds,l,s){return{x:_rx(px),y:Math.round(LOS_Y-yds*YPX-6),l:l,side
 var DEF_FRONTS={
 'none':{name:'No Defense',p:function(){return{}}},
 '43over':{name:'4-3 Over',p:function(){return{
-  E1:_dp(35,0.5,'E','dl'),N:_dp(52,0.5,'N','dl'),T:_dp(47,0.5,'T','dl'),E2:_dp(65,0.5,'E','dl'),
+  E1:_dp(35,0.5,'E','dl'),N:_dp(47,0.5,'N','dl'),T:_dp(57,0.5,'T','dl'),E2:_dp(65,0.5,'E','dl'),
   W:_dp(38,5,'W','lb'),M:_dp(50,5,'M','lb'),S:_dp(60,5,'$','lb'),
   CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
 '43under':{name:'4-3 Under',p:function(){return{
-  E1:_dp(38,0.5,'E','dl'),N:_dp(48,0.5,'N','dl'),T:_dp(55,0.5,'T','dl'),E2:_dp(65,0.5,'E','dl'),
+  E1:_dp(35,0.5,'E','dl'),N:_dp(43,0.5,'N','dl'),T:_dp(53,0.5,'T','dl'),E2:_dp(65,0.5,'E','dl'),
   W:_dp(35,5,'W','lb'),M:_dp(50,5,'M','lb'),S:_dp(62,5,'$','lb'),
   CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
@@ -866,22 +866,22 @@ var DEF_FRONTS={
 'odd':{name:'3-4 / Odd',p:function(){return{
   E1:_dp(37,0.5,'E','dl'),N:_dp(50,0.5,'N','dl'),E2:_dp(63,0.5,'E','dl'),
   OLB1:_dp(32,3,'W','lb'),OLB2:_dp(68,3,'$','lb'),M1:_dp(50,5,'M','lb'),M2:_dp(55,5,'M','lb'),
-  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(55,12,'FS','db')
+  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
 'bear':{name:'Bear',p:function(){return{
   E1:_dp(35,0.5,'E','dl'),T1:_dp(43,0.5,'T','dl'),N:_dp(50,0.5,'N','dl'),T2:_dp(57,0.5,'T','dl'),E2:_dp(65,0.5,'E','dl'),
   S:_dp(70,3,'$','lb'),M:_dp(50,5,'M','lb'),
-  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(55,12,'FS','db')
+  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
 'nickel':{name:'Nickel 4-2-5',p:function(){return{
-  E1:_dp(35,0.5,'E','dl'),T:_dp(47,0.5,'T','dl'),N:_dp(53,0.5,'N','dl'),E2:_dp(65,0.5,'E','dl'),
+  E1:_dp(35,0.5,'E','dl'),T:_dp(57,0.5,'T','dl'),N:_dp(47,0.5,'N','dl'),E2:_dp(65,0.5,'E','dl'),
   M:_dp(50,5,'M','lb'),W:_dp(40,5,'W','lb'),NB:_dp(25,5,'NB','db'),
-  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(55,12,'FS','db')
+  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
 'dime':{name:'Dime 4-1-6',p:function(){return{
-  E1:_dp(35,0.5,'E','dl'),T:_dp(47,0.5,'T','dl'),N:_dp(53,0.5,'N','dl'),E2:_dp(65,0.5,'E','dl'),
+  E1:_dp(35,0.5,'E','dl'),T:_dp(57,0.5,'T','dl'),N:_dp(47,0.5,'N','dl'),E2:_dp(65,0.5,'E','dl'),
   M:_dp(50,5,'M','lb'),NB:_dp(25,5,'NB','db'),DB:_dp(75,5,'DB','db'),
-  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(55,12,'FS','db')
+  CB1:_dp(10,3,'C','db'),CB2:_dp(90,3,'C','db'),BS:_dp(40,12,'BS','db'),FS:_dp(60,12,'FS','db')
 }}},
 };
 
