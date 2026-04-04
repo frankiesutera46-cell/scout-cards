@@ -1262,37 +1262,64 @@ function getOffPlayers(card){
   if(card.opos){var ks2=Object.keys(card.opos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.opos[ks2[i]].x;p[ks2[i]].y=card.opos[ks2[i]].y}}}
   return p;
 }
-// Align safeties to offensive formation: inside shade of slot WR, or 10yd/1yd outside tackle if no slot
-function alignSafeties(defP, card){
+// Align defense to offensive formation (match-quarters rules)
+// Receiver numbering: #1=outermost, #2=slot (middle in trips), #3=innermost in trips
+// Receivers sorted innermost-first: idx 0=#3(trips)/#2(2-man), idx 1=#2(trips), idx 2=#1
+function alignDefenseToOffense(defP, card){
   var off=getOffPlayers(card);
   if(!off||Object.keys(off).length===0)return;
-  var sks=['FS','BS'];
-  for(var si=0;si<sks.length;si++){
-    var sk=sks[si];
-    if(!defP[sk])continue;
-    var onRight=defP[sk].x>=CX;
-    // Find WR/TE on this safety's side, near LOS (not deep backfield)
-    var recv=[];
-    var oks=Object.keys(off);
+  // Helper: get WR/TE on a side sorted innermost first (closest to center first)
+  function getRecv(onRight){
+    var recv=[];var oks=Object.keys(off);
     for(var i=0;i<oks.length;i++){
       var pl=off[oks[i]];
       if((pl.side==='wr'||pl.side==='te')&&pl.y<=OL_Y+40){
         if((onRight&&pl.x>=CX)||(!onRight&&pl.x<CX)) recv.push(pl);
       }
     }
-    // Sort by distance from center (innermost first)
     recv.sort(function(a,b){return Math.abs(a.x-CX)-Math.abs(b.x-CX)});
-    if(recv.length>=2){
-      // Slot exists — inside shade (toward center) of innermost receiver
-      var slot=recv[0];
-      defP[sk].x=slot.x+(slot.x>=CX?-10:10);
-    } else {
-      // No slot — 10 yards off, 1 yard outside the tackle
-      var tackle=onRight?off.RT:off.LT;
-      if(tackle){
-        defP[sk].x=tackle.x+(onRight?Math.round(YPX):-Math.round(YPX));
-        defP[sk].y=Math.round(LOS_Y-10*YPX-6);
-      }
+    return recv;
+  }
+  // Helper: find defender keys by label
+  function findByLabel(lbl){
+    var res=[];var dks=Object.keys(defP);
+    for(var i=0;i<dks.length;i++){if(defP[dks[i]].l===lbl)res.push(dks[i])}
+    return res;
+  }
+  var sRecv=getRecv(true), wRecv=getRecv(false);
+  // Slot index: in 2-man surface slot=#2=idx0, in trips slot=#2=idx1
+  var sSlotIdx=sRecv.length>=3?1:0;
+  var wSlotIdx=wRecv.length>=3?1:0;
+  // --- Safeties: inside shade of slot (#2), or 10yd/1yd outside tackle ---
+  if(defP.FS){
+    if(sRecv.length>=2){defP.FS.x=sRecv[sSlotIdx].x+(sRecv[sSlotIdx].x>=CX?-10:10)}
+    else if(off.RT){defP.FS.x=off.RT.x+Math.round(YPX);defP.FS.y=Math.round(LOS_Y-10*YPX-6)}
+  }
+  if(defP.BS){
+    if(wRecv.length>=2){defP.BS.x=wRecv[wSlotIdx].x+(wRecv[wSlotIdx].x>=CX?-10:10)}
+    else if(off.LT){defP.BS.x=off.LT.x-Math.round(YPX);defP.BS.y=Math.round(LOS_Y-10*YPX-6)}
+  }
+  // --- $ (Sam): midpoint slot (#2) and strong tackle ---
+  var samKeys=findByLabel('$');
+  for(var i=0;i<samKeys.length;i++){
+    if(sRecv.length>=2&&off.RT) defP[samKeys[i]].x=Math.round((sRecv[sSlotIdx].x+off.RT.x)/2);
+  }
+  // --- W (Will): midpoint slot (#2) and weak tackle ---
+  var willKeys=findByLabel('W');
+  for(var i=0;i<willKeys.length;i++){
+    if(wRecv.length>=2&&off.LT) defP[willKeys[i]].x=Math.round((wRecv[wSlotIdx].x+off.LT.x)/2);
+  }
+  // --- Mike in trips: midpoint #3 (innermost) and tackle ---
+  var mikeKeys=findByLabel('M');
+  if(mikeKeys.length>0){
+    if(sRecv.length>=3&&off.RT){
+      var mk=mikeKeys[0];
+      for(var j=1;j<mikeKeys.length;j++){if(defP[mikeKeys[j]].x>defP[mk].x)mk=mikeKeys[j]}
+      defP[mk].x=Math.round((sRecv[0].x+off.RT.x)/2);
+    } else if(wRecv.length>=3&&off.LT){
+      var mk=mikeKeys[0];
+      for(var j=1;j<mikeKeys.length;j++){if(defP[mikeKeys[j]].x<defP[mk].x)mk=mikeKeys[j]}
+      defP[mk].x=Math.round((wRecv[0].x+off.LT.x)/2);
     }
   }
 }
@@ -1311,7 +1338,7 @@ function getDefPlayers(card){
     }
   }
   // Align safeties to offensive formation
-  alignSafeties(p, card);
+  alignDefenseToOffense(p, card);
   // Override with custom positions
   if(card.dpos){var ks2=Object.keys(card.dpos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.dpos[ks2[i]].x;p[ks2[i]].y=card.dpos[ks2[i]].y}}}
   return p;
@@ -1374,7 +1401,7 @@ function getScoutFlippedDef(card){
   var p=df.p();
   var ho=getHashOffset(card);
   if(ho!==0){var ks=Object.keys(p);for(var i=0;i<ks.length;i++){p[ks[i]].x+=ho;if(p[ks[i]].x<SL+15)p[ks[i]].x=SL+15;if(p[ks[i]].x>SR-15)p[ks[i]].x=SR-15}}
-  alignSafeties(p, card);
+  alignDefenseToOffense(p, card);
   var out={};var ks=Object.keys(p);
   for(var i=0;i<ks.length;i++){var k=ks[i],b=p[k];out[k]={x:b.x,y:PD_LOS_Y+(LOS_Y-b.y),l:b.l,side:b.side}}
   if(card.dposOff){var cks=Object.keys(card.dposOff);for(var j=0;j<cks.length;j++){if(out[cks[j]]){out[cks[j]].x=card.dposOff[cks[j]].x;out[cks[j]].y=card.dposOff[cks[j]].y}}}
