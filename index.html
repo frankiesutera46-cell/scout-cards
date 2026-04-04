@@ -200,9 +200,11 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 ::-webkit-scrollbar-thumb:hover{background:rgba(26,60,43,.3)}
 
 /* ---- AUTH OVERLAY ---- */
-#auth-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#F7F7F5;z-index:9999;display:flex;align-items:center;justify-content:center}
+#auth-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #auth-screen.hidden{display:none}
-.auth-card{background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:4px;padding:48px 40px;width:380px;max-width:90vw;text-align:center}
+.auth-card{background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:4px;padding:48px 40px;width:380px;max-width:90vw;text-align:center;position:relative}
+.auth-card .auth-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;color:rgba(58,58,56,.4);cursor:pointer;line-height:1;padding:4px}
+.auth-card .auth-close:hover{color:#3A3A38}
 .auth-card .auth-logo{width:60px;height:86px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
 .auth-card .auth-logo svg{width:60px;height:86px}
 .auth-card h1{font-family:'Bebas Neue',sans-serif;font-size:32px;font-weight:400;color:#2D4A3E;margin-bottom:2px;letter-spacing:0.06em}
@@ -222,11 +224,103 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .auth-card .auth-btn-google{width:100%;padding:10px;border:1px solid rgba(58,58,56,.15);border-radius:2px;background:#fff;color:#3A3A38;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-bottom:10px}
 .auth-card .auth-btn-google:hover{background:rgba(26,60,43,.03);border-color:rgba(26,60,43,.25)}
 .auth-card .auth-btn-google svg{width:18px;height:18px}
-.auth-card .auth-btn-demo{width:100%;padding:11px;border:2px solid #C6A355;border-radius:2px;background:transparent;color:#C6A355;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.05em;cursor:pointer;transition:all .15s;margin-top:0}
-.auth-card .auth-btn-demo:hover{background:#C6A355;color:#1A3C2B}
 .demo-banner{background:#C6A355;color:#1A3C2B;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-align:center;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:12px;letter-spacing:0.03em}
 .demo-banner button{background:#1A3C2B;color:#F7F7F5;border:none;border-radius:2px;padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:background .15s}
 .demo-banner button:hover{background:#244d38}
+
+/* ---- LANDING PAGE ---- */
+#landing-page{background:#F5F0E8;min-height:100vh}
+#landing-page.hidden{display:none}
+.lp-nav{position:sticky;top:0;z-index:100;background:rgba(245,240,232,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(45,74,62,.08);padding:0 24px;height:60px;display:flex;align-items:center;max-width:100%}
+.lp-nav-inner{max-width:1200px;margin:0 auto;width:100%;display:flex;align-items:center;gap:16px}
+.lp-nav .lp-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.lp-nav .lp-brand svg{width:24px;height:34px}
+.lp-nav .lp-brand-text span{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#2D4A3E;letter-spacing:0.08em;text-transform:uppercase;line-height:1}
+.lp-nav .lp-brand-text div{font-family:'Oswald',sans-serif;font-size:7px;color:#B8A88A;letter-spacing:0.3em;font-weight:600;text-transform:uppercase}
+.lp-nav-links{display:flex;gap:24px;margin-left:40px}
+.lp-nav-links a{font-family:'Space Grotesk',sans-serif;font-size:14px;color:#6b6560;text-decoration:none;font-weight:500;transition:color .15s}
+.lp-nav-links a:hover{color:#2D4A3E}
+.lp-nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.lp-btn{padding:9px 20px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:all .15s;text-decoration:none;display:inline-block;text-align:center}
+.lp-btn-pri{background:#C4A355;color:#1B3029;border:2px solid #C4A355}
+.lp-btn-pri:hover{background:#b8963d;border-color:#b8963d}
+.lp-btn-sec{background:transparent;color:#2D4A3E;border:2px solid #2D4A3E}
+.lp-btn-sec:hover{background:#2D4A3E;color:#F5F0E8}
+.lp-btn-lg{padding:14px 32px;font-size:13px}
+
+/* Hero */
+.lp-hero{max-width:1200px;margin:0 auto;padding:80px 24px 60px;text-align:center}
+.lp-hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);color:#1B3029;letter-spacing:0.03em;line-height:1.05;margin-bottom:20px}
+.lp-hero p{font-family:'Space Grotesk',sans-serif;font-size:clamp(16px,2vw,20px);color:#6b6560;max-width:640px;margin:0 auto 36px;line-height:1.6}
+.lp-hero-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
+.lp-hero-img{max-width:960px;margin:0 auto;background:#2D4A3E;border-radius:8px;overflow:hidden;box-shadow:0 24px 80px rgba(27,48,41,.18);aspect-ratio:16/9.5;display:flex;align-items:center;justify-content:center;color:rgba(245,240,232,.3);font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.1em}
+
+/* Feature Grid */
+.lp-features{background:#fff;padding:80px 24px}
+.lp-features-inner{max-width:1200px;margin:0 auto}
+.lp-features h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);color:#1B3029;text-align:center;letter-spacing:0.03em;margin-bottom:48px}
+.lp-fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.lp-fcard{padding:28px 24px;border:1px solid rgba(45,74,62,.08);border-radius:4px;transition:box-shadow .2s}
+.lp-fcard:hover{box-shadow:0 4px 20px rgba(45,74,62,.06)}
+.lp-fcard-icon{width:40px;height:40px;background:#2D4A3E;border-radius:3px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.lp-fcard-icon svg{width:20px;height:20px;fill:none;stroke:#C4A355;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-fcard h3{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#1B3029;margin-bottom:8px}
+.lp-fcard p{font-family:'Space Grotesk',sans-serif;font-size:14px;color:#6b6560;line-height:1.6}
+
+/* How It Works */
+.lp-how{background:#F5F0E8;padding:80px 24px}
+.lp-how-inner{max-width:1200px;margin:0 auto;text-align:center}
+.lp-how h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);color:#1B3029;letter-spacing:0.03em;margin-bottom:48px}
+.lp-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.lp-step-num{width:44px;height:44px;background:#2D4A3E;color:#C4A355;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;margin:0 auto 16px}
+.lp-step h3{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#1B3029;margin-bottom:8px}
+.lp-step p{font-family:'Space Grotesk',sans-serif;font-size:14px;color:#6b6560;line-height:1.6}
+
+/* Comparison */
+.lp-compare{background:#fff;padding:80px 24px}
+.lp-compare-inner{max-width:900px;margin:0 auto}
+.lp-compare h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);color:#1B3029;text-align:center;letter-spacing:0.03em;margin-bottom:48px}
+.lp-table{width:100%;border-collapse:collapse;font-family:'Space Grotesk',sans-serif;font-size:14px}
+.lp-table th{background:#2D4A3E;color:#F5F0E8;padding:12px 16px;font-weight:600;text-align:left;font-size:13px}
+.lp-table th:first-child{border-radius:4px 0 0 0}
+.lp-table th:last-child{border-radius:0 4px 0 0;color:#C4A355}
+.lp-table td{padding:12px 16px;border-bottom:1px solid rgba(45,74,62,.08);color:#6b6560}
+.lp-table tr td:last-child{color:#1B3029;font-weight:600}
+.lp-table tbody tr:hover{background:rgba(196,163,85,.04)}
+
+/* Credibility */
+.lp-cred{background:#1B3029;color:#F5F0E8;padding:80px 24px}
+.lp-cred-inner{max-width:720px;margin:0 auto;text-align:center}
+.lp-cred h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:0.03em;margin-bottom:20px;color:#F5F0E8}
+.lp-cred p{font-family:'Space Grotesk',sans-serif;font-size:16px;color:rgba(245,240,232,.7);line-height:1.7}
+
+/* Final CTA */
+.lp-cta{background:#F5F0E8;padding:80px 24px;text-align:center}
+.lp-cta h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);color:#1B3029;letter-spacing:0.03em;margin-bottom:12px}
+.lp-cta p{font-family:'Space Grotesk',sans-serif;font-size:16px;color:#6b6560;margin-bottom:28px}
+.lp-cta-link{font-family:'JetBrains Mono',monospace;font-size:12px;color:#6b6560;margin-top:16px;display:inline-block;text-decoration:none;transition:color .15s;cursor:pointer}
+.lp-cta-link:hover{color:#2D4A3E}
+
+/* Footer */
+.lp-footer{background:#1B3029;padding:32px 24px;text-align:center}
+.lp-footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.lp-footer-brand{display:flex;align-items:center;gap:8px}
+.lp-footer-brand svg{width:18px;height:26px}
+.lp-footer-brand span{font-family:'Bebas Neue',sans-serif;font-size:14px;color:rgba(245,240,232,.5);letter-spacing:0.08em}
+.lp-footer-links{display:flex;gap:20px}
+.lp-footer-links a{font-family:'Space Grotesk',sans-serif;font-size:12px;color:rgba(245,240,232,.4);text-decoration:none;transition:color .15s}
+.lp-footer-links a:hover{color:#C4A355}
+.lp-footer-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(245,240,232,.25);letter-spacing:0.05em}
+
+/* Landing responsive */
+@media(max-width:768px){
+.lp-nav-links{display:none}
+.lp-fgrid,.lp-steps{grid-template-columns:1fr}
+.lp-table{font-size:12px}
+.lp-table th,.lp-table td{padding:8px 10px}
+.lp-hero{padding:48px 20px 40px}
+.lp-footer-inner{flex-direction:column;text-align:center}
+}
 .topbar .user-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(247,247,245,.5);letter-spacing:0.05em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .sign-out{background:transparent;border:1px solid rgba(247,247,245,.2);color:rgba(247,247,245,.6);font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;letter-spacing:0.05em;transition:.15s}
 .topbar .sign-out:hover{border-color:rgba(247,247,245,.5);color:#F7F7F5}
@@ -239,9 +333,146 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 </head>
 <body>
 
-<!-- Auth Screen -->
-<div id="auth-screen">
+<!-- Landing Page -->
+<div id="landing-page">
+
+<!-- Nav -->
+<nav class="lp-nav"><div class="lp-nav-inner">
+  <a class="lp-brand" href="#">
+    <svg viewBox="0 0 130 190" fill="none"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#2D4A3E"/><rect x="25" y="46" width="24" height="130" fill="#3A5E4F"/><polygon points="22,46 112,46 107,56 27,56" fill="#24382F"/><polygon points="27,56 65,46 107,56" fill="#2D4A3E"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg>
+    <div class="lp-brand-text"><span>Juice Box</span><div>Football</div></div>
+  </a>
+  <div class="lp-nav-links">
+    <a href="#lp-features">Features</a>
+    <a href="#lp-how">How It Works</a>
+    <a href="#lp-about">About</a>
+  </div>
+  <div class="lp-nav-right">
+    <a class="lp-btn lp-btn-sec" id="lpNavDemo" href="#" style="padding:7px 16px;font-size:10px">Try Demo</a>
+    <a class="lp-btn lp-btn-pri" id="lpNavSignup" href="#" style="padding:7px 16px;font-size:10px">Sign Up Free</a>
+  </div>
+</div></nav>
+
+<!-- Hero -->
+<section class="lp-hero">
+  <h1>Build Scout Cards in Minutes, Not Hours</h1>
+  <p>The web-based play card builder for football coaches. No Visio. No PowerPoint. No installs. Just open your browser and start drawing.</p>
+  <div class="lp-hero-buttons">
+    <a class="lp-btn lp-btn-pri lp-btn-lg" id="lpHeroDemo" href="#">Try Demo &mdash; Free</a>
+    <a class="lp-btn lp-btn-sec lp-btn-lg" id="lpHeroSignup" href="#">Sign Up Free</a>
+  </div>
+  <div class="lp-hero-img">EDITOR SCREENSHOT</div>
+</section>
+
+<!-- Features -->
+<section class="lp-features" id="lp-features"><div class="lp-features-inner">
+  <h2>Everything You Need to Build Cards</h2>
+  <div class="lp-fgrid">
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <h3>Formation Library</h3>
+      <p>20+ pre-built offensive formations ready to go. Doubles, Trips, Empty, Pistol, I-Form, Bunch, Unbalanced &mdash; click and start building.</p>
+    </div>
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><path d="M13 5l7 7-7 7"/><path d="M4 12h16"/></svg></div>
+      <h3>One-Click Routes</h3>
+      <p>Click any player, pick a route. Verticals, intermediates, quick game, runs, blocks, motions &mdash; all organized by category. No freehand drawing needed.</p>
+    </div>
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/></svg></div>
+      <h3>Defensive Front Overlay</h3>
+      <p>Drop your defense on top of the offensive look. 4-3 Over, Under, Tite, Odd, Bear &mdash; see both sides of the ball on one card.</p>
+    </div>
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+      <h3>Export to PDF & PNG</h3>
+      <p>Print-ready scout cards in one click. Export your full card deck and hand it to your scout team before practice.</p>
+    </div>
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></div>
+      <h3>Freehand Drawing</h3>
+      <p>Need to mark up something custom? Freehand pen, shapes, text boxes, multiple colors and line widths &mdash; all built in.</p>
+    </div>
+    <div class="lp-fcard">
+      <div class="lp-fcard-icon"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
+      <h3>Save Presets</h3>
+      <p>Save your most-used formations, defensive fronts, and route combos as presets. Reuse them week after week all season.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- How It Works -->
+<section class="lp-how" id="lp-how"><div class="lp-how-inner">
+  <h2>Game Prep in 3 Steps</h2>
+  <div class="lp-steps">
+    <div class="lp-step">
+      <div class="lp-step-num">1</div>
+      <h3>Pick a Formation</h3>
+      <p>Choose from 20+ offensive formation templates or build your own. Drag players anywhere to customize.</p>
+    </div>
+    <div class="lp-step">
+      <div class="lp-step-num">2</div>
+      <h3>Assign Routes & Fronts</h3>
+      <p>Click players to assign routes. Overlay your defensive front. Add notes, tags, and down &amp; distance.</p>
+    </div>
+    <div class="lp-step">
+      <div class="lp-step-num">3</div>
+      <h3>Export & Practice</h3>
+      <p>Export to PDF or PNG. Print your cards. Share a link with your scout team. Run practice.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- Comparison -->
+<section class="lp-compare" id="lp-compare"><div class="lp-compare-inner">
+  <h2>Why Coaches Are Making the Switch</h2>
+  <table class="lp-table">
+    <thead><tr><th></th><th>Hand-Drawn</th><th>Visio / PowerPoint</th><th>Juicebox Football</th></tr></thead>
+    <tbody>
+      <tr><td>Cost</td><td>Free (but your time isn't)</td><td>$199+/yr + Office license</td><td>Sign up free</td></tr>
+      <tr><td>Software install</td><td>No</td><td>Yes &mdash; Visio or PowerPoint</td><td>No &mdash; 100% web-based</td></tr>
+      <tr><td>iPad / Chromebook</td><td>No</td><td>No &mdash; desktop only</td><td>Yes &mdash; any browser</td></tr>
+      <tr><td>Setup time</td><td>None</td><td>Install + learn Visio</td><td>Open browser, start drawing</td></tr>
+      <tr><td>Defensive overlay</td><td>No</td><td>Manual drawing</td><td>Built-in one-click presets</td></tr>
+      <tr><td>Export to PDF</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- Credibility -->
+<section class="lp-cred" id="lp-about"><div class="lp-cred-inner">
+  <h2>Built by a Coach, for Coaches</h2>
+  <p>Juicebox Football was built by a high school defensive coordinator who spent years hand-drawing 40+ scout cards every Tuesday night. Every feature exists because a real coach needed it. No bloat. No corporate sales pitch. Just the tool you wish you had last season.</p>
+</div></section>
+
+<!-- Final CTA -->
+<section class="lp-cta"><div>
+  <h2>Stop Drawing Scout Cards by Hand</h2>
+  <p>Try the full editor free. No signup required.</p>
+  <a class="lp-btn lp-btn-pri lp-btn-lg" id="lpCtaDemo" href="#">Try Demo &mdash; Free</a><br/>
+  <a class="lp-cta-link" id="lpCtaSignup" href="#">Or sign up to save your work &rarr;</a>
+</div></section>
+
+<!-- Footer -->
+<footer class="lp-footer"><div class="lp-footer-inner">
+  <div class="lp-footer-brand">
+    <svg viewBox="0 0 130 190" fill="none"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="rgba(245,240,232,.15)"/><rect x="25" y="46" width="24" height="130" fill="rgba(245,240,232,.08)"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg>
+    <span>Juice Box Football</span>
+  </div>
+  <div class="lp-footer-links">
+    <a href="#lp-features">Features</a>
+    <a id="lpFootDemo" href="#">Demo</a>
+    <a id="lpFootSignup" href="#">Sign Up</a>
+  </div>
+  <div class="lp-footer-copy">&copy; 2026 Juicebox Football</div>
+</div></footer>
+
+</div>
+
+<!-- Auth Screen (overlay) -->
+<div id="auth-screen" class="hidden">
   <div class="auth-card">
+    <button class="auth-close" id="authClose">&times;</button>
     <div class="auth-logo"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#2D4A3E"/><rect x="25" y="46" width="24" height="130" fill="#3A5E4F"/><polygon points="22,46 112,46 107,56 27,56" fill="#24382F"/><polygon points="27,56 65,46 107,56" fill="#2D4A3E" stroke="#24382F" stroke-width="0.6"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>
     <h1>Juice Box</h1>
     <div class="auth-sub">Football</div>
@@ -258,8 +489,6 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
       <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Continue with Google
     </button>
-    <div class="auth-divider">or</div>
-    <button class="auth-btn-demo" id="authDemo">Try Demo — No Sign Up Required</button>
   </div>
 </div>
 
@@ -276,8 +505,19 @@ var savingToCloud=false;
 var autoSaveTimer=null;
 var demoMode=false;
 
+function showLanding(){
+  document.getElementById('landing-page').classList.remove('hidden');
+  document.getElementById('auth-screen').classList.add('hidden');
+}
+function hideLanding(){
+  document.getElementById('landing-page').classList.add('hidden');
+}
+function showSignIn(){
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
+
 function initAuth(){
-  if(!supabase){console.warn('Supabase not loaded, using localStorage only');showApp();return}
+  if(!supabase){console.warn('Supabase not loaded, using localStorage only');hideLanding();return}
   var authScreen=document.getElementById('auth-screen');
   var authForm=document.getElementById('authForm');
   var authToggle=document.getElementById('authToggle');
@@ -320,18 +560,48 @@ function initAuth(){
     supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});
   });
 
-  document.getElementById('authDemo').addEventListener('click',function(){enterDemoMode()});
+  // Close auth overlay → back to landing
+  document.getElementById('authClose').addEventListener('click',function(){
+    authScreen.classList.add('hidden');
+  });
+
+  // Landing page buttons — Demo
+  var demoButtons=['lpNavDemo','lpHeroDemo','lpCtaDemo','lpFootDemo'];
+  demoButtons.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.addEventListener('click',function(e){e.preventDefault();enterDemoMode()});
+  });
+
+  // Landing page buttons — Sign Up
+  var signupButtons=['lpNavSignup','lpHeroSignup','lpCtaSignup','lpFootSignup'];
+  signupButtons.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.addEventListener('click',function(e){e.preventDefault();showSignIn()});
+  });
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('.lp-nav-links a').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var href=this.getAttribute('href');
+      if(href&&href.charAt(0)==='#'){
+        e.preventDefault();
+        var target=document.querySelector(href);
+        if(target)target.scrollIntoView({behavior:'smooth'});
+      }
+    });
+  });
 
   var initialLoadDone=false;
   supabase.auth.onAuthStateChange(function(event,session){
     if(session&&session.user){
       currentUser=session.user;
       authScreen.classList.add('hidden');
+      hideLanding();
       if(!initialLoadDone){initialLoadDone=true;loadFromCloud()}
     }else{
       currentUser=null;
       initialLoadDone=false;
-      authScreen.classList.remove('hidden');
+      if(!demoMode)showLanding();
     }
   });
 
@@ -340,6 +610,7 @@ function initAuth(){
     if(res.data.session){
       currentUser=res.data.session.user;
       authScreen.classList.add('hidden');
+      hideLanding();
       loadFromCloud();
     }
   });
@@ -347,6 +618,7 @@ function initAuth(){
 
 function showApp(){
   document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('landing-page').classList.add('hidden');
 }
 
 function getDemoData(){
@@ -389,6 +661,7 @@ function enterDemoMode(){
   demoMode=true;
   loadGamesFromData(getDemoData());
   document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('landing-page').classList.add('hidden');
   render();
 }
 
@@ -396,7 +669,8 @@ function exitDemoToAuth(){
   demoMode=false;
   games=[mkGame('Week 1')];activeGameIdx=0;
   cards=games[0].cards;activeIdx=0;gameTitle='Week 1';
-  document.getElementById('auth-screen').classList.remove('hidden');
+  showSignIn();
+  showLanding();
 }
 
 function loadGamesFromData(d){
@@ -485,7 +759,7 @@ function signOut(){
   if(!supabase)return;
   supabase.auth.signOut().then(function(){
     currentUser=null;
-    document.getElementById('auth-screen').classList.remove('hidden');
+    showLanding();
   });
 }
 
@@ -5021,8 +5295,9 @@ document.addEventListener('keydown',function(e){
 // Check for ?share= URL parameter — render share viewer instead of normal app
 var shareParam=new URLSearchParams(window.location.search).get('share');
 if(shareParam&&supabase){
-  // Hide auth screen immediately for share links
+  // Hide auth screen and landing page immediately for share links
   document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('landing-page').classList.add('hidden');
   supabase.from('shares').select('data').eq('id',shareParam).single().then(function(res){
     if(res.error||!res.data){
       document.body.innerHTML='<div style="text-align:center;padding:80px 20px;font-family:Arial,sans-serif;color:#333"><h2>Share not found</h2><p style="color:#888;margin-top:8px">This link may have expired or been removed.</p><a href="'+window.location.pathname+'" style="display:inline-block;margin-top:16px;color:#1A3C2B;font-weight:600">← Back to Juice Box Football</a></div>';
