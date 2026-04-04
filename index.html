@@ -2381,6 +2381,7 @@ function render(){
   h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
   h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
   h+='<button class="flip-btn" id="bFlip">&#x2194; Flip Play</button>';
+  h+='<button class="flip-btn" id="bResetPos" title="Reset all player positions to formation defaults">&#x21bb; Reset Pos</button>';
   // Tag toggles
   h+='<div class="tag-row">';
   for(var tti=0;tti<TAG_OPTIONS.length;tti++){
@@ -3202,6 +3203,14 @@ function bind(){
     for(var ti=0;ti<flipTBs.length;ti++){flipTBs[ti].x=CX+(CX-flipTBs[ti].x)}
     // Mirror label positions
     if(card.lpos){var lks=Object.keys(card.lpos);for(var lki=0;lki<lks.length;lki++){card.lpos[lks[lki]].x=CX+(CX-card.lpos[lks[lki]].x)}}
+    selPlayer=null;render();
+  });
+
+  var bResetPos=document.getElementById('bResetPos');
+  if(bResetPos)bResetPos.addEventListener('click',function(){
+    pushUndo();
+    card.opos=null;card.dpos=null;
+    if(appMode==='playdesign'){card.pdOpos={};card.pdDpos={};card.pdOposOff={};card.pdDposOff={}}
     selPlayer=null;render();
   });
 
