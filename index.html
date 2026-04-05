@@ -151,6 +151,14 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .field-wrap svg.drawing [data-dp]{pointer-events:none}
 .field-wrap svg [data-dp^="rsz_"]{cursor:nwse-resize}
 
+/* ---- QUICK TEXT ---- */
+.quick-text-bar{padding:4px 12px 6px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.quick-text-bar .qt-label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.4);font-weight:600;margin-right:4px;white-space:nowrap}
+.quick-text-bar .qt-btn{padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;cursor:pointer;color:#3A3A38;transition:.15s;white-space:nowrap}
+.quick-text-bar .qt-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.quick-text-bar .qt-btn:active{transform:scale(.95)}
+.quick-text-bar .qt-edit{padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:9px;background:transparent;border:1px dashed rgba(58,58,56,.2);border-radius:3px;cursor:pointer;color:rgba(58,58,56,.4);transition:.15s;margin-left:auto}
+.quick-text-bar .qt-edit:hover{border-color:#1A3C2B;color:#1A3C2B}
 /* ---- PRESETS ---- */
 .preset-section{margin-top:12px;padding-top:12px;border-top:1px solid rgba(58,58,56,.1)}
 .preset-section label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:5px;font-weight:500}
@@ -1134,6 +1142,13 @@ var userPlaybooks=[];
 function loadPlaybooks(){try{var r=localStorage.getItem('scoutPlaybooks');if(r)userPlaybooks=JSON.parse(r)}catch(e){}}
 function savePlaybooks(){try{localStorage.setItem('scoutPlaybooks',JSON.stringify(userPlaybooks))}catch(e){}}
 loadPlaybooks();
+
+// Quick Text stamps
+var DEFAULT_QUICK_TEXTS=['Wall 2','Squat','Pole','1/2','1/4','Curl/Flat','Hook','Seam','Carry','Buzz','Rob','Cut','Peel','Spy','MEG','MOD','Banjo','Trap','Bracket','3 Match','Invert','Push'];
+var quickTexts=[];
+function loadQuickTexts(){try{var r=localStorage.getItem('scoutQuickTexts');if(r)quickTexts=JSON.parse(r);else quickTexts=DEFAULT_QUICK_TEXTS.slice()}catch(e){quickTexts=DEFAULT_QUICK_TEXTS.slice()}}
+function saveQuickTexts(){try{localStorage.setItem('scoutQuickTexts',JSON.stringify(quickTexts))}catch(e){}}
+loadQuickTexts();
 
 var glossaryPdf=null; // {name, path, thumb}
 function loadGlossary(){try{var r=localStorage.getItem('scoutGlossary');if(r)glossaryPdf=JSON.parse(r)}catch(e){}}
@@ -2453,6 +2468,15 @@ function render(){
   h+='</div>';
   h+='</div>';
 
+  // Quick Text stamp bar
+  h+='<div class="quick-text-bar" id="qtBar">';
+  h+='<span class="qt-label">Quick Text</span>';
+  for(var qi=0;qi<quickTexts.length;qi++){
+    h+='<button class="qt-btn" data-qt="'+qi+'">'+esc(quickTexts[qi])+'</button>';
+  }
+  h+='<button class="qt-edit" id="qtEditBtn" title="Add, remove, or reorder quick texts">Edit</button>';
+  h+='</div>';
+
   h+='<div class="eb">';
   if(appMode==='playdesign') h+='<div class="field-col">';
 
@@ -3725,6 +3749,67 @@ function bind(){
   if(tbText)tbText.addEventListener('click',function(){
     if(textMode){textMode=false}else{textMode=true;drawMode=false;eraserMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
     selPlayer=null;render();
+  });
+
+  // === QUICK TEXT STAMPS ===
+  var qtBtns=document.querySelectorAll('.qt-btn[data-qt]');
+  for(var qti=0;qti<qtBtns.length;qti++){
+    qtBtns[qti].addEventListener('click',(function(idx){return function(){
+      var card=cards[activeIdx];
+      var txt=quickTexts[idx];if(!txt)return;
+      pushUndo();
+      var curTBs=getCurTB(card);
+      // Place at center of field, stagger slightly if multiple
+      var offsetY=(curTBs.length%5)*20;
+      curTBs.push({id:tbNid++,x:CX,y:Math.round(LOS_Y-5*YPX)+offsetY,text:txt,color:'#222',size:12});
+      selTextBox=curTBs.length-1;selPlayer=null;
+      textMode=true;drawMode=false;eraserMode=false;shapeMode=false;lineMode=false;
+      render();
+    }})(parseInt(qtBtns[qti].getAttribute('data-qt'))));
+  }
+  var qtEditBtn=document.getElementById('qtEditBtn');
+  if(qtEditBtn)qtEditBtn.addEventListener('click',function(){
+    var existing=document.getElementById('qtEditModal');
+    if(existing)existing.remove();
+    var m=document.createElement('div');m.id='qtEditModal';
+    m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center';
+    var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:420px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25);max-height:80vh;overflow-y:auto">';
+    mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Edit Quick Texts</span><button id="qtEditClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+    mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.5);margin-bottom:12px">Click &times; to remove. Add new terms below.</div>';
+    mh+='<div id="qtList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">';
+    for(var i=0;i<quickTexts.length;i++){
+      mh+='<div style="display:flex;align-items:center;gap:2px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:3px;padding:4px 6px 4px 10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#3A3A38"><span>'+esc(quickTexts[i])+'</span><button data-qtdel="'+i+'" style="background:none;border:none;cursor:pointer;color:#999;font-size:14px;padding:0 2px;line-height:1">&times;</button></div>';
+    }
+    mh+='</div>';
+    mh+='<div style="display:flex;gap:6px;margin-bottom:12px"><input id="qtNewInput" type="text" placeholder="Add new text..." style="flex:1;padding:8px 10px;border:1px solid rgba(58,58,56,.15);border-radius:3px;font-family:\'JetBrains Mono\',monospace;font-size:11px"/><button id="qtAddBtn" style="padding:8px 14px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:3px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;cursor:pointer">Add</button></div>';
+    mh+='<button id="qtResetBtn" style="padding:6px 12px;background:transparent;border:1px dashed rgba(58,58,56,.2);border-radius:3px;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.4);cursor:pointer">Reset to Defaults</button>';
+    mh+='</div>';
+    m.innerHTML=mh;
+    document.body.appendChild(m);
+    document.getElementById('qtEditClose').addEventListener('click',function(){m.remove()});
+    m.addEventListener('click',function(e){if(e.target===m)m.remove()});
+    // Delete buttons
+    var delBtns=m.querySelectorAll('[data-qtdel]');
+    for(var di=0;di<delBtns.length;di++){
+      delBtns[di].addEventListener('click',(function(idx){return function(){
+        quickTexts.splice(idx,1);saveQuickTexts();m.remove();render();
+      }})(parseInt(delBtns[di].getAttribute('data-qtdel'))));
+    }
+    // Add button
+    var addFn=function(){
+      var inp=document.getElementById('qtNewInput');
+      var val=inp.value.trim();
+      if(!val)return;
+      quickTexts.push(val);saveQuickTexts();
+      inp.value='';m.remove();render();
+    };
+    document.getElementById('qtAddBtn').addEventListener('click',addFn);
+    document.getElementById('qtNewInput').addEventListener('keydown',function(e){if(e.key==='Enter')addFn()});
+    // Reset to defaults
+    document.getElementById('qtResetBtn').addEventListener('click',function(){
+      if(!confirm('Reset to default quick texts?'))return;
+      quickTexts=DEFAULT_QUICK_TEXTS.slice();saveQuickTexts();m.remove();render();
+    });
   });
 
   // === SHAPE TOOL BUTTONS ===
