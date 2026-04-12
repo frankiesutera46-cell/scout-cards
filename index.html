@@ -604,6 +604,7 @@ function initAuth(){
   supabase.auth.onAuthStateChange(function(event,session){
     if(session&&session.user){
       currentUser=session.user;
+      migrateLocalStorage();reloadUserData();
       authScreen.classList.add('hidden');
       hideLanding();
       if(!initialLoadDone){initialLoadDone=true;loadFromCloud()}
@@ -618,6 +619,7 @@ function initAuth(){
   supabase.auth.getSession().then(function(res){
     if(res.data.session){
       currentUser=res.data.session.user;
+      migrateLocalStorage();reloadUserData();
       authScreen.classList.add('hidden');
       hideLanding();
       loadFromCloud();
@@ -713,7 +715,7 @@ function loadFromCloud(){
     }else{
       // No cloud data — try loading from localStorage as migration
       try{
-        var r=localStorage.getItem('scoutCards2');
+        var r=localStorage.getItem(lsKey('scoutCards2'));
         if(r){loadGamesFromData(JSON.parse(r));render();saveToCloud()}
       }catch(e){}
     }
@@ -742,7 +744,7 @@ function saveToCloud(){
     }
   });
   // Also keep localStorage as backup
-  try{localStorage.setItem('scoutCards2',JSON.stringify(payload))}catch(e){}
+  try{localStorage.setItem(lsKey('scoutCards2'),JSON.stringify(payload))}catch(e){}
 }
 
 function autoSave(){
@@ -1116,13 +1118,36 @@ var DRAW_WIDTHS=[1.5,2.5,4];
 var TAG_OPTIONS=['Run','Pass','Screen','RPO','Play Action','Boot','Gadget','Special Teams'];
 var activeTagFilter=null;
 
+// ===== USER-SCOPED LOCALSTORAGE =====
+// Prefix localStorage keys with user ID so each account has its own data
+function lsKey(base){
+  if(currentUser&&currentUser.id)return currentUser.id+'_'+base;
+  return base;
+}
+// Migrate unscoped data to user-scoped keys on login
+function migrateLocalStorage(){
+  if(!currentUser||!currentUser.id)return;
+  var keys=['scoutPlaybooks','scoutGlossary','scoutBranding','scoutScript','scoutCards2','scoutPresets','scoutQuickTexts'];
+  for(var i=0;i<keys.length;i++){
+    var oldVal=localStorage.getItem(keys[i]);
+    var newKey=currentUser.id+'_'+keys[i];
+    if(oldVal&&!localStorage.getItem(newKey)){
+      localStorage.setItem(newKey,oldVal);
+    }
+  }
+}
+// Reload all user-scoped data after login
+function reloadUserData(){
+  loadScript();loadBranding();loadPlaybooks();loadQuickTexts();loadGlossary();loadPresets();
+}
+
 // Feature 5: Practice Script
 var practiceScript=[];
 var PERIODS=['Indy','Team','7on7','Blitz Period','Red Zone','2-Minute','Special Teams'];
 var scriptMode=false;
 var scriptDragIdx=null;
-function loadScript(){try{var r=localStorage.getItem('scoutScript');if(r)practiceScript=JSON.parse(r)}catch(e){}}
-function saveScript(){try{localStorage.setItem('scoutScript',JSON.stringify(practiceScript))}catch(e){}}
+function loadScript(){try{var r=localStorage.getItem(lsKey('scoutScript'));if(r)practiceScript=JSON.parse(r)}catch(e){}}
+function saveScript(){try{localStorage.setItem(lsKey('scoutScript'),JSON.stringify(practiceScript))}catch(e){}}
 loadScript();
 
 var selTextBox=null; // index of selected text box
@@ -1131,28 +1156,28 @@ var selLine=null; // index of selected drawn line
 
 // ===== TEAM BRANDING =====
 var teamBranding={logoUrl:'',teamName:'',primaryColor:'#1A3C2B'};
-function loadBranding(){try{var r=localStorage.getItem('scoutBranding');if(r)teamBranding=Object.assign(teamBranding,JSON.parse(r))}catch(e){}}
-function saveBranding(){try{localStorage.setItem('scoutBranding',JSON.stringify(teamBranding))}catch(e){}}
+function loadBranding(){try{var r=localStorage.getItem(lsKey('scoutBranding'));if(r)teamBranding=Object.assign(teamBranding,JSON.parse(r))}catch(e){}}
+function saveBranding(){try{localStorage.setItem(lsKey('scoutBranding'),JSON.stringify(teamBranding))}catch(e){}}
 loadBranding();
 
 // ===== PERSISTENT PLAYBOOKS =====
 // Stored in localStorage: [{name, path, thumb}]
 // path = Supabase Storage path, thumb = data URL of first page
 var userPlaybooks=[];
-function loadPlaybooks(){try{var r=localStorage.getItem('scoutPlaybooks');if(r)userPlaybooks=JSON.parse(r)}catch(e){}}
-function savePlaybooks(){try{localStorage.setItem('scoutPlaybooks',JSON.stringify(userPlaybooks))}catch(e){}}
+function loadPlaybooks(){try{var r=localStorage.getItem(lsKey('scoutPlaybooks'));if(r)userPlaybooks=JSON.parse(r)}catch(e){}}
+function savePlaybooks(){try{localStorage.setItem(lsKey('scoutPlaybooks'),JSON.stringify(userPlaybooks))}catch(e){}}
 loadPlaybooks();
 
 // Quick Text stamps
 var DEFAULT_QUICK_TEXTS=['Wall 2','Squat','Pole','1/2','1/4','Curl/Flat','Hook','Seam','Carry','Buzz','Rob','Cut','Peel','Spy','MEG','MOD','Banjo','Trap','Bracket','3 Match','Invert','Push'];
 var quickTexts=[];
-function loadQuickTexts(){try{var r=localStorage.getItem('scoutQuickTexts');if(r)quickTexts=JSON.parse(r);else quickTexts=DEFAULT_QUICK_TEXTS.slice()}catch(e){quickTexts=DEFAULT_QUICK_TEXTS.slice()}}
-function saveQuickTexts(){try{localStorage.setItem('scoutQuickTexts',JSON.stringify(quickTexts))}catch(e){}}
+function loadQuickTexts(){try{var r=localStorage.getItem(lsKey('scoutQuickTexts'));if(r)quickTexts=JSON.parse(r);else quickTexts=DEFAULT_QUICK_TEXTS.slice()}catch(e){quickTexts=DEFAULT_QUICK_TEXTS.slice()}}
+function saveQuickTexts(){try{localStorage.setItem(lsKey('scoutQuickTexts'),JSON.stringify(quickTexts))}catch(e){}}
 loadQuickTexts();
 
 var glossaryPdf=null; // {name, path, thumb}
-function loadGlossary(){try{var r=localStorage.getItem('scoutGlossary');if(r)glossaryPdf=JSON.parse(r)}catch(e){}}
-function saveGlossary(){try{if(glossaryPdf)localStorage.setItem('scoutGlossary',JSON.stringify(glossaryPdf));else localStorage.removeItem('scoutGlossary')}catch(e){}}
+function loadGlossary(){try{var r=localStorage.getItem(lsKey('scoutGlossary'));if(r)glossaryPdf=JSON.parse(r)}catch(e){}}
+function saveGlossary(){try{if(glossaryPdf)localStorage.setItem(lsKey('scoutGlossary'),JSON.stringify(glossaryPdf));else localStorage.removeItem(lsKey('scoutGlossary'))}catch(e){}}
 loadGlossary();
 
 // Generate PDF thumbnail using PDF.js
@@ -1203,14 +1228,14 @@ var savedPlays=[];
 
 function loadPresets(){
   try{
-    var raw=localStorage.getItem('scoutPresets');
+    var raw=localStorage.getItem(lsKey('scoutPresets'));
     if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[];customRoutes=d.croutes||[];savedPlays=d.savedPlays||[]}
     // Register custom routes into ROUTES and RGROUPS
     rebuildCustomRoutes();
   }catch(e){}
 }
 function savePresets(){
-  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes,savedPlays:savedPlays}))}catch(e){}
+  try{localStorage.setItem(lsKey('scoutPresets'),JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes,savedPlays:savedPlays}))}catch(e){}
 }
 function rebuildCustomRoutes(){
   // Remove old custom entries
@@ -3301,7 +3326,7 @@ function bind(){
   if(btnSv)btnSv.addEventListener('click',function(){
     games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
     saveToCloud();
-    try{localStorage.setItem('scoutCards2',JSON.stringify(buildSavePayload()))}catch(e){}
+    try{localStorage.setItem(lsKey('scoutCards2'),JSON.stringify(buildSavePayload()))}catch(e){}
     alert('Saved!');
   });
 
@@ -3310,7 +3335,7 @@ function bind(){
     if(currentUser&&supabase){
       loadFromCloud();
     }else{
-      try{var r=localStorage.getItem('scoutCards2');if(r){loadGamesFromData(JSON.parse(r));render()}else alert('No saved data')}catch(e){alert('Load failed')}
+      try{var r=localStorage.getItem(lsKey('scoutCards2'));if(r){loadGamesFromData(JSON.parse(r));render()}else alert('No saved data')}catch(e){alert('Load failed')}
     }
   });
 
