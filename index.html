@@ -2135,16 +2135,16 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
         s+='<text x="'+pp.x+'" y="'+(pp.y+20)+'" text-anchor="middle" fill="'+noteCol+'" font-size="9" font-family="Arial,sans-serif" font-weight="bold" font-style="italic" pointer-events="none">'+esc(pnMap[pk])+'</text>';
       }
     } else if(pp.side==='c'){
-      // CENTER: small black-outline oval (matches OL) — horizontal (wider than tall)
-      var crx=11,cry=8;
-      s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+crx+'" ry="'+cry+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
-      // Defensive shade overlay on Center oval
+      // CENTER: black-outline square, white fill
+      var sz=9;
+      s+='<rect x="'+(pp.x-sz)+'" y="'+(pp.y-sz)+'" width="'+(sz*2)+'" height="'+(sz*2)+'" rx="1" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
+      // Defensive shade overlay on Center (left/right/full)
       var cShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
-      if(cShade==='left'){s+='<path d="M '+pp.x+' '+(pp.y-cry+1)+' A '+(crx-1)+' '+(cry-1)+' 0 0 0 '+pp.x+' '+(pp.y+cry-1)+' Z" fill="#222" pointer-events="none"/>';}
-      else if(cShade==='right'){s+='<path d="M '+pp.x+' '+(pp.y-cry+1)+' A '+(crx-1)+' '+(cry-1)+' 0 0 1 '+pp.x+' '+(pp.y+cry-1)+' Z" fill="#222" pointer-events="none"/>';}
-      else if(cShade==='full'){s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+(crx-1)+'" ry="'+(cry-1)+'" fill="#222" pointer-events="none"/>';}
+      if(cShade==='left'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
+      else if(cShade==='right'){s+='<rect x="'+(pp.x)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
+      else if(cShade==='full'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz*2-4)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(cShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
-      if(isSel){s+='<rect x="'+(pp.x-crx-3)+'" y="'+(pp.y-cry-3)+'" width="'+(crx*2+6)+'" height="'+(cry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(isSel){s+='<rect x="'+(pp.x-sz-3)+'" y="'+(pp.y-sz-3)+'" width="'+(sz*2+6)+'" height="'+(sz*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='ol'){
       // OL: small black-outline oval — horizontal (wider than tall)
       var orx=11,ory=8;
