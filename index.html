@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
 <title>Juice Box Football</title>
+<!-- PWA / Add to Home Screen (iPad) -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Juice Box"/>
+<meta name="theme-color" content="#1A3C2B"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231A3C2B'/%3E%3Cg transform='translate(25,-5)'%3E%3Crect x='78' y='0' width='5.5' height='50' rx='2.75' fill='%23B8A88A' transform='rotate(14,80,25)'/%3E%3Ccircle cx='92' cy='0' r='3.5' fill='%23B8A88A'/%3E%3Crect x='25' y='46' width='80' height='130' rx='4' fill='%232D4A3E'/%3E%3Crect x='25' y='46' width='24' height='130' fill='%233A5E4F'/%3E%3Cpolygon points='22,46 112,46 107,56 27,56' fill='%2324382F'/%3E%3Cpolygon points='27,56 65,46 107,56' fill='%232D4A3E'/%3E%3Crect x='25' y='158' width='80' height='6' fill='%23B8A88A'/%3E%3C/g%3E%3C/svg%3E"/>
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Juice Box Football","short_name":"Juice Box","start_url":"/","display":"standalone","background_color":"%231A3C2B","theme_color":"%231A3C2B","orientation":"any","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 180 180\"%3E%3Crect width=\"180\" height=\"180\" fill=\"%231A3C2B\"/%3E%3C/svg%3E","sizes":"180x180","type":"image/svg+xml"}]}'/>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 190'%3E%3Crect x='78' y='0' width='5.5' height='50' rx='2.75' fill='%23B8A88A' transform='rotate(14,80,25)'/%3E%3Ccircle cx='92' cy='0' r='3.5' fill='%23B8A88A'/%3E%3Crect x='25' y='46' width='80' height='130' rx='4' fill='%232D4A3E'/%3E%3Crect x='25' y='46' width='24' height='130' fill='%233A5E4F'/%3E%3Cpolygon points='22,46 112,46 107,56 27,56' fill='%2324382F'/%3E%3Cpolygon points='27,56 65,46 107,56' fill='%232D4A3E'/%3E%3Crect x='25' y='158' width='80' height='6' fill='%23B8A88A'/%3E%3C/svg%3E"/>
 <meta property="og:title" content="Juice Box Football"/>
 <meta property="og:description" content="Scout cards, film review, and game prep for your team"/>
@@ -88,7 +95,7 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 /* ---- BODY ---- */
 .eb{display:flex;flex:1;min-height:0}
 .field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
-.field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15)}
+.field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
 .field-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .field-col .field-wrap{flex:1;min-height:0}
 .field-col .field-wrap svg{max-height:calc(100vh - 340px)}
@@ -338,6 +345,63 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .topbar .week-sel option{background:#1A3C2B;color:#F7F7F5}
 .topbar .week-btn{background:transparent;border:1px solid rgba(247,247,245,.2);color:rgba(247,247,245,.6);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;border-radius:2px;cursor:pointer;letter-spacing:0.05em;transition:.15s}
 .topbar .week-btn:hover{border-color:rgba(247,247,245,.5);color:#F7F7F5}
+
+/* ===== TOUCH DEVICE OVERRIDES (iPad / tablets / phones) =====
+   Only applies when the primary pointing device is coarse (finger/pencil).
+   Desktop browsers with a mouse stay completely unaffected. */
+@media (pointer: coarse){
+  /* Toolbar buttons — bump to 44pt Apple HIG minimum */
+  .tb, .draw-bar .tb-action{width:44px;height:44px}
+  .tb svg, .draw-bar .tb-action svg{width:22px;height:22px}
+  .draw-bar .color-btn{width:32px;height:32px}
+  .draw-bar .width-btn{width:40px;height:40px}
+  .draw-bar .preset-btn{padding:8px 14px;font-size:11px}
+  .draw-bar{padding:8px 12px;gap:6px}
+  .draw-bar .tb-group{padding:3px;gap:2px}
+  /* Quick text bar */
+  .quick-text-bar{padding:8px 12px 10px;gap:6px}
+  .quick-text-bar .qt-btn{padding:8px 14px;font-size:12px;min-height:36px}
+  .quick-text-bar .qt-edit{padding:6px 10px;font-size:11px;min-height:36px}
+  /* Flip / Reset buttons */
+  .flip-btn{padding:10px 16px;font-size:12px;min-height:40px}
+  /* Top bar buttons */
+  .topbar .week-btn, .topbar .sign-out{padding:8px 12px;font-size:11px;min-height:36px}
+  .topbar .week-sel{padding:8px 12px;font-size:12px;min-height:36px}
+  /* Form controls */
+  .draw-bar select{padding:6px 10px;font-size:12px;min-height:34px}
+  /* Right-panel route buttons & selectors */
+  .rb{min-height:34px;padding:8px 12px;font-size:11px}
+  .clr-btn{min-height:32px;padding:6px 12px}
+  /* Prevent iOS Safari double-tap zoom on interactive elements */
+  button, .tb, .qt-btn, .flip-btn{touch-action:manipulation}
+}
+
+/* Panel toggle buttons — only visible on touch + narrow viewports */
+.panel-toggle{display:none;align-items:center;justify-content:center;width:38px;height:38px;background:#fff;border:1px solid rgba(58,58,56,.18);border-radius:4px;color:#1A3C2B;cursor:pointer;padding:0;flex-shrink:0;transition:.15s}
+.panel-toggle:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.panel-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.panel-toggle svg circle{fill:currentColor;stroke:none}
+.panel-toggle.active{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+
+/* ===== iPad / Tablet off-canvas panels ===== */
+@media (pointer: coarse) and (max-width: 1024px){
+  .panel-toggle{display:inline-flex}
+  .layout{position:relative;overflow:hidden}
+  /* Sidebar slides in from the left */
+  .sidebar{position:fixed;top:52px;left:0;bottom:0;width:300px;max-width:80vw;z-index:200;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 20px rgba(0,0,0,.15)}
+  .layout.show-sidebar .sidebar{transform:translateX(0)}
+  /* Right panel slides in from the right */
+  .rp{position:fixed;top:52px;right:0;bottom:0;width:340px;max-width:85vw;z-index:200;transform:translateX(100%);transition:transform .25s ease;box-shadow:-2px 0 20px rgba(0,0,0,.15)}
+  .layout.show-rp .rp{transform:translateX(0)}
+  /* Backdrop when any panel is open */
+  .panel-backdrop{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
+  .layout.show-sidebar .panel-backdrop, .layout.show-rp .panel-backdrop{display:block}
+  /* Editor header — slightly more compact on tablet */
+  .eh{gap:6px;padding:8px 10px}
+  .eh .pn{font-size:13px;padding:8px 10px;min-height:36px}
+  .eh .dd{font-size:13px;padding:8px 10px;min-height:36px;width:90px}
+  .eh select{padding:8px 10px;font-size:12px;min-height:36px}
+}
 </style>
 </head>
 <body>
@@ -2343,6 +2407,7 @@ function render(){
   h+='</div></div>';
 
   h+='<div class="layout">';
+  h+='<div class="panel-backdrop" id="panelBackdrop"></div>';
 
   // Sidebar
   h+='<aside class="sidebar"><div class="btns">';
@@ -2416,6 +2481,7 @@ function render(){
 
   // Header
   h+='<div class="eh">';
+  h+='<button class="panel-toggle" id="togSidebar" title="Cards list" aria-label="Show cards list"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>';
   h+='<span class="cnum">#'+(activeIdx+1)+'</span>';
   h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
   h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
@@ -2439,6 +2505,7 @@ function render(){
   if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi2=0;dpi2<defPresets.length;dpi2++){h+='<option value="defp_'+dpi2+'"'+(card._defPreset===dpi2?' selected':'')+'>'+esc(defPresets[dpi2].name)+'</option>'}}
   h+='</select>';
   h+='<button class="btn-del" id="bDel">&#x2715;</button>';
+  h+='<button class="panel-toggle" id="togRp" title="Routes &amp; settings" aria-label="Show route settings panel"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>';
   h+='</div>';
 
   // Body - draw toolbar first, then content
@@ -2723,7 +2790,7 @@ function bind(){
   // Sidebar
   var cis=document.querySelectorAll('.ci');
   for(var i=0;i<cis.length;i++){
-    cis[i].addEventListener('click',(function(idx){return function(){activeIdx=idx;selPlayer=null;render()}})(parseInt(cis[i].getAttribute('data-ci'))));
+    cis[i].addEventListener('click',(function(idx){return function(){activeIdx=idx;selPlayer=null;var l=document.querySelector('.layout');if(l)l.classList.remove('show-sidebar');render()}})(parseInt(cis[i].getAttribute('data-ci'))));
   }
   var ciDels=document.querySelectorAll('.ci-del');
   for(var di=0;di<ciDels.length;di++){
@@ -2752,7 +2819,9 @@ function bind(){
   // SVG interactions
   var svg=document.getElementById('fSvg');
   if(svg){
-    svg.addEventListener('mousedown',function(e){
+    svg.addEventListener('pointerdown',function(e){
+      // Capture the pointer so move/up keep coming to the SVG even if it wanders off
+      try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
       // If an inline editor is open, close it on any click on the field
       var activeEditor=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
       if(activeEditor){activeEditor.blur();e.preventDefault();return}
@@ -3262,6 +3331,22 @@ function bind(){
     if(appMode==='playdesign'){card.pdOpos={};card.pdDpos={};card.pdOposOff={};card.pdDposOff={}}
     selPlayer=null;render();
   });
+
+  // Panel toggles (iPad / touch only — buttons hidden by CSS on desktop)
+  var layoutEl=document.querySelector('.layout');
+  var togSidebar=document.getElementById('togSidebar');
+  var togRp=document.getElementById('togRp');
+  var panelBackdrop=document.getElementById('panelBackdrop');
+  function closePanels(){if(layoutEl)layoutEl.classList.remove('show-sidebar','show-rp')}
+  if(togSidebar&&layoutEl)togSidebar.addEventListener('click',function(){
+    var on=layoutEl.classList.toggle('show-sidebar');
+    if(on)layoutEl.classList.remove('show-rp');
+  });
+  if(togRp&&layoutEl)togRp.addEventListener('click',function(){
+    var on=layoutEl.classList.toggle('show-rp');
+    if(on)layoutEl.classList.remove('show-sidebar');
+  });
+  if(panelBackdrop)panelBackdrop.addEventListener('click',closePanels);
 
   var bDel=document.getElementById('bDel');
   if(bDel)bDel.addEventListener('click',function(){
@@ -4066,7 +4151,7 @@ function bindDrag(){
   var svg=document.getElementById('fSvg');
   if(!svg)return;
 
-  svg.onmousemove=function(e){
+  svg.onpointermove=function(e){
     // Straight line rubber-band preview
     if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=1){
       var pt=svgPoint(svg,e);
@@ -4354,7 +4439,7 @@ function bindDrag(){
     }
   };
 
-  svg.onmouseup=function(){
+  svg.onpointerup=function(){
     // Commit drawing
     if(currentLine&&drawMode&&!eraserMode){
       if(currentLine.pts.length>=2){
@@ -4409,7 +4494,7 @@ function bindDrag(){
     }
   };
 
-  svg.onmouseleave=function(){
+  svg.onpointerleave=function(){
     // Commit drawing on leave
     if(currentLine&&drawMode){
       if(currentLine.pts.length>=2){
