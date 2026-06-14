@@ -383,8 +383,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .panel-toggle svg circle{fill:currentColor;stroke:none}
 .panel-toggle.active{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
 
-/* iPad fixed left tool rail — hidden on desktop */
+/* iPad layout elements — hidden on desktop */
 .ipad-side{display:none}
+.ipad-top{display:none}
 
 /* ===== iPad / Tablet off-canvas panels ===== */
 @media (pointer: coarse){
@@ -395,33 +396,42 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   .eh{padding:6px 8px;gap:6px;flex-wrap:nowrap;overflow-x:auto}
   .eh select#hSel, .eh select#fSel, .eh select#dfSel{display:none}
   .eh .tag-row{display:none !important}
-  /* Fixed left sidebar with sections */
-  .ipad-side{display:flex;flex-direction:column;position:fixed;left:0;top:96px;bottom:0;width:148px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);overflow-y:auto;z-index:50;padding:6px 6px 12px;gap:6px;-webkit-overflow-scrolling:touch}
+  /* Horizontal top toolbar (drawing tools) — CHLK-style */
+  .ipad-top{display:flex;align-items:center;justify-content:flex-start;gap:6px;padding:6px 10px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;white-space:nowrap}
+  .it-group{display:flex;align-items:center;gap:2px}
+  .it-sep{width:1px;height:24px;background:rgba(58,58,56,.15);margin:0 4px;flex-shrink:0}
+  .it-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:4px;color:#3A3A38;cursor:pointer;padding:0;flex-shrink:0;transition:.1s;touch-action:manipulation}
+  .it-btn svg{width:20px;height:20px}
+  .it-btn:active{transform:scale(.95)}
+  .it-btn.it-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+  .it-color{width:26px;height:26px;border-radius:50%;border:2px solid rgba(58,58,56,.1);padding:0;cursor:pointer;flex-shrink:0;transition:.1s;touch-action:manipulation}
+  .it-color.it-on{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
+  .it-color:active{transform:scale(.9)}
+  .it-width{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:4px;cursor:pointer;flex-shrink:0;transition:.1s;touch-action:manipulation}
+  .it-width span{display:block;background:#3A3A38;border-radius:50%}
+  .it-width.it-on{background:rgba(26,60,43,.1);border-color:#1A3C2B}
+  /* Fixed left sidebar — settings only (formation/defense/hash/quick text) */
+  .ipad-side{display:flex;flex-direction:column;position:fixed;left:0;top:96px;bottom:0;width:148px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);overflow-y:auto;z-index:50;padding:6px 6px 12px;gap:8px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
+  .layout.ipad-side-collapsed .ipad-side{transform:translateX(-148px)}
+  /* Collapse arrow tab on right edge of sidebar (fixed to viewport so parent overflow doesn't clip) */
+  .is-collapse{position:fixed;left:148px;top:174px;width:22px;height:44px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:60;padding:0;box-shadow:2px 0 6px rgba(0,0,0,.15);transition:left .25s ease;touch-action:manipulation}
+  .is-collapse svg{width:14px;height:14px;transition:transform .25s ease}
+  .layout.ipad-side-collapsed .is-collapse{left:0}
+  .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:4px}
   .is-label{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.45);font-weight:600;padding:2px 2px 0}
   .is-grid{display:grid;gap:4px}
-  .is-grid-tools{grid-template-columns:repeat(3,1fr)}
-  .is-grid-line{grid-template-columns:repeat(4,1fr)}
-  .is-grid-color{grid-template-columns:repeat(4,1fr)}
-  .is-grid-width{grid-template-columns:repeat(3,1fr)}
   .is-grid-form{grid-template-columns:repeat(2,1fr)}
   .is-grid-hash{grid-template-columns:repeat(3,1fr)}
   .is-grid-qt{grid-template-columns:repeat(2,1fr)}
   .is-btn{display:flex;align-items:center;justify-content:center;min-height:30px;padding:4px 6px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:#3A3A38;cursor:pointer;transition:.1s;touch-action:manipulation;text-align:center;line-height:1.1}
-  .is-btn.is-tool{min-height:36px}
-  .is-btn.is-tool svg{width:18px;height:18px}
   .is-btn:active{transform:scale(.95)}
   .is-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
   .is-btn.is-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
-  .is-color{display:block;width:100%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(58,58,56,.1);padding:0;cursor:pointer;touch-action:manipulation;transition:.1s}
-  .is-color.is-on{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
-  .is-color:active{transform:scale(.9)}
-  .is-width{display:flex;align-items:center;justify-content:center;min-height:30px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;cursor:pointer;touch-action:manipulation;transition:.1s}
-  .is-width span{display:block;background:#3A3A38;border-radius:50%}
-  .is-width.is-on{background:rgba(26,60,43,.1);border-color:#1A3C2B}
   /* Field area: push right to clear the sidebar, top-align the play card */
-  .field-wrap{margin-left:148px;padding:4px;align-items:flex-start;justify-content:center}
-  .field-wrap svg{max-height:calc(100vh - 110px);max-width:100%;width:100%;height:auto}
+  .field-wrap{margin-left:148px;padding:4px;align-items:flex-start;justify-content:center;transition:margin-left .25s ease}
+  .layout.ipad-side-collapsed .field-wrap{margin-left:0}
+  .field-wrap svg{max-height:calc(100vh - 150px);max-width:100%;width:100%;height:auto}
   /* Off-canvas panels — sidebar (cards) and rp (settings) still slide from edges */
 
   .panel-toggle{display:inline-flex}
@@ -2549,40 +2559,53 @@ function render(){
     ['nickel','Nickel'],['dime','Dime'],['bear','Bear']
   ];
   var IPAD_HASHES=[['L','L'],['M','Mid'],['R','R']];
-  h+='<aside class="ipad-side">';
-  // DRAW section: pen + eraser + text + undo + clear
-  h+='<div class="is-section"><div class="is-label">DRAW</div><div class="is-grid is-grid-tools">';
-  h+='<button class="is-btn is-tool'+(drawMode&&!eraserMode?' is-on':'')+'" data-istool="pen" title="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
-  h+='<button class="is-btn is-tool'+(eraserMode?' is-on':'')+'" data-istool="erase" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
-  h+='<button class="is-btn is-tool'+(textMode?' is-on':'')+'" data-istool="text" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
-  h+='<button class="is-btn is-tool'+(shapeMode==='circle'?' is-on':'')+'" data-istool="circle" title="Circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>';
-  h+='<button class="is-btn is-tool'+(shapeMode==='rect'?' is-on':'')+'" data-istool="rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>';
-  h+='<button class="is-btn is-tool" data-istool="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
-  h+='</div></div>';
-  // LINE STYLE
-  h+='<div class="is-section"><div class="is-label">LINE</div><div class="is-grid is-grid-line">';
+  // Horizontal top toolbar (drawing tools — always visible on iPad)
+  h+='<div class="ipad-top">';
+  // Tools
+  h+='<div class="it-group">';
+  h+='<button class="it-btn'+(drawMode&&!eraserMode?' it-on':'')+'" data-istool="pen" title="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
+  h+='<button class="it-btn'+(eraserMode?' it-on':'')+'" data-istool="erase" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
+  h+='<button class="it-btn'+(textMode?' it-on':'')+'" data-istool="text" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
+  h+='<button class="it-btn'+(shapeMode==='circle'?' it-on':'')+'" data-istool="circle" title="Circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>';
+  h+='<button class="it-btn'+(shapeMode==='rect'?' it-on':'')+'" data-istool="rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>';
+  h+='</div>';
+  h+='<div class="it-sep"></div>';
+  // Line styles
   var ipLineStyles=[
     ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
     ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
     ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
     ['dot','Dotted','<line x1="5" y1="19" x2="19" y2="5" stroke-dasharray="1.5,4" stroke-linecap="round"/>']
   ];
+  h+='<div class="it-group">';
   for(var ipi=0;ipi<ipLineStyles.length;ipi++){var ls=ipLineStyles[ipi];
-    h+='<button class="is-btn is-tool'+(drawStyle===ls[0]?' is-on':'')+'" data-islstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ls[2]+'</svg></button>';
+    h+='<button class="it-btn'+(drawStyle===ls[0]?' it-on':'')+'" data-islstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ls[2]+'</svg></button>';
   }
-  h+='</div></div>';
-  // COLOR
-  h+='<div class="is-section"><div class="is-label">COLOR</div><div class="is-grid is-grid-color">';
+  h+='</div>';
+  h+='<div class="it-sep"></div>';
+  // Colors
+  h+='<div class="it-group it-colors">';
   for(var ipci=0;ipci<DRAW_COLORS.length;ipci++){var dc=DRAW_COLORS[ipci];
-    h+='<button class="is-color'+(drawColor===dc?' is-on':'')+'" data-iscolor="'+dc+'" style="background:'+dc+'"></button>';
+    h+='<button class="it-color'+(drawColor===dc?' it-on':'')+'" data-iscolor="'+dc+'" style="background:'+dc+'"></button>';
   }
-  h+='</div></div>';
-  // WIDTH
-  h+='<div class="is-section"><div class="is-label">WIDTH</div><div class="is-grid is-grid-width">';
+  h+='</div>';
+  h+='<div class="it-sep"></div>';
+  // Widths
+  h+='<div class="it-group">';
   for(var ipwi=0;ipwi<DRAW_WIDTHS.length;ipwi++){var dw=DRAW_WIDTHS[ipwi];
-    h+='<button class="is-width'+(drawWidth===dw?' is-on':'')+'" data-iswidth="'+dw+'"><span style="width:'+(4+ipwi*3)+'px;height:'+(4+ipwi*3)+'px"></span></button>';
+    h+='<button class="it-width'+(drawWidth===dw?' it-on':'')+'" data-iswidth="'+dw+'"><span style="width:'+(4+ipwi*3)+'px;height:'+(4+ipwi*3)+'px"></span></button>';
   }
-  h+='</div></div>';
+  h+='</div>';
+  h+='<div class="it-sep"></div>';
+  // Undo
+  h+='<div class="it-group">';
+  h+='<button class="it-btn" data-istool="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+  h+='</div>';
+  h+='</div>';
+
+  h+='<aside class="ipad-side">';
+  // Collapse toggle (right-edge tab)
+  h+='<button class="is-collapse" id="ipadSideToggle" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
   // FORMATION
   h+='<div class="is-section"><div class="is-label">FORMATION</div><div class="is-grid is-grid-form">';
   for(var ipfi=0;ipfi<IPAD_FORMS.length;ipfi++){var fr=IPAD_FORMS[ipfi];
@@ -3462,30 +3485,38 @@ function bind(){
     selPlayer=null;render();
   });
 
-  // iPad sidebar button wiring — delegates to existing handlers
-  document.querySelectorAll('.ipad-side [data-istool]').forEach(function(btn){
+  // iPad sidebar/top toolbar button wiring — delegates to existing handlers
+  document.querySelectorAll('.ipad-side [data-istool], .ipad-top [data-istool]').forEach(function(btn){
     var tool=btn.getAttribute('data-istool');
     var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo'}[tool];
     if(targetId)btn.addEventListener('click',function(){var t=document.getElementById(targetId);if(t)t.click()});
   });
-  document.querySelectorAll('.ipad-side [data-islstyle]').forEach(function(btn){
+  document.querySelectorAll('.ipad-side [data-islstyle], .ipad-top [data-islstyle]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var s=this.getAttribute('data-islstyle');
       var t=document.querySelector('[data-lstyle="'+s+'"]');if(t)t.click();
     });
   });
-  document.querySelectorAll('.ipad-side [data-iscolor]').forEach(function(btn){
+  document.querySelectorAll('.ipad-side [data-iscolor], .ipad-top [data-iscolor]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var c=this.getAttribute('data-iscolor');
       var t=document.querySelector('[data-dc="'+c+'"]');if(t)t.click();
     });
   });
-  document.querySelectorAll('.ipad-side [data-iswidth]').forEach(function(btn){
+  document.querySelectorAll('.ipad-side [data-iswidth], .ipad-top [data-iswidth]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var w=this.getAttribute('data-iswidth');
       var t=document.querySelector('[data-dw="'+w+'"]');if(t)t.click();
     });
   });
+  // Sidebar collapse toggle (iPad only)
+  var ipadSideTog=document.getElementById('ipadSideToggle');
+  if(ipadSideTog){
+    ipadSideTog.addEventListener('click',function(){
+      var l=document.querySelector('.layout');
+      if(l)l.classList.toggle('ipad-side-collapsed');
+    });
+  }
   document.querySelectorAll('.ipad-side [data-isfk]').forEach(function(btn){
     btn.addEventListener('click',function(){
       card._offPreset=null;
