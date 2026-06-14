@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#2D4A3E"/>
+
+  <!-- Juice box icon -->
+  <g transform="translate(460, 80) scale(1.4)">
+    <!-- Straw -->
+    <rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14, 80, 25)"/>
+    <circle cx="92" cy="0" r="3.5" fill="#B8A88A"/>
+    <!-- Box body -->
+    <rect x="25" y="46" width="80" height="130" rx="4" fill="#F5F0E8"/>
+    <!-- Left shadow panel -->
+    <rect x="25" y="46" width="24" height="130" fill="#E0D9CC"/>
+    <!-- Top fold -->
+    <polygon points="22,46 112,46 107,56 27,56" fill="#D6CEBD"/>
+    <!-- Top triangle fold -->
+    <polygon points="27,56 65,46 107,56" fill="#F5F0E8" stroke="#D6CEBD" stroke-width="0.6"/>
+    <!-- Thin bottom accent stripe -->
+    <rect x="25" y="158" width="80" height="6" fill="#B8A88A"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="430" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="bold" fill="#F5F0E8" letter-spacing="8">JUICE BOX</text>
+  <text x="600" y="480" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="600" fill="#B8A88A" letter-spacing="14">FOOTBALL</text>
+
+  <!-- Tagline -->
+  <text x="600" y="550" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="18" fill="rgba(245,240,232,0.4)" letter-spacing="6">SCOUT CARDS &amp; GAME PREP</text>
+</svg>
