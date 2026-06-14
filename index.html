@@ -642,6 +642,20 @@ select:focus{
 /* Hide the hero screenshot — it's a stale image of the old design. Replace with a clean banner later. */
 .lp-hero-img{display:none !important}
 
+/* --- iPad emphasis section --- */
+.lp-ipad{background:var(--paper);padding:60px 24px 80px;border-top:2.5px solid var(--pencil);border-bottom:2.5px solid var(--pencil)}
+.lp-ipad-inner{max-width:880px;margin:0 auto;text-align:center}
+.lp-ipad-badge{display:inline-block;background:var(--accent);color:#fff;font-family:var(--font-body),cursive;font-size:14px;font-weight:700;padding:6px 18px;border:2.5px solid var(--pencil);border-radius:var(--wobbly-sm);box-shadow:var(--shadow-hard-sm);margin-bottom:18px;letter-spacing:.02em;transform:rotate(-2deg)}
+.lp-ipad h2{font-family:var(--font-display),cursive !important;color:var(--pencil) !important;font-size:clamp(32px,5vw,52px) !important;line-height:1.1 !important;margin-bottom:18px !important;letter-spacing:0 !important}
+.lp-ipad-sub{font-family:var(--font-body),cursive;color:var(--pencil);font-size:19px;line-height:1.55;max-width:640px;margin:0 auto 40px}
+.lp-ipad-points{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;text-align:left}
+.lp-ipad-point{display:flex;gap:14px;align-items:flex-start;background:#fff;border:2.5px solid var(--pencil);border-radius:var(--wobbly-md);padding:18px 20px;box-shadow:var(--shadow-hard-sm);font-family:var(--font-body),cursive;color:var(--pencil);font-size:16px;line-height:1.5}
+.lp-ipad-point b{font-family:var(--font-display),cursive;font-weight:700;font-size:17px;color:var(--pencil)}
+.lp-ipad-check{flex-shrink:0;width:32px;height:32px;background:var(--accent);color:#fff;border:2.5px solid var(--pencil);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;box-shadow:var(--shadow-hard-sm);margin-top:2px}
+@media (max-width:700px){
+  .lp-ipad-points{grid-template-columns:1fr}
+}
+
 /* ==================== END HAND-DRAWN LAYER ==================== */
 
 /* ---- LAYOUT ---- */
@@ -1122,6 +1136,31 @@ select:focus{
   </div>
   <div class="lp-hero-img"><img src="hero-screenshot.png" alt="Juicebox Football editor showing a scout card with formations, routes, and defensive overlay"/></div>
 </section>
+
+<!-- iPad emphasis -->
+<section class="lp-ipad" id="lp-ipad"><div class="lp-ipad-inner">
+  <div class="lp-ipad-badge">Built for iPad</div>
+  <h2>Draw Like You're at the Whiteboard</h2>
+  <p class="lp-ipad-sub">Pull out your iPad. Tap a player. Drag a route. Done. No mouse, no learning curve &mdash; same hand-drawn feel you're used to, on the device you already bring to practice.</p>
+  <div class="lp-ipad-points">
+    <div class="lp-ipad-point">
+      <div class="lp-ipad-check">&#10003;</div>
+      <div><b>Apple Pencil ready</b> &mdash; Sketch routes, write notes, mark up coverages. Works just like paper.</div>
+    </div>
+    <div class="lp-ipad-point">
+      <div class="lp-ipad-check">&#10003;</div>
+      <div><b>Finger-friendly</b> &mdash; Big touch targets, drag-to-move players, no pinch-and-zoom guesswork. Just tap and go.</div>
+    </div>
+    <div class="lp-ipad-point">
+      <div class="lp-ipad-check">&#10003;</div>
+      <div><b>Add to Home Screen</b> &mdash; Pin Juice Box to your iPad home screen and it opens like a native app. Full-screen, no Safari bar.</div>
+    </div>
+    <div class="lp-ipad-point">
+      <div class="lp-ipad-check">&#10003;</div>
+      <div><b>Walk-around prep</b> &mdash; Build cards on the bus, on the sideline, in your office &mdash; same login, same cards, everywhere.</div>
+    </div>
+  </div>
+</div></section>
 
 <!-- Features -->
 <section class="lp-features" id="lp-features"><div class="lp-features-inner">
