@@ -3147,7 +3147,10 @@ function bind(){
         render();e.preventDefault();return;
       }
       // Drawing/eraser mode
-      if(drawMode||eraserMode){
+      // Only Apple Pencil (pen) or mouse can start strokes on touch devices — finger taps
+      // fall through to selection so accidental palm/finger touches don't register as drawings.
+      var isFingerTouch=(e.pointerType==='touch');
+      if((drawMode||eraserMode)&&!isFingerTouch){
         if(drawMode&&!eraserMode){
           selLine=null;
           var pt=svgPoint(svg,e);
@@ -4825,63 +4828,8 @@ function bindDrag(){
     if(dragInfo){dragInfo=null;render()}
   };
 
-  // Touch support for drawing
-  svg.ontouchstart=function(e){
-    if(!drawMode||eraserMode)return;
-    e.preventDefault();
-    var touch=e.touches[0];
-    var pt=svgPoint(svg,touch);
-    currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
-  };
-  svg.ontouchmove=function(e){
-    if(!currentLine||!drawMode)return;
-    e.preventDefault();
-    var touch=e.touches[0];
-    var pt=svgPoint(svg,touch);
-    var last=currentLine.pts[currentLine.pts.length-1];
-    var dx=pt.x-last.x,dy=pt.y-last.y;
-    if(dx*dx+dy*dy>4){
-      currentLine.pts.push({x:pt.x,y:pt.y});
-      var el=document.getElementById('drawPreview');
-      if(!el){
-        el=document.createElementNS('http://www.w3.org/2000/svg','path');
-        el.id='drawPreview';
-        el.setAttribute('fill','none');
-        el.setAttribute('stroke-linecap','round');
-        el.setAttribute('stroke-linejoin','round');
-        svg.appendChild(el);
-      }
-      var isCurvedTouch=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock');
-      var d;
-      if(isCurvedTouch&&currentLine.pts.length>=3){
-        d=smoothPath(currentLine.pts);
-      } else {
-        d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
-        for(var i=1;i<currentLine.pts.length;i++){
-          d+=' L '+currentLine.pts[i].x.toFixed(1)+' '+currentLine.pts[i].y.toFixed(1);
-        }
-      }
-      el.setAttribute('d',d);
-      el.setAttribute('stroke',currentLine.color);
-      el.setAttribute('stroke-width',currentLine.width);
-    }
-  };
-  svg.ontouchend=function(e){
-    if(!currentLine||!drawMode)return;
-    if(currentLine.pts.length>=2){
-      var simplified=simplifyLine(currentLine.pts,1.5);
-      currentLine.pts=simplified;
-      var card=cards[activeIdx];
-      pushUndo();
-      var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
-      var newLine3={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
-      var anc3=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
-      if(anc3)newLine3.anchor=anc3.prefix+anc3.key;
-      card[lk].push(newLine3);
-    }
-    currentLine=null;
-    render();
-  };
+  // Legacy touch handlers removed — pointer events handle iPad/Pencil drawing now and respect pointerType
+  // (finger touches are filtered out of draw mode by the pointerdown handler above)
 }
 
 // Line simplification (Ramer-Douglas-Peucker)
