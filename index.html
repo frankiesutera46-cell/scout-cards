@@ -1273,6 +1273,9 @@ var eraserMode=false;
 var textMode=false;
 var shapeMode=false; // 'circle' or 'rect' or false
 var lineMode=false; // straight line click-to-place mode
+var selectMode=false; // box-select tool active
+var multiSel=[]; // array of player keys (prefixed: 'o_X', 'd_T') currently multi-selected
+var marquee=null; // {x1,y1,x2,y2} during drag
 var drawColor='#000000';
 var drawWidth=2;
 var drawStyle='curved'; // curved, curvedarrow, curvedblock, dot
@@ -2135,6 +2138,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
   for(var pi=0;pi<keys.length;pi++){
     var pk=keys[pi],pp=players[pk];
     var isSel=(sel===pk&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
+    var inMultiSel=multiSel.indexOf((isDef?'d_':'o_')+pk)>=0;
+    var showSelBox=isSel||inMultiSel; // dashed box appears for single OR multi selection
     var col=playerColor(pp.side);
     var dp=prefix+pk;
     var R=11; // circle radius
@@ -2148,7 +2153,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var dfs=lbl.length>2?14:18;
       s+='<rect x="'+(pp.x-14)+'" y="'+(pp.y-10)+'" width="28" height="20" fill="transparent" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+5)+'" text-anchor="middle" fill="'+defCol+'" font-size="'+dfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
-      if(isSel){s+='<rect x="'+(pp.x-16)+'" y="'+(pp.y-13)+'" width="32" height="26" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(showSelBox){s+='<rect x="'+(pp.x-16)+'" y="'+(pp.y-13)+'" width="32" height="26" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
       // Auto-positioned assignment label below defender
       var pnMap=playerNotes||{};
       if(pnMap[pk]){
@@ -2165,7 +2170,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       else if(cShade==='right'){s+='<rect x="'+(pp.x)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
       else if(cShade==='full'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz*2-4)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(cShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
-      if(isSel){s+='<rect x="'+(pp.x-sz-3)+'" y="'+(pp.y-sz-3)+'" width="'+(sz*2+6)+'" height="'+(sz*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(showSelBox){s+='<rect x="'+(pp.x-sz-3)+'" y="'+(pp.y-sz-3)+'" width="'+(sz*2+6)+'" height="'+(sz*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='ol'){
       // OL: small black-outline oval — horizontal (wider than tall)
       var orx=11,ory=8;
@@ -2176,7 +2181,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       else if(oShade==='right'){s+='<path d="M '+pp.x+' '+(pp.y-ory+1)+' A '+(orx-1)+' '+(ory-1)+' 0 0 1 '+pp.x+' '+(pp.y+ory-1)+' Z" fill="#222" pointer-events="none"/>';}
       else if(oShade==='full'){s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+(orx-1)+'" ry="'+(ory-1)+'" fill="#222" pointer-events="none"/>';}
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(oShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
-      if(isSel){s+='<rect x="'+(pp.x-orx-3)+'" y="'+(pp.y-ory-3)+'" width="'+(orx*2+6)+'" height="'+(ory*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(showSelBox){s+='<rect x="'+(pp.x-orx-3)+'" y="'+(pp.y-ory-3)+'" width="'+(orx*2+6)+'" height="'+(ory*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='qb'){
       // QB: pill-shaped oval (wider than tall) with label
       var qlbl=cl[pk]||'Q';
@@ -2184,7 +2189,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var qrx=14,qry=10;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+qrx+'" ry="'+qry+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
-      if(isSel){s+='<rect x="'+(pp.x-qrx-3)+'" y="'+(pp.y-qry-3)+'" width="'+(qrx*2+6)+'" height="'+(qry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(showSelBox){s+='<rect x="'+(pp.x-qrx-3)+'" y="'+(pp.y-qry-3)+'" width="'+(qrx*2+6)+'" height="'+(qry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='wr'||pp.side==='rb'||pp.side==='te'){
       // Skill players: horizontal (wider than tall) ovals
       var defFills={'wr':['#cc0000','#990000'],'rb':['#22862a','#1a6b21'],'te':['#d4a017','#b8860b']};
@@ -2194,7 +2199,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var srx=13,sry=10;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+srx+'" ry="'+sry+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
-      if(isSel){s+='<rect x="'+(pp.x-srx-3)+'" y="'+(pp.y-sry-3)+'" width="'+(srx*2+6)+'" height="'+(sry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+      if(showSelBox){s+='<rect x="'+(pp.x-srx-3)+'" y="'+(pp.y-sry-3)+'" width="'+(srx*2+6)+'" height="'+(sry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else {
       var customPc2=cl._pc&&cl._pc[pk];
       var oFill=isSel?'#1A3C2B':(customPc2||'#888');
@@ -2625,6 +2630,7 @@ function render(){
   h+='<div class="ipad-top">';
   // Tools
   h+='<div class="it-group">';
+  h+='<button class="it-btn'+(selectMode?' it-on':'')+'" data-istool="select" title="Select (box-select)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
   h+='<button class="it-btn'+(drawMode&&!eraserMode?' it-on':'')+'" data-istool="pen" title="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
   h+='<button class="it-btn'+(eraserMode?' it-on':'')+'" data-istool="erase" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
   h+='<button class="it-btn'+(textMode?' it-on':'')+'" data-istool="text" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
@@ -2730,6 +2736,7 @@ function render(){
   h+='<div class="draw-bar">';
   // Group 1: Drawing tools (Pen, Eraser)
   h+='<div class="tb-group">';
+  h+='<button class="tb'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/></svg></button>';
   h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
   h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg></button>';
   h+='</div>';
@@ -3241,6 +3248,25 @@ function bind(){
         selLine=clickedIdx;selPlayer=null;selTextBox=null;
         render();e.preventDefault();return;
       }
+      // Box-select mode — start marquee on empty area, or toggle player in/out on player tap
+      if(selectMode){
+        var msTarget=findPlayerEl(e.target);
+        if(msTarget){
+          // Toggle this player in/out of multiSel
+          var msDp=msTarget.getAttribute('data-dp');
+          if(msDp&&msDp.indexOf('rsz_')!==0&&msDp.indexOf('t_')!==0){
+            var msIdx=multiSel.indexOf(msDp);
+            pushUndo();
+            if(msIdx>=0)multiSel.splice(msIdx,1);else multiSel.push(msDp);
+            render();e.preventDefault();return;
+          }
+        }
+        // Empty area — start marquee
+        var mPt=svgPoint(svg,e);
+        marquee={x1:mPt.x,y1:mPt.y,x2:mPt.x,y2:mPt.y};
+        try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
+        e.preventDefault();return;
+      }
       // Drawing/eraser mode
       if(drawMode||eraserMode){
         if(drawMode&&!eraserMode){
@@ -3392,10 +3418,11 @@ function bind(){
         // pointermove updates positions via setAttribute directly; pointerup renders at the end.
         e.preventDefault();
       }else{
-        // Clicked empty area — deselect player/label/popup
+        // Clicked empty area — deselect player/label/popup/multi-select
         var needsRender=false;
         if(selPlayer){selPlayer=null;popupCat=null;needsRender=true}
         if(selLabel){selLabel=null;needsRender=true}
+        if(multiSel.length){multiSel=[];needsRender=true}
         if(needsRender)render();
       }
     });
@@ -3506,9 +3533,14 @@ function bind(){
   }
 
   // Draw toolbar buttons
+  var tbSelect=document.getElementById('tbSelect');
+  if(tbSelect)tbSelect.addEventListener('click',function(){
+    if(selectMode){selectMode=false}else{selectMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
+    selPlayer=null;selTextBox=null;multiSel=[];popupCat=null;render();
+  });
   var tbPen=document.getElementById('tbPen');
   if(tbPen)tbPen.addEventListener('click',function(){
-    if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
+    if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
     selPlayer=null;selTextBox=null;render();
   });
   var tbErase=document.getElementById('tbErase');
@@ -3738,7 +3770,7 @@ function bind(){
   // iPad sidebar/top toolbar button wiring — delegates to existing handlers
   document.querySelectorAll('.ipad-side [data-istool], .ipad-top [data-istool]').forEach(function(btn){
     var tool=btn.getAttribute('data-istool');
-    var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo'}[tool];
+    var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo',select:'tbSelect'}[tool];
     if(targetId)btn.addEventListener('click',function(){var t=document.getElementById(targetId);if(t)t.click()});
   });
   document.querySelectorAll('.ipad-side [data-islstyle], .ipad-top [data-islstyle]').forEach(function(btn){
@@ -4663,6 +4695,26 @@ function bindDrag(){
   if(!svg)return;
 
   svg.onpointermove=function(e){
+    // Marquee selection — update preview rectangle
+    if(marquee){
+      var pt=svgPoint(svg,e);
+      marquee.x2=pt.x;marquee.y2=pt.y;
+      var mEl=document.getElementById('marqueePreview');
+      if(!mEl){
+        mEl=document.createElementNS('http://www.w3.org/2000/svg','rect');
+        mEl.id='marqueePreview';
+        mEl.setAttribute('fill','rgba(74,144,217,0.08)');
+        mEl.setAttribute('stroke','#4A90D9');
+        mEl.setAttribute('stroke-width','1');
+        mEl.setAttribute('stroke-dasharray','4,3');
+        mEl.setAttribute('pointer-events','none');
+        svg.appendChild(mEl);
+      }
+      var mx=Math.min(marquee.x1,marquee.x2),my=Math.min(marquee.y1,marquee.y2);
+      var mw=Math.abs(marquee.x2-marquee.x1),mh=Math.abs(marquee.y2-marquee.y1);
+      mEl.setAttribute('x',mx);mEl.setAttribute('y',my);mEl.setAttribute('width',mw);mEl.setAttribute('height',mh);
+      e.preventDefault();return;
+    }
     // Straight line rubber-band preview
     if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=1){
       var pt=svgPoint(svg,e);
@@ -4951,6 +5003,26 @@ function bindDrag(){
   };
 
   svg.onpointerup=function(){
+    // Commit marquee selection
+    if(marquee){
+      var x1=Math.min(marquee.x1,marquee.x2),x2=Math.max(marquee.x1,marquee.x2);
+      var y1=Math.min(marquee.y1,marquee.y2),y2=Math.max(marquee.y1,marquee.y2);
+      marquee=null;
+      var mp=document.getElementById('marqueePreview');if(mp)mp.remove();
+      // Only treat as marquee if user actually dragged (otherwise treat as a click)
+      if((x2-x1)>4||(y2-y1)>4){
+        var curCard=cards[activeIdx];
+        var oP=getCurOffPlayers(curCard),dP=getCurDefPlayers(curCard);
+        var newSel=[];
+        function within(pp){return pp.x>=x1&&pp.x<=x2&&pp.y>=y1&&pp.y<=y2}
+        Object.keys(oP).forEach(function(k){if(within(oP[k]))newSel.push('o_'+k)});
+        Object.keys(dP).forEach(function(k){if(within(dP[k]))newSel.push('d_'+k)});
+        // Replace selection (drag without modifier replaces; tap-on-player adds via pointerdown branch)
+        multiSel=newSel;
+        render();
+      }
+      return;
+    }
     // Commit drawing
     if(currentLine&&drawMode&&!eraserMode){
       if(currentLine.pts.length>=2){
