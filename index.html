@@ -189,6 +189,17 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .color-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:0;line-height:24px;text-align:center;padding:0;transition:.12s}
 .color-dot:hover{transform:scale(1.15)}
 .color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
+/* Floating player context popup — appears near the selected player on the field */
+.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;gap:5px;align-items:center;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:auto;white-space:nowrap}
+.pp-input{width:48px;padding:5px 6px;font-size:11px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit;text-align:center}
+.pp-color{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.1);cursor:pointer;padding:0;transition:.1s;touch-action:manipulation}
+.pp-color.act{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
+.pp-color:active{transform:scale(.9)}
+.pp-btn{padding:5px 8px;font-size:10px;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:4px;cursor:pointer;font-weight:600;color:#3A3A38;font-family:inherit;transition:.1s;touch-action:manipulation}
+.pp-btn:hover{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
+.pp-btn.act{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
+.pp-sep{width:1px;height:20px;background:rgba(58,58,56,.15);margin:0 2px;flex-shrink:0}
+
 .shade-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(58,58,56,.2);background:#fff;color:#3A3A38;font-weight:600;transition:.12s;flex:1;text-align:center;touch-action:manipulation}
 .shade-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
 .shade-btn.shade-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
@@ -2804,7 +2815,46 @@ function render(){
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
     h+=buildWaypointHandles(card,rOff);
   }
-  h+='</svg></div>';
+  h+='</svg>';
+  // Floating player context popup — positioned by JS after render
+  if(selPlayer){
+    var ppPlayers=selSide==='def'?getCurDefPlayers(card):getCurOffPlayers(card);
+    var ppP=ppPlayers[selPlayer];
+    if(ppP){
+      var ppIsOl=(ppP.side==='ol'||ppP.side==='c');
+      var ppIsSkill=(ppP.side==='wr'||ppP.side==='rb'||ppP.side==='te');
+      var ppCl=card.cl[selPlayer]||'';
+      h+='<div class="player-popup" id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'">';
+      // Label input (jersey number / custom label)
+      h+='<input class="pp-input" id="ppLabel" type="text" placeholder="#" maxlength="4" value="'+esc(ppCl)+'"/>';
+      h+='<div class="pp-sep"></div>';
+      if(ppIsSkill){
+        // Color picker for skill players
+        var ppColors=[['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#d4a017','Y'],['#9333ea','P'],['#ffffff','W']];
+        var curPpCol=(card.cl._pc&&card.cl._pc[selPlayer])||'';
+        for(var ppci=0;ppci<ppColors.length;ppci++){
+          var ppc=ppColors[ppci][0];
+          var ppOn=curPpCol===ppc;
+          h+='<button class="pp-color'+(ppOn?' act':'')+'" data-pp-color="'+ppc+'" style="background:'+ppc+(ppc==='#ffffff'?';border:1px solid #999':'')+'"></button>';
+        }
+      } else if(ppIsOl){
+        // Defender shade for OL/C
+        var curShade=(card.olShade&&card.olShade[selPlayer])||'';
+        var shadeOpts=[['','None'],['left','L'],['right','R'],['full','Full']];
+        for(var psi=0;psi<shadeOpts.length;psi++){
+          var sv=shadeOpts[psi][0],sn=shadeOpts[psi][1];
+          h+='<button class="pp-btn'+(curShade===sv?' act':'')+'" data-pp-shade="'+sv+'">'+sn+'</button>';
+        }
+      }
+      // Clear route (if assigned)
+      if(card.asgn[selPlayer]){
+        h+='<div class="pp-sep"></div>';
+        h+='<button class="pp-btn" id="ppClearRoute" title="Clear route">&#x2715;</button>';
+      }
+      h+='</div>';
+    }
+  }
+  h+='</div>';
 
   // Play Designer notes section (below field)
   if(appMode==='playdesign'){
@@ -3311,6 +3361,84 @@ function bind(){
 
   bindDrag();
   bindDraw();
+
+  // Floating player context popup — position near the selected player and wire up actions
+  var pPop=document.getElementById('playerPopup');
+  if(pPop){
+    var svgEl=document.getElementById('fSvg');
+    var fwEl=document.querySelector('.field-wrap');
+    if(svgEl&&fwEl){
+      try{
+        var ctm=svgEl.getScreenCTM();
+        var fwR=fwEl.getBoundingClientRect();
+        var px=parseFloat(pPop.getAttribute('data-pp-x'));
+        var py=parseFloat(pPop.getAttribute('data-pp-y'));
+        if(ctm&&!isNaN(px)&&!isNaN(py)){
+          var sx=ctm.a*px+ctm.c*py+ctm.e;
+          var sy=ctm.b*px+ctm.d*py+ctm.f;
+          // Position relative to field-wrap (which has position:relative)
+          var lx=sx-fwR.left;
+          var ly=sy-fwR.top;
+          // Make visible briefly to measure
+          pPop.style.visibility='hidden';
+          pPop.style.left='0';pPop.style.top='0';
+          var ppW=pPop.offsetWidth,ppH=pPop.offsetHeight;
+          var finalX=Math.max(4,Math.min(fwR.width-ppW-4,lx-ppW/2));
+          var finalY=ly-ppH-16;
+          if(finalY<4)finalY=ly+22; // not enough room above — show below
+          pPop.style.left=finalX+'px';
+          pPop.style.top=finalY+'px';
+          pPop.style.visibility='visible';
+        }
+      }catch(_){}
+    }
+    // Wire up label input
+    var ppLabelEl=document.getElementById('ppLabel');
+    if(ppLabelEl)ppLabelEl.addEventListener('input',function(){
+      if(!selPlayer)return;
+      card.cl[selPlayer]=this.value;
+      // Update only the player text directly to avoid full re-render and losing focus
+      var svgT=document.getElementById('fSvg');
+      if(svgT){
+        var dp=(selSide==='def'?'d_':'o_')+selPlayer;
+        var siblings=svgT.querySelectorAll('[data-dp="'+dp+'"]');
+        for(var sti=0;sti<siblings.length;sti++){
+          var nxt=siblings[sti].nextElementSibling;
+          if(nxt&&nxt.tagName==='text'&&nxt.getAttribute('pointer-events')==='none'){nxt.textContent=this.value||siblings[sti].getAttribute('data-default-label')||''}
+        }
+      }
+    });
+    // Color buttons
+    pPop.querySelectorAll('[data-pp-color]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!selPlayer)return;
+        if(!card.cl._pc)card.cl._pc={};
+        var v=this.getAttribute('data-pp-color');
+        if(v)card.cl._pc[selPlayer]=v;else delete card.cl._pc[selPlayer];
+        render();
+      });
+    });
+    // Shade buttons
+    pPop.querySelectorAll('[data-pp-shade]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!selPlayer)return;
+        pushUndo();
+        if(!card.olShade)card.olShade={};
+        var v=this.getAttribute('data-pp-shade');
+        if(v)card.olShade[selPlayer]=v;else delete card.olShade[selPlayer];
+        render();
+      });
+    });
+    // Clear route button
+    var ppClear=document.getElementById('ppClearRoute');
+    if(ppClear)ppClear.addEventListener('click',function(){
+      if(!selPlayer)return;
+      pushUndo();
+      delete card.asgn[selPlayer];
+      if(card.routePts)delete card.routePts[selPlayer];
+      render();
+    });
+  }
 
   // Draw toolbar buttons
   var tbPen=document.getElementById('tbPen');
