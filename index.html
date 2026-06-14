@@ -423,7 +423,11 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:6px}
-  .is-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.5);font-weight:700;padding:0 2px}
+  .is-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.5);font-weight:700;padding:6px 2px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation}
+  .is-label.is-toggle:active{opacity:.6}
+  .is-chev{font-size:10px;transition:transform .15s ease;color:rgba(58,58,56,.4)}
+  .is-section.is-collapsed .is-chev{transform:rotate(-90deg)}
+  .is-section.is-collapsed .is-grid{display:none}
   .is-grid{display:grid;gap:5px}
   .is-grid-form{grid-template-columns:1fr}     /* full-width single column for formation */
   .is-grid-hash{grid-template-columns:repeat(3,1fr)}
@@ -2613,25 +2617,25 @@ function render(){
   // Collapse toggle (right-edge tab)
   h+='<button class="is-collapse" id="ipadSideToggle" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
   // FORMATION
-  h+='<div class="is-section"><div class="is-label">FORMATION</div><div class="is-grid is-grid-form">';
+  h+='<div class="is-section" data-issec="form"><button class="is-label is-toggle">FORMATION<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
   for(var ipfi=0;ipfi<IPAD_FORMS.length;ipfi++){var fr=IPAD_FORMS[ipfi];
     h+='<button class="is-btn'+(card.fk===fr[0]?' is-on':'')+'" data-isfk="'+fr[0]+'">'+fr[1]+'</button>';
   }
   h+='</div></div>';
   // DEFENSE
-  h+='<div class="is-section"><div class="is-label">DEFENSE</div><div class="is-grid is-grid-form">';
+  h+='<div class="is-section" data-issec="def"><button class="is-label is-toggle">DEFENSE<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
   for(var ipdi=0;ipdi<IPAD_DEFS.length;ipdi++){var dr=IPAD_DEFS[ipdi];
     h+='<button class="is-btn'+(card.dfk===dr[0]?' is-on':'')+'" data-isdfk="'+dr[0]+'">'+dr[1]+'</button>';
   }
   h+='</div></div>';
   // HASH
-  h+='<div class="is-section"><div class="is-label">HASH</div><div class="is-grid is-grid-hash">';
+  h+='<div class="is-section" data-issec="hash"><button class="is-label is-toggle">HASH<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-hash">';
   for(var iphi=0;iphi<IPAD_HASHES.length;iphi++){var hr=IPAD_HASHES[iphi];
     h+='<button class="is-btn'+(card.hash===hr[0]?' is-on':'')+'" data-ishash="'+hr[0]+'">'+hr[1]+'</button>';
   }
   h+='</div></div>';
   // QUICK TEXT
-  h+='<div class="is-section"><div class="is-label">QUICK TEXT</div><div class="is-grid is-grid-qt">';
+  h+='<div class="is-section" data-issec="qt"><button class="is-label is-toggle">QUICK TEXT<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-qt">';
   for(var ipqi=0;ipqi<quickTexts.length;ipqi++){
     h+='<button class="is-btn is-qt" data-isqt="'+ipqi+'">'+esc(quickTexts[ipqi])+'</button>';
   }
@@ -2979,6 +2983,9 @@ function bind(){
   var svg=document.getElementById('fSvg');
   if(svg){
     svg.addEventListener('pointerdown',function(e){
+      // Release iPad's implicit pointer capture on the touch target — otherwise after render()
+      // destroys the target element, subsequent pointermove events go nowhere and drag is broken
+      try{if(e.target&&e.target.releasePointerCapture&&e.pointerId!==undefined)e.target.releasePointerCapture(e.pointerId)}catch(_){}
       // If an inline editor is open, close it on any click on the field
       var activeEditor=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
       if(activeEditor){activeEditor.blur();e.preventDefault();return}
@@ -3522,6 +3529,20 @@ function bind(){
       if(l)l.classList.toggle('ipad-side-collapsed');
     });
   }
+  // Section collapse toggles (FORMATION / DEFENSE / HASH / QUICK TEXT)
+  function loadIpadSecState(){try{return JSON.parse(localStorage.getItem(lsKey('ipadSecCollapsed'))||'{}')}catch(_){return{}}}
+  function saveIpadSecState(s){try{localStorage.setItem(lsKey('ipadSecCollapsed'),JSON.stringify(s))}catch(_){}}
+  var ipadSec=loadIpadSecState();
+  document.querySelectorAll('.ipad-side .is-section').forEach(function(sec){
+    var key=sec.getAttribute('data-issec');
+    if(ipadSec[key])sec.classList.add('is-collapsed');
+    var lbl=sec.querySelector('.is-label.is-toggle');
+    if(lbl)lbl.addEventListener('click',function(){
+      sec.classList.toggle('is-collapsed');
+      ipadSec[key]=sec.classList.contains('is-collapsed');
+      saveIpadSecState(ipadSec);
+    });
+  });
   document.querySelectorAll('.ipad-side [data-isfk]').forEach(function(btn){
     btn.addEventListener('click',function(){
       card._offPreset=null;
