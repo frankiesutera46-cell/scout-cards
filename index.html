@@ -972,8 +972,10 @@ select:focus{
   .topbar-row2{height:32px;padding:0 12px;gap:4px}
   .topbar .brand .brand-wordmark img{height:42px}
   .topbar-row1{height:56px !important}
-  /* Fixed left sidebar — settings only, wider with bigger buttons */
-  .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:140px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:18px 10px 20px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
+  /* Fixed left sidebar — settings only, wider with bigger buttons.
+     top:260px clears the topbar (~92px) + ipad-top drawing toolbar (~56px) + editor header row
+     so FORMATION/DEFENSE/HASH/QUICK TEXT line up with the play card title, not crowd the toolbars. */
+  .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:260px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:18px 10px 20px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
   .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
   /* Collapse handle — centered vertically on left edge so it can't hide behind topbar */
   .is-collapse{position:fixed;left:172px;top:50%;transform:translateY(-50%);width:28px;height:72px;background:var(--pencil);color:var(--paper);border:2px solid var(--pencil);border-radius:0 8px 8px 0;display:flex !important;align-items:center;justify-content:center;cursor:pointer;z-index:9999;padding:0;box-shadow:3px 0 10px rgba(0,0,0,.25);transition:left .25s ease;touch-action:manipulation}
