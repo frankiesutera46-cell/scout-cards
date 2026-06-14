@@ -2979,8 +2979,6 @@ function bind(){
   var svg=document.getElementById('fSvg');
   if(svg){
     svg.addEventListener('pointerdown',function(e){
-      // Capture the pointer so move/up keep coming to the SVG even if it wanders off
-      try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
       // If an inline editor is open, close it on any click on the field
       var activeEditor=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
       if(activeEditor){activeEditor.blur();e.preventDefault();return}
@@ -3107,6 +3105,7 @@ function bind(){
           selLine=null;
           var pt=svgPoint(svg,e);
           currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
           e.preventDefault();
           return;
         } else if(eraserMode){
