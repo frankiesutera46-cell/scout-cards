@@ -62,6 +62,11 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 /* In PWA standalone mode (Add to Home Screen) — lock body so pull/bounce/refresh can't move the app */
 @media (display-mode: standalone){
   html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-overflow-scrolling:auto}
+  /* Push content below the iPad/iPhone status bar (time, battery, etc.). The topmost
+     element of the layout absorbs the safe-area inset — never both at once. */
+  .topbar{padding-top:env(safe-area-inset-top)}
+  .demo-banner{padding-top:calc(8px + env(safe-area-inset-top))}
+  .demo-banner + .topbar{padding-top:0}
 }
 
 /* ---- TOP BAR ---- */
@@ -415,6 +420,179 @@ select:focus{
 .lp-step h3{font-size:22px !important}
 /* iPad sidebar section labels stay bigger now too */
 .is-label{font-size:14px !important}
+
+/* --- Modals, share & tutorial: hand-drawn design overrides ---
+   Targets #*Modal containers (Branding, Playbooks, Reports, Help, Share, Auth) and
+   replaces the default white-card look with paper + wobbly border + hard shadow + Kalam/Patrick Hand. */
+#brandingModal,#playbooksModal,#reportsModal,#helpModal,#shareModal,#auth-screen{
+  font-family:var(--font-body),cursive !important;
+}
+#brandingModal > div,
+#playbooksModal > div,
+#reportsModal > div,
+#helpModal > div,
+#shareModal > div,
+#auth-screen .auth-card{
+  background:var(--paper) !important;
+  border:2.5px solid var(--pencil) !important;
+  border-radius:var(--wobbly-md) !important;
+  box-shadow:var(--shadow-hard-lg) !important;
+  padding:28px 30px !important;
+  color:var(--pencil) !important;
+}
+/* Modal headings (the big titles inside the modals — usually a span with font-family Bebas Neue or Space Grotesk) */
+#brandingModal > div > div > span,
+#playbooksModal > div > div > span,
+#reportsModal > div > div > span,
+#helpModal > div > div > span,
+#shareModal > div > div > span{
+  font-family:var(--font-display),cursive !important;
+  font-size:26px !important;
+  font-weight:700 !important;
+  color:var(--pencil) !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+/* Section sub-headings inside Help modal (the green underlined "Getting Started" etc.) */
+#helpModal > div div[style*="text-transform:uppercase"]{
+  font-family:var(--font-display),cursive !important;
+  font-size:18px !important;
+  font-weight:700 !important;
+  color:var(--pencil) !important;
+  letter-spacing:0.04em !important;
+  border-bottom:2px solid var(--pencil) !important;
+  text-transform:none !important;
+  margin-top:22px !important;
+}
+/* Body paragraphs and list rows */
+#brandingModal p, #playbooksModal p, #reportsModal p, #helpModal p, #shareModal p,
+#brandingModal > div div[style*="font-size:13px"],
+#brandingModal > div div[style*="font-size:14px"],
+#playbooksModal > div div[style*="font-size:13px"],
+#playbooksModal > div div[style*="font-size:14px"],
+#reportsModal > div div[style*="font-size:13px"],
+#reportsModal > div div[style*="font-size:14px"],
+#helpModal > div div[style*="font-size:13px"],
+#helpModal > div div[style*="font-size:14px"],
+#shareModal > div div[style*="font-size:11px"],
+#shareModal > div div[style*="font-size:13px"]{
+  font-family:var(--font-body),cursive !important;
+  font-size:16px !important;
+  line-height:1.55 !important;
+  color:var(--pencil) !important;
+  letter-spacing:0 !important;
+}
+/* Buttons inside any modal — wobbly, hand-drawn */
+#brandingModal button, #playbooksModal button, #reportsModal button, #helpModal button, #shareModal button{
+  font-family:var(--font-body),cursive !important;
+  font-size:15px !important;
+  border-radius:var(--wobbly-sm) !important;
+  border:2.5px solid var(--pencil) !important;
+  background:#fff !important;
+  color:var(--pencil) !important;
+  box-shadow:var(--shadow-hard-sm) !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+  padding:8px 16px !important;
+  cursor:pointer;
+  transition:transform .08s, box-shadow .08s;
+}
+#brandingModal button:active, #playbooksModal button:active, #reportsModal button:active, #helpModal button:active, #shareModal button:active{
+  transform:translate(2px,2px);box-shadow:none !important;
+}
+/* Close (×) buttons stay borderless */
+#brandingModal button[id$="Close"], #playbooksModal button[id$="Close"], #reportsModal button[id$="Close"], #helpModal button[id$="Close"], #shareModal button[id$="Close"]{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  font-size:24px !important;
+  padding:0 8px !important;
+}
+/* Primary action buttons (Save / Upload / Create Share Link / Sign Up) — red accent */
+#brandingModal button[id*="Save"], #brandingModal button[id*="Submit"],
+#playbooksModal button[id*="Upload"],
+#reportsModal button[id*="Upload"],
+#shareModal button[id*="Confirm"],
+#shareModal #shareConfirmBtn,
+#auth-screen button.auth-btn{
+  background:var(--accent) !important;
+  color:#fff !important;
+  border-color:var(--pencil) !important;
+}
+/* Form inputs inside modals */
+#brandingModal input, #brandingModal textarea, #brandingModal select,
+#playbooksModal input, #playbooksModal textarea, #playbooksModal select,
+#reportsModal input, #reportsModal textarea, #reportsModal select,
+#helpModal input, #helpModal textarea, #helpModal select,
+#shareModal input, #shareModal textarea, #shareModal select,
+#auth-screen input{
+  font-family:var(--font-body),cursive !important;
+  font-size:15px !important;
+  border:2px solid var(--pencil) !important;
+  border-radius:var(--wobbly-sm) !important;
+  background:#fff !important;
+  color:var(--pencil) !important;
+  padding:8px 12px !important;
+}
+/* Keyboard hints in tutorial */
+#helpModal kbd{
+  font-family:'JetBrains Mono',monospace !important;
+  background:var(--postit) !important;
+  border:2px solid var(--pencil) !important;
+  border-radius:4px !important;
+  padding:2px 8px !important;
+  font-size:12px !important;
+}
+/* List row cards (report list, playbook list etc.) — paper rows with hand-drawn frames */
+#reportsModal > div > div[id="srList"] > div,
+#playbooksModal > div div[style*="background:#fff"][style*="border"]{
+  background:#fff !important;
+  border:2px solid var(--pencil) !important;
+  border-radius:var(--wobbly-sm) !important;
+  box-shadow:var(--shadow-hard-sm) !important;
+}
+
+/* --- Landing page polish --- */
+.lp-nav{
+  background:var(--paper) !important;
+  border-bottom:2px solid var(--pencil) !important;
+}
+.lp-nav a, .lp-nav span{
+  font-family:var(--font-body),cursive !important;
+  color:var(--pencil) !important;
+}
+.lp-fcard{
+  background:var(--paper) !important;
+  border:2.5px solid var(--pencil) !important;
+  border-radius:var(--wobbly-md) !important;
+  box-shadow:var(--shadow-hard) !important;
+  padding:24px !important;
+}
+.lp-fcard:hover{
+  box-shadow:var(--shadow-hard-lg) !important;
+}
+.lp-fcard-icon{
+  background:var(--accent) !important;
+  border:2px solid var(--pencil) !important;
+  border-radius:var(--wobbly-sm) !important;
+  box-shadow:var(--shadow-hard-sm) !important;
+}
+.lp-fcard-icon svg{stroke:#fff !important}
+.lp-fcard h3{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+}
+.lp-fcard p{
+  font-family:var(--font-body),cursive !important;
+  color:var(--pencil) !important;
+}
+/* "Everything You Need" / section headings */
+.lp h2, .lp-section h2, [class*="lp-"] h2{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+}
 
 /* ==================== END HAND-DRAWN LAYER ==================== */
 
@@ -795,7 +973,7 @@ select:focus{
   .topbar .brand .brand-wordmark img{height:42px}
   .topbar-row1{height:56px !important}
   /* Fixed left sidebar — settings only, wider with bigger buttons */
-  .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:108px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:10px 10px 16px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
+  .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:140px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:18px 10px 20px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
   .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
   /* Collapse handle — centered vertically on left edge so it can't hide behind topbar */
   .is-collapse{position:fixed;left:172px;top:50%;transform:translateY(-50%);width:28px;height:72px;background:var(--pencil);color:var(--paper);border:2px solid var(--pencil);border-radius:0 8px 8px 0;display:flex !important;align-items:center;justify-content:center;cursor:pointer;z-index:9999;padding:0;box-shadow:3px 0 10px rgba(0,0,0,.25);transition:left .25s ease;touch-action:manipulation}
@@ -1620,6 +1798,41 @@ function popUndo(){
   if(activeIdx>=cards.length)activeIdx=cards.length-1;
   selPlayer=null;selLine=null;selTextBox=null;selLabel=null;
   return true;
+}
+
+// Delete whatever is selected. Returns true if something was deleted, false otherwise.
+function deleteSelected(){
+  var card=cards[activeIdx];if(!card)return false;
+  if(selLabel){
+    if(selLabel==='fmhash'){selLabel=null;render();return true;}
+    pushUndo();
+    if(selLabel==='play'){card.play=''}
+    else if(selLabel==='dd'){card.dd=''}
+    else if(selLabel==='notes'){card.notes=''}
+    else if(selLabel.indexOf('pn_')===0){var pnk=selLabel.substring(3);delete card.pn[pnk];delete card.lpos[selLabel];if(card.lsz)delete card.lsz[selLabel]}
+    selLabel=null;render();return true;
+  }
+  var delLines=getCurLines(card);
+  if(selLine!==null&&delLines[selLine]!==undefined){
+    pushUndo();delLines.splice(selLine,1);selLine=null;render();return true;
+  }
+  var dsTBs=getCurTB(card);
+  if(selTextBox!==null&&dsTBs[selTextBox]!==undefined){
+    pushUndo();dsTBs.splice(selTextBox,1);selTextBox=null;render();return true;
+  }
+  if(typeof multiSel!=='undefined'&&multiSel.length){
+    pushUndo();
+    for(var msi=0;msi<multiSel.length;msi++){
+      var mk=multiSel[msi];var pre=mk.substring(0,2);var pk=mk.substring(2);
+      if(pre==='o_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];}
+      else if(pre==='d_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];}
+    }
+    multiSel=[];render();return true;
+  }
+  if(selPlayer&&card.asgn[selPlayer]){
+    pushUndo();delete card.asgn[selPlayer];if(card.routePts)delete card.routePts[selPlayer];render();return true;
+  }
+  return false;
 }
 
 // Drawing state
@@ -2616,8 +2829,10 @@ function buildTextBoxes(card){
     }
     s+='</text>';
     if(isSel){
-      var hx=bx+bw+2,hy=by+bh+2;
-      s+='<rect x="'+(hx-4)+'" y="'+(hy-4)+'" width="8" height="8" fill="#1A3C2B" rx="1" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize"/>';
+      var hx=bx+bw+6,hy=by+bh+6;
+      // Larger handle + invisible hit area for easier iPad touch
+      s+='<rect x="'+(hx-12)+'" y="'+(hy-12)+'" width="24" height="24" fill="transparent" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize"/>';
+      s+='<rect x="'+(hx-6)+'" y="'+(hy-6)+'" width="12" height="12" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" rx="2" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize;pointer-events:none"/>';
     }
   }
   return s;
@@ -3011,9 +3226,10 @@ function render(){
   }
   h+='</div>';
   h+='<div class="it-sep"></div>';
-  // Undo
+  // Undo / Delete Selected
   h+='<div class="it-group">';
   h+='<button class="it-btn" data-istool="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+  h+='<button class="it-btn" data-istool="del" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
   h+='</div>';
   h+='</div>';
 
@@ -3116,6 +3332,7 @@ function render(){
   // Group 8: Undo / Clear
   h+='<div class="tb-group">';
   h+='<button class="tb-action" id="tbUndo" title="Undo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+  h+='<button class="tb-action" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
   h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
   h+='</div>';
   h+='</div>';
@@ -3678,7 +3895,7 @@ function bind(){
         var pt3=svgPoint(svg,e);
         var tb2=getCurTB(card)[selTextBox];
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false,editOnRelease:wasAlreadySel};
-        render();bindDrag();
+        // Don't render() in pointerdown — destroying the SVG mid-touch breaks iPad drag. pointerup renders at end.
         e.preventDefault();return;
       }
 
@@ -3907,6 +4124,8 @@ function bind(){
   if(tbUndo)tbUndo.addEventListener('click',function(){
     if(popUndo()){render()}
   });
+  var tbDel=document.getElementById('tbDel');
+  if(tbDel)tbDel.addEventListener('click',function(){deleteSelected()});
   var tbClear=document.getElementById('tbClear');
   if(tbClear)tbClear.addEventListener('click',function(){
     var card=cards[activeIdx];
@@ -3920,10 +4139,14 @@ function bind(){
   });
   var dStyleSel=document.getElementById('dStyle');
   if(dStyleSel)dStyleSel.addEventListener('change',function(){drawStyle=this.value});
-  // Line style icon buttons
+  // Line style icon buttons — toggle off if pressed while already active
   var lsBtns=document.querySelectorAll('[data-lstyle]');
   for(var lsi=0;lsi<lsBtns.length;lsi++){
-    lsBtns[lsi].addEventListener('click',(function(s){return function(){drawStyle=s;drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;render()}})(lsBtns[lsi].getAttribute('data-lstyle')));
+    lsBtns[lsi].addEventListener('click',(function(s){return function(){
+      if(drawMode&&!eraserMode&&drawStyle===s){drawMode=false}
+      else{drawStyle=s;drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false}
+      render();
+    }})(lsBtns[lsi].getAttribute('data-lstyle')));
   }
 
   // Dashed toggle
@@ -4125,7 +4348,7 @@ function bind(){
   // iPad sidebar/top toolbar button wiring — delegates to existing handlers
   document.querySelectorAll('.ipad-side [data-istool], .ipad-top [data-istool]').forEach(function(btn){
     var tool=btn.getAttribute('data-istool');
-    var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo',select:'tbSelect'}[tool];
+    var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo',del:'tbDel',select:'tbSelect'}[tool];
     if(targetId)btn.addEventListener('click',function(){var t=document.getElementById(targetId);if(t)t.click()});
   });
   document.querySelectorAll('.ipad-side [data-islstyle], .ipad-top [data-islstyle]').forEach(function(btn){
@@ -5209,12 +5432,26 @@ function bindDrag(){
       var newSz=Math.round(Math.max(6,Math.min(40,dragInfo.startSize+dy*0.15)));
       if(dragInfo.isTbResize){
         var rzTBs=getCurTB(card);
-        if(rzTBs[dragInfo.idx])rzTBs[dragInfo.idx].size=newSz;
+        if(rzTBs[dragInfo.idx]){
+          rzTBs[dragInfo.idx].size=newSz;
+          // Update font-size directly so iPad touch isn't broken by re-render
+          var rzEls=svg.querySelectorAll('[data-tb="'+dragInfo.idx+'"]');
+          for(var rzi=0;rzi<rzEls.length;rzi++){
+            var nxt=rzEls[rzi].nextElementSibling;
+            if(nxt&&nxt.tagName==='text'){nxt.setAttribute('font-size',newSz)}
+          }
+        }
       }else{
         if(!card.lsz)card.lsz={};
         card.lsz[dragInfo.key]=newSz;
+        // Update label text directly
+        var lblDp='t_'+dragInfo.key;
+        var lblEls=svg.querySelectorAll('[data-dp="'+lblDp+'"]');
+        for(var lei=0;lei<lblEls.length;lei++){
+          var nxt2=lblEls[lei].nextElementSibling;
+          if(nxt2&&nxt2.tagName==='text'){nxt2.setAttribute('font-size',newSz)}
+        }
       }
-      render();bindDrag();
       return;
     }
 
@@ -6528,36 +6765,7 @@ document.addEventListener('keydown',function(e){
 
   // Delete/Backspace: delete selected line, text box, label, or player route
   if(e.key==='Delete'||e.key==='Backspace'){
-    if(selLabel){
-      if(selLabel==='fmhash'){selLabel=null;render();e.preventDefault();return;}
-      pushUndo();
-      if(selLabel==='play'){card.play=''}
-      else if(selLabel==='dd'){card.dd=''}
-      else if(selLabel==='notes'){card.notes=''}
-      else if(selLabel.indexOf('pn_')===0){var pnk=selLabel.substring(3);delete card.pn[pnk];delete card.lpos[selLabel];if(card.lsz)delete card.lsz[selLabel]}
-      selLabel=null;
-      render();e.preventDefault();return;
-    }
-    var delLines=getCurLines(card);
-    if(selLine!==null&&delLines[selLine]!==undefined){
-      pushUndo();
-      delLines.splice(selLine,1);
-      selLine=null;
-      render();e.preventDefault();return;
-    }
-    var kbTBsDel=getCurTB(card);
-    if(selTextBox!==null&&kbTBsDel[selTextBox]!==undefined){
-      pushUndo();
-      kbTBsDel.splice(selTextBox,1);
-      selTextBox=null;
-      render();e.preventDefault();return;
-    }
-    if(selPlayer&&card.asgn[selPlayer]){
-      pushUndo();
-      delete card.asgn[selPlayer];
-      delete card.routePts[selPlayer];
-      render();e.preventDefault();return;
-    }
+    if(deleteSelected()){e.preventDefault();return;}
   }
 
   // Cmd/Ctrl+C: copy selected line, text box, or whole card
