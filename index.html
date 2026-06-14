@@ -26,9 +26,39 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kalam:wght@400;700&family=Patrick+Hand&display=swap');
+/* ===== HAND-DRAWN DESIGN TOKENS =====
+   Applied app-wide except the play card SVG which stays clean for readability/print */
+:root{
+  --paper:#fdfbf7;            /* warm paper background */
+  --pencil:#2d2d2d;           /* soft pencil black */
+  --muted:#e5e0d8;            /* erased pencil / old paper */
+  --accent:#ff4d4d;           /* correction marker red */
+  --accent-2:#2d5da1;         /* blue ballpoint */
+  --postit:#fff9c4;           /* post-it yellow */
+  --font-display:'Kalam',cursive;      /* felt-tip marker */
+  --font-body:'Patrick Hand',cursive;  /* handwritten */
+  /* Wobbly border-radius values — irregular like hand-drawn shapes */
+  --wobbly:255px 15px 225px 15px / 15px 225px 15px 255px;
+  --wobbly-md:30px 8px 25px 12px / 12px 28px 8px 30px;
+  --wobbly-sm:12px 4px 10px 6px / 6px 12px 4px 10px;
+  --shadow-hard:4px 4px 0px 0px var(--pencil);
+  --shadow-hard-lg:8px 8px 0px 0px var(--pencil);
+  --shadow-hard-sm:2px 2px 0px 0px var(--pencil);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
+body{
+  background:var(--paper);
+  color:var(--pencil);
+  font-family:var(--font-body),system-ui,-apple-system,sans-serif;
+  overflow-x:hidden;
+  /* Subtle dot-grain paper texture */
+  background-image:radial-gradient(var(--muted) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-size:16px;
+  line-height:1.5;
+}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:var(--pencil);line-height:1.2}
 /* In PWA standalone mode (Add to Home Screen) — lock body so pull/bounce/refresh can't move the app */
 @media (display-mode: standalone){
   html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-overflow-scrolling:auto}
@@ -62,6 +92,276 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .btn-add:hover{background:rgba(26,60,43,.06)}
 .btn-del{background:none;border:none;color:rgba(58,58,56,.35);font-size:13px;cursor:pointer;padding:2px 6px;font-family:'JetBrains Mono',monospace}
 .btn-del:hover{color:#FF8C69}
+
+/* ==================== HAND-DRAWN DESIGN LAYER ====================
+   Overrides applied to chrome (topbar, sidebar, panels, landing, buttons, inputs).
+   The play card SVG itself is intentionally untouched so it stays clean for print/share. */
+
+/* --- Buttons: wobbly shape, hard offset shadow, marker-press interaction --- */
+.btn,
+.lp-btn,
+.flip-btn,
+.tf-btn,
+.preset-btn,
+.tag-btn,
+.shade-btn,
+.pp-btn,
+.pp-cat,
+.qt-btn,
+.is-btn,
+.it-btn,
+.is-label.is-toggle{
+  font-family:var(--font-body),cursive !important;
+  border:2.5px solid var(--pencil) !important;
+  border-radius:var(--wobbly-md);
+  background:#fff;
+  color:var(--pencil);
+  box-shadow:var(--shadow-hard);
+  text-transform:none;
+  letter-spacing:.02em;
+  font-weight:400;
+  transition:transform .1s ease,box-shadow .1s ease,background .1s ease,color .1s ease;
+}
+.btn:hover,
+.lp-btn:hover,
+.flip-btn:hover,
+.tf-btn:hover,
+.preset-btn:hover,
+.tag-btn:hover,
+.shade-btn:hover,
+.pp-btn:hover,
+.pp-cat:hover,
+.qt-btn:hover,
+.is-btn:hover,
+.it-btn:hover,
+.is-label.is-toggle:hover{
+  background:var(--accent) !important;
+  color:#fff !important;
+  border-color:var(--pencil) !important;
+  box-shadow:var(--shadow-hard-sm) !important;
+  transform:translate(2px,2px);
+}
+.btn:active,
+.lp-btn:active,
+.flip-btn:active,
+.shade-btn:active,
+.pp-btn:active,
+.qt-btn:active{
+  box-shadow:none !important;
+  transform:translate(4px,4px);
+}
+/* Primary button variant (filled red marker) */
+.btn-pri,
+.lp-btn-pri,
+.flip-btn.on,
+.tf-btn.tf-on,
+.tag-btn.tag-on,
+.preset-btn.act,
+.shade-btn.shade-on,
+.pp-btn.act,
+.pp-cat.act,
+.qt-btn.qt-on,
+.is-btn.is-on,
+.it-btn.it-on{
+  background:var(--accent) !important;
+  color:#fff !important;
+  border-color:var(--pencil) !important;
+}
+.btn-pri:hover,
+.lp-btn-pri:hover{
+  background:#e63939 !important;
+}
+/* Secondary button variant (muted) */
+.btn-sec,
+.lp-btn-sec{
+  background:var(--muted) !important;
+  color:var(--pencil) !important;
+}
+.btn-sec:hover,
+.lp-btn-sec:hover{
+  background:var(--accent-2) !important;
+  color:#fff !important;
+}
+/* Delete / close buttons stay smaller and quieter */
+.btn-del{
+  font-family:var(--font-body),cursive !important;
+  color:var(--pencil) !important;
+}
+.btn-del:hover{color:var(--accent) !important;background:transparent !important}
+
+/* --- Toolbar buttons (.tb): keep them snappy but with pencil borders --- */
+.tb{
+  border:2px solid var(--pencil) !important;
+  border-radius:var(--wobbly-sm);
+  background:#fff;
+  color:var(--pencil);
+  box-shadow:var(--shadow-hard-sm);
+  transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
+}
+.tb:hover{
+  background:var(--accent);
+  color:#fff;
+  box-shadow:1px 1px 0px 0px var(--pencil);
+  transform:translate(1px,1px);
+}
+.tb.on,.tb.text-on,.tb.eraser-on{
+  background:var(--accent) !important;
+  color:#fff !important;
+  border-color:var(--pencil) !important;
+}
+
+/* --- Inputs: wobbly box, handwritten text --- */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select{
+  font-family:var(--font-body),cursive !important;
+  border:2.5px solid var(--pencil) !important;
+  border-radius:var(--wobbly-sm) !important;
+  background:#fff;
+  color:var(--pencil);
+  padding:6px 10px;
+  font-size:15px;
+}
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus{
+  outline:none !important;
+  border-color:var(--accent-2) !important;
+  box-shadow:0 0 0 3px rgba(45,93,161,.2) !important;
+}
+
+/* --- Cards & containers: wobbly shape, hard shadow, paper feel --- */
+.sidebar,
+.rp,
+.editor,
+.main,
+.lp-fcard,
+.lp-step,
+.lp-table,
+.preset-section,
+.front-sel{
+  background:#fff !important;
+  color:var(--pencil);
+}
+.lp-fcard,
+.lp-step{
+  border:2.5px solid var(--pencil) !important;
+  border-radius:var(--wobbly-md) !important;
+  box-shadow:var(--shadow-hard) !important;
+}
+.lp-fcard:hover{
+  transform:rotate(-1deg) translate(2px,2px);
+  box-shadow:var(--shadow-hard-sm) !important;
+}
+
+/* --- Topbar: paper-ish pencil-lined banner --- */
+.topbar{
+  background:var(--pencil) !important;
+  border-bottom:3px solid var(--pencil);
+}
+.topbar .brand span,
+.topbar .brand .sub{
+  font-family:var(--font-display),cursive !important;
+  color:var(--paper) !important;
+}
+.topbar .week-sel,
+.topbar .week-btn,
+.topbar .sign-out{
+  font-family:var(--font-body),cursive !important;
+  background:var(--paper) !important;
+  color:var(--pencil) !important;
+  border:2px solid var(--paper) !important;
+  border-radius:var(--wobbly-sm) !important;
+}
+.topbar .week-sel option{
+  background:var(--pencil);
+  color:var(--paper);
+}
+
+/* --- Card list items (sidebar) — pencil-bordered notes --- */
+.ci{
+  font-family:var(--font-body),cursive !important;
+  border:2px solid transparent !important;
+  border-radius:var(--wobbly-sm) !important;
+  background:#fff;
+  margin-bottom:4px;
+  transition:transform .1s ease;
+}
+.ci:hover{
+  background:var(--postit) !important;
+  border-color:var(--pencil) !important;
+  transform:rotate(-.5deg);
+}
+.ci.act{
+  background:var(--postit) !important;
+  border-color:var(--pencil) !important;
+  box-shadow:var(--shadow-hard-sm);
+}
+.ci .cn{font-family:var(--font-display),cursive !important;font-weight:700}
+.ci .cm{font-family:var(--font-body),cursive !important}
+
+/* --- Section labels / titles — felt-tip headings --- */
+.rp-title,
+.is-label,
+.qt-label,
+.script-period,
+.lp-section-title{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+  font-weight:700;
+}
+
+/* --- Landing page anchor points --- */
+.lp-nav{
+  background:var(--paper) !important;
+  border-bottom:2px dashed var(--pencil) !important;
+}
+.lp-brand,
+.lp-nav-links a{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+}
+.lp-hero h1,
+.lp-section-title{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+}
+.lp-hero p,
+.lp-fcard p,
+.lp-step p{
+  font-family:var(--font-body),cursive !important;
+  color:var(--pencil) !important;
+}
+
+/* --- Field-wrap: paper edge around the play card SVG --- */
+.field-wrap{
+  background:var(--paper) !important;
+}
+/* (the .field-wrap svg itself is left untouched — that's our work surface) */
+
+/* --- Quick text bar — sticky-note vibe --- */
+.quick-text-bar{
+  background:var(--paper) !important;
+  border-bottom:2px dashed var(--pencil) !important;
+}
+
+/* --- Demo banner — taped note across the top --- */
+.demo-banner{
+  background:var(--postit) !important;
+  color:var(--pencil) !important;
+  border-bottom:2px dashed var(--pencil) !important;
+  font-family:var(--font-body),cursive !important;
+}
+
+/* ==================== END HAND-DRAWN LAYER ==================== */
 
 /* ---- LAYOUT ---- */
 .layout{display:flex;height:calc(100vh - 52px)}
