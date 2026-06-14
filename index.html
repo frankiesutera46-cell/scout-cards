@@ -3206,7 +3206,7 @@ function render(){
   ];
   h+='<div class="it-group">';
   for(var ipi=0;ipi<ipLineStyles.length;ipi++){var ls=ipLineStyles[ipi];
-    h+='<button class="it-btn'+(drawStyle===ls[0]?' it-on':'')+'" data-islstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ls[2]+'</svg></button>';
+    h+='<button class="it-btn'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' it-on':'')+'" data-islstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ls[2]+'</svg></button>';
   }
   // Dashed toggle (separate from line style — overlays a dashed pattern on any of the 4 styles)
   h+='<button class="it-btn'+(drawDashed?' it-on':'')+'" data-isdash="1" title="Dashed Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
@@ -3308,7 +3308,7 @@ function render(){
   ];
   for(var lsi=0;lsi<lineStyles.length;lsi++){
     var ls=lineStyles[lsi];
-    h+='<button class="tb'+(drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
+    h+='<button class="tb'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
   }
   h+='</div>';
   // Dashed toggle
@@ -4345,16 +4345,44 @@ function bind(){
     selPlayer=null;render();
   });
 
-  // iPad sidebar/top toolbar button wiring — delegates to existing handlers
+  // iPad sidebar/top toolbar button wiring — runs the toggle inline (don't proxy through
+  // .click() on the hidden desktop button — iOS Safari occasionally drops programmatic
+  // clicks on display:none elements, which made the deselect tap silently no-op).
   document.querySelectorAll('.ipad-side [data-istool], .ipad-top [data-istool]').forEach(function(btn){
     var tool=btn.getAttribute('data-istool');
-    var targetId={pen:'tbPen',erase:'tbErase',text:'tbText',circle:'tbCircle',rect:'tbRect',undo:'tbUndo',del:'tbDel',select:'tbSelect'}[tool];
-    if(targetId)btn.addEventListener('click',function(){var t=document.getElementById(targetId);if(t)t.click()});
+    btn.addEventListener('click',function(){
+      if(tool==='pen'){
+        if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;render();
+      } else if(tool==='erase'){
+        if(eraserMode){eraserMode=false;drawMode=false}else{eraserMode=true;drawMode=true;textMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;render();
+      } else if(tool==='text'){
+        if(textMode){textMode=false}else{textMode=true;drawMode=false;eraserMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;render();
+      } else if(tool==='circle'){
+        if(shapeMode==='circle'){shapeMode=false}else{shapeMode='circle';drawMode=false;eraserMode=false;textMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;render();
+      } else if(tool==='rect'){
+        if(shapeMode==='rect'){shapeMode=false}else{shapeMode='rect';drawMode=false;eraserMode=false;textMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;render();
+      } else if(tool==='select'){
+        if(selectMode){selectMode=false}else{selectMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
+        selPlayer=null;selTextBox=null;popupCat=null;render();
+      } else if(tool==='undo'){
+        if(popUndo())render();
+      } else if(tool==='del'){
+        deleteSelected();
+      }
+    });
   });
   document.querySelectorAll('.ipad-side [data-islstyle], .ipad-top [data-islstyle]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var s=this.getAttribute('data-islstyle');
-      var t=document.querySelector('[data-lstyle="'+s+'"]');if(t)t.click();
+      // Inline toggle — second tap on the same style deselects pen mode entirely
+      if(drawMode&&!eraserMode&&drawStyle===s){drawMode=false}
+      else{drawStyle=s;drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;selectMode=false}
+      render();
     });
   });
   document.querySelectorAll('.ipad-side [data-iscolor], .ipad-top [data-iscolor]').forEach(function(btn){
