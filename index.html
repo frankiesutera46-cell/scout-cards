@@ -4347,12 +4347,22 @@ function bind(){
     selPlayer=null;render();
   });
 
-  // iPad sidebar/top toolbar button wiring — runs the toggle inline (don't proxy through
-  // .click() on the hidden desktop button — iOS Safari occasionally drops programmatic
-  // clicks on display:none elements, which made the deselect tap silently no-op).
+  // iPad sidebar/top toolbar button wiring — inline toggle. iOS Safari sometimes fires
+  // both a touch-derived click and a pointer-derived click on the same tap, which would
+  // double-toggle (on→off net no-op). Guard with a 350ms debounce window per button group.
+  function _tapGuard(fn){
+    var last=0;
+    return function(){
+      var now=(window.performance&&performance.now)?performance.now():(+new Date());
+      if(now-last<350)return;
+      last=now;
+      fn.apply(this,arguments);
+    };
+  }
   document.querySelectorAll('.ipad-side [data-istool], .ipad-top [data-istool]').forEach(function(btn){
     var tool=btn.getAttribute('data-istool');
-    btn.addEventListener('click',function(){
+    var handler=_tapGuard(function(e){
+      if(e&&e.preventDefault)e.preventDefault();
       if(tool==='pen'){
         if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
         selPlayer=null;selTextBox=null;render();
@@ -4377,15 +4387,22 @@ function bind(){
         deleteSelected();
       }
     });
+    // Pointerup fires the FIRST and most reliably on iPad touch; click is the fallback
+    // for mouse/trackpad. The debounce keeps a single tap from triggering both.
+    btn.addEventListener('pointerup',handler);
+    btn.addEventListener('click',handler);
   });
   document.querySelectorAll('.ipad-side [data-islstyle], .ipad-top [data-islstyle]').forEach(function(btn){
-    btn.addEventListener('click',function(){
+    var handler=_tapGuard(function(e){
+      if(e&&e.preventDefault)e.preventDefault();
       var s=this.getAttribute('data-islstyle');
       // Inline toggle — second tap on the same style deselects pen mode entirely
       if(drawMode&&!eraserMode&&drawStyle===s){drawMode=false}
       else{drawStyle=s;drawMode=true;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;selectMode=false}
       render();
     });
+    btn.addEventListener('pointerup',handler);
+    btn.addEventListener('click',handler);
   });
   document.querySelectorAll('.ipad-side [data-iscolor], .ipad-top [data-iscolor]').forEach(function(btn){
     btn.addEventListener('click',function(){
