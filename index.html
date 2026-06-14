@@ -3392,8 +3392,11 @@ function bind(){
         // pointermove updates positions via setAttribute directly; pointerup renders at the end.
         e.preventDefault();
       }else{
-        // Clicked empty area — deselect label
-        if(selLabel){selLabel=null;render()}
+        // Clicked empty area — deselect player/label/popup
+        var needsRender=false;
+        if(selPlayer){selPlayer=null;popupCat=null;needsRender=true}
+        if(selLabel){selLabel=null;needsRender=true}
+        if(needsRender)render();
       }
     });
   }
@@ -3482,8 +3485,21 @@ function bind(){
         if(!selPlayer)return;
         pushUndo();
         var v=this.getAttribute('data-pp-route');
-        if(v){card.asgn[selPlayer]=v;if(card.routePts)delete card.routePts[selPlayer]}
-        else{delete card.asgn[selPlayer];if(card.routePts)delete card.routePts[selPlayer]}
+        if(v){
+          card.asgn[selPlayer]=v;
+          // Generate editable waypoints so the user can drag and reshape the route
+          var pSrc=selSide==='def'?getCurDefPlayers(card):getCurOffPlayers(card);
+          var pp2=pSrc[selPlayer];
+          if(pp2){
+            if(!card.routePts)card.routePts={};
+            var isRight=pp2.x>CX;
+            var dirDown=(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def');
+            card.routePts[selPlayer]=routePath(v,pp2.x,pp2.y,isRight,dirDown);
+          }
+        } else{
+          delete card.asgn[selPlayer];
+          if(card.routePts)delete card.routePts[selPlayer];
+        }
         render();
       });
     });
