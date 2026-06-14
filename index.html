@@ -3149,11 +3149,8 @@ function bind(){
       // Drawing/eraser mode
       if(drawMode||eraserMode){
         if(drawMode&&!eraserMode){
-          var pt=svgPoint(svg,e);
-          // Confine drawing to inside the play card — strokes that start outside the SVG
-          // viewBox bounds are rejected so a stray Pencil tap on the chrome doesn't draw.
-          if(pt.x<0||pt.x>FW||pt.y<0||pt.y>FH)return;
           selLine=null;
+          var pt=svgPoint(svg,e);
           currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
           try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
           e.preventDefault();
@@ -4479,9 +4476,6 @@ function bindDrag(){
     // Drawing
     if(currentLine&&drawMode&&!eraserMode){
       var pt=svgPoint(svg,e);
-      // Clamp stroke points to the play card bounds so they can't extend outside
-      pt.x=Math.max(0,Math.min(FW,pt.x));
-      pt.y=Math.max(0,Math.min(FH,pt.y));
       // Shift = constrain to straight line from start to cursor
       if(e.shiftKey){
         currentLine.pts=[currentLine.pts[0],{x:pt.x,y:pt.y}];
