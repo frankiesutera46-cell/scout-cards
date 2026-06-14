@@ -741,21 +741,20 @@ select:focus{
   .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:108px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:10px 10px 16px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
   .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
   /* Collapse handle — centered vertically on left edge so it can't hide behind topbar */
-  .is-collapse{position:fixed;left:172px;top:50%;transform:translateY(-50%);width:28px;height:72px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 8px 8px 0;display:flex !important;align-items:center;justify-content:center;cursor:pointer;z-index:9999;padding:0;box-shadow:3px 0 10px rgba(0,0,0,.25);transition:left .25s ease;touch-action:manipulation}
+  .is-collapse{position:fixed;left:172px;top:50%;transform:translateY(-50%);width:28px;height:72px;background:var(--pencil);color:var(--paper);border:2px solid var(--pencil);border-radius:0 8px 8px 0;display:flex !important;align-items:center;justify-content:center;cursor:pointer;z-index:9999;padding:0;box-shadow:3px 0 10px rgba(0,0,0,.25);transition:left .25s ease;touch-action:manipulation}
   .is-collapse svg{width:18px;height:18px;transition:transform .25s ease}
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:6px}
   /* Section header is a solid green pill that stays visible even when collapsed */
-  .is-label{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#F7F7F5;font-weight:700;padding:10px 12px;background:#1A3C2B;border:1px solid #1A3C2B;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation;min-height:40px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .is-label{font-family:var(--font-body),cursive;font-size:13px;letter-spacing:.02em;color:var(--pencil);font-weight:400;padding:10px 12px;background:#fff;border:2.5px solid var(--pencil);border-radius:var(--wobbly-sm);cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation;min-height:40px;box-shadow:var(--shadow-hard-sm)}
   .is-label.is-toggle:hover{background:#143020}
   .is-label.is-toggle:active{opacity:.7}
-  .is-chev{font-size:14px;transition:transform .2s ease;color:#F7F7F5;font-weight:bold;line-height:1}
+  .is-chev{font-size:14px;transition:transform .2s ease;color:var(--pencil);font-weight:bold;line-height:1}
   .is-section.is-collapsed .is-chev{transform:rotate(-90deg)}
   .is-section.is-collapsed .is-grid{display:none}
   /* Visual cue that a section is collapsed — lighter green */
-  .is-section.is-collapsed .is-label{background:#3a5a4a;border-color:#3a5a4a}
-  .is-section.is-collapsed .is-label:hover{background:#2d4a3c}
+  .is-section.is-collapsed .is-label{background:var(--muted);border-color:var(--pencil)}
   .is-grid{display:grid;gap:5px}
   .is-grid-form{grid-template-columns:1fr}     /* full-width single column for formation */
   .is-grid-hash{grid-template-columns:repeat(3,1fr)}
