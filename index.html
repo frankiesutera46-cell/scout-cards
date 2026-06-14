@@ -2524,7 +2524,10 @@ function render(){
   h+='</div>';
   h+='</div></div>';
 
-  h+='<div class="layout">';
+  // Bake iPad sidebar collapsed state into the layout HTML so render() doesn't briefly flash the sidebar before JS re-applies the class
+  var ipadCollapsed='';
+  try{if(localStorage.getItem(lsKey('ipadSideCollapsed'))==='1')ipadCollapsed=' ipad-side-collapsed'}catch(_){}
+  h+='<div class="layout'+ipadCollapsed+'">';
   h+='<div class="panel-backdrop" id="panelBackdrop"></div>';
 
   // Sidebar
