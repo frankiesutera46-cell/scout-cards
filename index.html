@@ -2355,14 +2355,16 @@ var HASH_OFFSETS = {
 };
 
 var HDR_H=26; // header band height at top of card
+function hdrH(card){return (card && card.showHeader===false) ? 0 : HDR_H}
 function buildField(card){
   var s='';
+  var hh=hdrH(card);
 
   // White field background
   s+='<rect x="0" y="0" width="'+FW+'" height="'+FH+'" fill="#ffffff"/>';
 
   // Clip field content below header
-  s+='<defs><clipPath id="fieldClip"><rect x="0" y="'+HDR_H+'" width="'+FW+'" height="'+(FH-HDR_H)+'"/></clipPath></defs>';
+  s+='<defs><clipPath id="fieldClip"><rect x="0" y="'+hh+'" width="'+FW+'" height="'+(FH-hh)+'"/></clipPath></defs>';
   s+='<g clip-path="url(#fieldClip)">';
 
   // Blank field: skip all yard lines, hashes, numbers, sidelines, LOS — just an empty page
@@ -2389,7 +2391,7 @@ function buildField(card){
     var Y1 = YPX; // 1 yard in pixels
     for(var yd=0;yd<=TOTAL_YARDS;yd++){
       var hy = MARGIN_TOP + yd * Y1;
-      if(hy < HDR_H || hy > FH - 2) continue;
+      if(hy < hh || hy > FH - 2) continue;
       var is5 = (yd % 5 === 0);
       var tickW = is5 ? 5 : 3;
       var sw = is5 ? 1.2 : 0.7;
@@ -2412,7 +2414,7 @@ function buildField(card){
       var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
       for(var ni=0;ni<pdNums.length;ni++){
         var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
-        if(yy<HDR_H||yy>FH-MARGIN_BOT) continue;
+        if(yy<hh||yy>FH-MARGIN_BOT) continue;
         var lnx=SL+85,rnx=SR-85;
         s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
         s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
@@ -2421,7 +2423,7 @@ function buildField(card){
       // Scout mode: only 10 and 20 above LOS (defensive side)
       for(var i=0;i<=TOTAL_YARDS/5;i++){
         var yy = MARGIN_TOP + i * Y5;
-        if(yy < HDR_H || yy > FH - MARGIN_BOT) continue;
+        if(yy < hh || yy > FH - MARGIN_BOT) continue;
         var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
         if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
         var label = yardsFromLOS.toString();
@@ -2433,8 +2435,8 @@ function buildField(card){
     }
 
     // Sidelines (start from header line, not top)
-    s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
-    s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+    s+='<line x1="'+SL+'" y1="'+hh+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+    s+='<line x1="'+SR+'" y1="'+hh+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
     // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
     var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
@@ -2444,8 +2446,10 @@ function buildField(card){
 
   s+='</g>'; // end fieldClip
 
-  // Header border line (thick black at top of field)
-  s+='<line x1="0" y1="'+HDR_H+'" x2="'+FW+'" y2="'+HDR_H+'" stroke="#222" stroke-width="2.5"/>';
+  // Header border line (thick black at top of field) — only when header is shown
+  if(hh>0){
+    s+='<line x1="0" y1="'+hh+'" x2="'+FW+'" y2="'+hh+'" stroke="#222" stroke-width="2.5"/>';
+  }
 
   return s;
 }
@@ -2561,7 +2565,10 @@ function buildTextLabels(card){
   if(!card.lpos)card.lpos={};
   if(!card.lsz)card.lsz={};
 
+  var hdrOn=(card.showHeader!==false);
+
   // === HEADER BAND (fixed in top band, above field) ===
+  if(hdrOn){
   if(appMode==='playdesign'){
     // Play Designer: only show play name
     var playText=card.play||'';
@@ -2609,6 +2616,7 @@ function buildTextLabels(card){
       s+='<text x="'+(FW-6)+'" y="'+hdrY+'" text-anchor="end" fill="#222" font-size="'+rsz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(rightText)+'</text>';
     }
   }
+  } // end if(hdrOn)
 
   // === FIELD LABELS (draggable, below header) ===
   var defaults={notes:{x:CX,y:HDR_H+30}};
@@ -3393,6 +3401,8 @@ function render(){
   h+='<span class="cnum">#'+(activeIdx+1)+'</span>';
   var curFtSel=fieldTypeOf(card);
   h+='<select id="ftSel" title="Field type"><option value="hs"'+(curFtSel==='hs'?' selected':'')+'>High School</option><option value="ncaa"'+(curFtSel==='ncaa'?' selected':'')+'>College</option><option value="nfl"'+(curFtSel==='nfl'?' selected':'')+'>NFL</option><option value="blank"'+(curFtSel==='blank'?' selected':'')+'>Blank</option></select>';
+  var hdrOnNow=(card.showHeader!==false);
+  h+='<button class="flip-btn'+(hdrOnNow?' on':'')+'" id="bToggleHdr" title="Show / hide the card header band">'+(hdrOnNow?'Header: On':'Header: Off')+'</button>';
   h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
   h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
   h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
@@ -4326,6 +4336,11 @@ function bind(){
 
   var pI=document.getElementById('pI');if(pI)pI.addEventListener('input',function(){card.play=this.value;upSB()});
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
+  var bToggleHdr=document.getElementById('bToggleHdr');if(bToggleHdr)bToggleHdr.addEventListener('click',function(){
+    // false → true, anything else (including undefined for legacy cards) → false
+    card.showHeader=(card.showHeader===false);
+    render();
+  });
   var ftSel=document.getElementById('ftSel');if(ftSel)ftSel.addEventListener('change',function(){
     var oldHo=getHashOffset(card);
     card.fieldType=this.value;
