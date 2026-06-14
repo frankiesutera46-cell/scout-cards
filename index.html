@@ -594,6 +594,54 @@ select:focus{
   letter-spacing:0 !important;
 }
 
+/* --- Strip every green from the landing page — page is paper/pencil/red only --- */
+.lp-nav{background:var(--paper) !important}
+.lp-brand img{height:48px;width:auto;display:block;background:transparent}
+.lp-footer-brand img{height:40px;width:auto;display:block;background:transparent;filter:invert(1) brightness(1.8)}
+.auth-logo img{height:64px;width:auto;display:block;margin:0 auto 18px;background:transparent}
+/* Landing nav links → pencil black */
+.lp-nav-links a, .lp-nav-right a{color:var(--pencil) !important}
+.lp-nav-links a:hover{color:var(--accent) !important}
+/* Hero + section headings → pencil black, hand-drawn */
+.lp-hero h1, .lp-features h2, .lp-how h2, .lp-compare h2, .lp-cta h2{
+  font-family:var(--font-display),cursive !important;
+  color:var(--pencil) !important;
+}
+.lp-hero p, .lp-step h3{
+  color:var(--pencil) !important;
+}
+/* Secondary button — was green outline */
+.lp-btn-sec{background:var(--paper) !important;color:var(--pencil) !important;border:2.5px solid var(--pencil) !important;box-shadow:var(--shadow-hard-sm)}
+.lp-btn-sec:hover{background:var(--muted) !important;color:var(--pencil) !important}
+.lp-btn-pri{background:var(--accent) !important;color:#fff !important;border:2.5px solid var(--pencil) !important;box-shadow:var(--shadow-hard)}
+.lp-btn-pri:hover{background:#e64242 !important}
+/* Step numbers — were green circles, now red */
+.lp-step-num{background:var(--accent) !important;color:#fff !important;border:2.5px solid var(--pencil) !important;box-shadow:var(--shadow-hard-sm)}
+/* Comparison table — green header replaced with paper + bold pencil border */
+.lp-compare{background:var(--paper) !important}
+.lp-table{background:var(--paper) !important;border:2.5px solid var(--pencil);border-radius:var(--wobbly-md);box-shadow:var(--shadow-hard);overflow:hidden}
+.lp-table th{background:var(--pencil) !important;color:var(--paper) !important;font-family:var(--font-display),cursive !important;font-size:16px !important;font-weight:700 !important;letter-spacing:0 !important}
+.lp-table th:last-child{color:var(--accent) !important}
+.lp-table td{color:var(--pencil) !important;font-family:var(--font-body),cursive !important;font-size:15px !important}
+.lp-table tr td:last-child{color:var(--pencil) !important;font-weight:700 !important}
+/* "Built by a Coach, for Coaches" — was dark green section. Make it paper. */
+.lp-cred{background:var(--paper) !important;color:var(--pencil) !important;border-top:2.5px solid var(--pencil);border-bottom:2.5px solid var(--pencil)}
+.lp-cred h2{color:var(--pencil) !important;font-family:var(--font-display),cursive !important}
+.lp-cred p{color:var(--pencil) !important;font-family:var(--font-body),cursive !important;font-size:18px !important;line-height:1.6 !important}
+/* Final CTA section */
+.lp-cta{background:var(--paper) !important}
+.lp-cta p{color:var(--pencil) !important;font-family:var(--font-body),cursive !important}
+.lp-cta-link{color:var(--pencil) !important}
+.lp-cta-link:hover{color:var(--accent) !important}
+/* Footer — was dark green. Use pencil-dark with paper text. */
+.lp-footer{background:var(--pencil) !important;color:var(--paper) !important;border-top:2.5px solid var(--pencil)}
+.lp-footer-brand span{font-family:var(--font-display),cursive !important;color:var(--paper) !important}
+.lp-footer-links a{color:var(--paper) !important;font-family:var(--font-body),cursive !important}
+.lp-footer-links a:hover{color:var(--accent) !important}
+.lp-footer-copy{color:rgba(253,251,247,.6) !important;font-family:var(--font-body),cursive !important}
+/* Hide the hero screenshot — it's a stale image of the old design. Replace with a clean banner later. */
+.lp-hero-img{display:none !important}
+
 /* ==================== END HAND-DRAWN LAYER ==================== */
 
 /* ---- LAYOUT ---- */
@@ -1051,8 +1099,7 @@ select:focus{
 <!-- Nav -->
 <nav class="lp-nav"><div class="lp-nav-inner">
   <a class="lp-brand" href="#">
-    <svg viewBox="0 0 130 190" fill="none"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#2D4A3E"/><rect x="25" y="46" width="24" height="130" fill="#3A5E4F"/><polygon points="22,46 112,46 107,56 27,56" fill="#24382F"/><polygon points="27,56 65,46 107,56" fill="#2D4A3E"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg>
-    <div class="lp-brand-text"><span>Juice Box</span><div>Football</div></div>
+    <img src="juice-wordmark.png" alt="Juice"/>
   </a>
   <div class="lp-nav-links">
     <a href="#lp-features">Features</a>
@@ -1168,8 +1215,7 @@ select:focus{
 <!-- Footer -->
 <footer class="lp-footer"><div class="lp-footer-inner">
   <div class="lp-footer-brand">
-    <svg viewBox="0 0 130 190" fill="none"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="rgba(245,240,232,.15)"/><rect x="25" y="46" width="24" height="130" fill="rgba(245,240,232,.08)"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg>
-    <span>Juice Box Football</span>
+    <img src="juice-wordmark.png" alt="Juice"/>
   </div>
   <div class="lp-footer-links">
     <a href="#lp-features">Features</a>
@@ -1185,9 +1231,7 @@ select:focus{
 <div id="auth-screen" class="hidden">
   <div class="auth-card">
     <button class="auth-close" id="authClose">&times;</button>
-    <div class="auth-logo"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#2D4A3E"/><rect x="25" y="46" width="24" height="130" fill="#3A5E4F"/><polygon points="22,46 112,46 107,56 27,56" fill="#24382F"/><polygon points="27,56 65,46 107,56" fill="#2D4A3E" stroke="#24382F" stroke-width="0.6"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>
-    <h1>Juice Box</h1>
-    <div class="auth-sub">Football</div>
+    <div class="auth-logo"><img src="juice-wordmark.png" alt="Juice"/></div>
     <div class="auth-err" id="authErr"></div>
     <div class="auth-msg" id="authMsg"></div>
     <form id="authForm">
