@@ -423,9 +423,11 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:6px}
-  .is-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.5);font-weight:700;padding:6px 2px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation}
-  .is-label.is-toggle:active{opacity:.6}
-  .is-chev{font-size:10px;transition:transform .15s ease;color:rgba(58,58,56,.4)}
+  /* Section label looks like a clear row so it doesn't visually vanish when collapsed */
+  .is-label{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#1A3C2B;font-weight:700;padding:8px 10px;background:rgba(26,60,43,.06);border:1px solid rgba(26,60,43,.12);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation;min-height:34px}
+  .is-label.is-toggle:hover{background:rgba(26,60,43,.12)}
+  .is-label.is-toggle:active{opacity:.7}
+  .is-chev{font-size:11px;transition:transform .15s ease;color:#1A3C2B;font-weight:bold}
   .is-section.is-collapsed .is-chev{transform:rotate(-90deg)}
   .is-section.is-collapsed .is-grid{display:none}
   .is-grid{display:grid;gap:5px}
