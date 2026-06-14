@@ -396,11 +396,27 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   /* Backdrop when any panel is open */
   .panel-backdrop{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
   .layout.show-sidebar .panel-backdrop, .layout.show-rp .panel-backdrop{display:block}
-  /* Editor header — slightly more compact on tablet */
-  .eh{gap:6px;padding:8px 10px}
-  .eh .pn{font-size:13px;padding:8px 10px;min-height:36px}
-  .eh .dd{font-size:13px;padding:8px 10px;min-height:36px;width:90px}
-  .eh select{padding:8px 10px;font-size:12px;min-height:36px}
+  /* Maximize field card real estate — compact every chrome element */
+  .eh{gap:4px;padding:4px 6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .eh .pn{font-size:13px;padding:6px 8px;min-height:34px;min-width:120px}
+  .eh .dd{font-size:13px;padding:6px 8px;min-height:34px;width:80px}
+  .eh select{padding:6px 8px;font-size:12px;min-height:34px}
+  .eh .flip-btn{padding:6px 10px;font-size:11px;min-height:34px;white-space:nowrap}
+  .eh .tag-row{display:none} /* Tags accessible via right panel; reclaim 21px */
+  /* Toolbars: trim padding so they take less vertical room */
+  .draw-bar{padding:4px 8px;gap:4px}
+  .draw-bar .tb-group{padding:2px;gap:1px}
+  .tb, .draw-bar .tb-action{width:40px;height:40px}
+  .tb svg, .draw-bar .tb-action svg{width:20px;height:20px}
+  .draw-bar .color-btn{width:28px;height:28px}
+  .draw-bar .width-btn{width:34px;height:34px}
+  .quick-text-bar{padding:4px 8px 6px;gap:5px}
+  .quick-text-bar .qt-btn{padding:6px 10px;font-size:11px;min-height:32px}
+  .quick-text-bar .qt-edit{padding:5px 8px;font-size:10px;min-height:32px}
+  .quick-text-bar .qt-label{font-size:9px;margin-right:2px}
+  /* Field area — kill the centering padding so card sits at top + uses all available height */
+  .field-wrap{padding:2px;align-items:flex-start}
+  .field-wrap svg{max-height:calc(100vh - 220px)}
 }
 </style>
 </head>
