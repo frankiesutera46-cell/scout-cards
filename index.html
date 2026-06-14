@@ -2799,6 +2799,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var dash=isMot?' stroke-dasharray="6,4"':'';
       var sw=isBlk?2.5:2;
       routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
+      // Invisible hit-area on top of the route for easier clicking — wider than the visible stroke
+      routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       var ep=pts[pts.length-1];
       if(!isBlk){
         if(pts.length>=2){
@@ -4034,6 +4036,32 @@ function bind(){
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false,editOnRelease:wasAlreadySel};
         // Don't render() in pointerdown — destroying the SVG mid-touch breaks iPad drag. pointerup renders at end.
         e.preventDefault();return;
+      }
+      // Route / block line click — select the owning player so the route's waypoints appear and can be dragged
+      var routeHit=tgt2.getAttribute&&tgt2.getAttribute('data-routehit');
+      if(routeHit){
+        var hitPrefix=routeHit.substring(0,2);
+        var hitKey=routeHit.substring(2);
+        if(hitPrefix==='o_'||hitPrefix==='d_'){
+          selSide=(hitPrefix==='d_')?'def':'off';
+          selPlayer=hitKey;selTextBox=null;selLine=null;selLabel=null;popupCat=null;
+          // Auto-populate waypoints so the route is immediately editable (drag handles appear)
+          var ra=card.asgn&&card.asgn[hitKey];
+          if(ra){
+            if(!card.routePts)card.routePts={};
+            if(!card.routePts[hitKey]||card.routePts[hitKey].length<2){
+              var hitPlayers=(selSide==='def')?getCurDefPlayers(card):getCurOffPlayers(card);
+              var hpp=hitPlayers[hitKey];
+              if(hpp){
+                var isRightHit=hpp.x>CX;
+                var dirDownHit=(selSide==='def')&&!(appMode==='playdesign'&&viewPerspective==='off');
+                card.routePts[hitKey]=routePath(ra,hpp.x,hpp.y,isRightHit,dirDownHit);
+              }
+            }
+          }
+          render();
+          e.preventDefault();return;
+        }
       }
 
       // Normal player select/drag
