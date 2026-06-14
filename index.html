@@ -3403,6 +3403,14 @@ function bind(){
 
         var isDef=dp.indexOf('d_')===0;
         var pk=dp.replace(/^[od]_/,'');
+        // Group drag — if the tapped player is in multiSel, move the entire group together
+        if(!selectMode&&multiSel.indexOf(dp)>=0&&multiSel.length>1){
+          var pt=svgPoint(svg,e);
+          pushUndo();
+          dragInfo={isGroup:true,lastX:pt.x,lastY:pt.y,moved:false};
+          e.preventDefault();
+          return;
+        }
         selPlayer=pk;selLabel=null;
         selSide=isDef?'def':'off';
 
@@ -3536,7 +3544,8 @@ function bind(){
   var tbSelect=document.getElementById('tbSelect');
   if(tbSelect)tbSelect.addEventListener('click',function(){
     if(selectMode){selectMode=false}else{selectMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
-    selPlayer=null;selTextBox=null;multiSel=[];popupCat=null;render();
+    // Keep multiSel so the user can drag the group after turning select tool off
+    selPlayer=null;selTextBox=null;popupCat=null;render();
   });
   var tbPen=document.getElementById('tbPen');
   if(tbPen)tbPen.addEventListener('click',function(){
@@ -4803,6 +4812,50 @@ function bindDrag(){
     dragInfo.moved=true;
     var pt=svgPoint(svg,e);
     var card=cards[activeIdx];
+
+    // Group drag — move every multiSel player by the same delta
+    if(dragInfo.isGroup){
+      var gdx=pt.x-dragInfo.lastX,gdy=pt.y-dragInfo.lastY;
+      if(gdx===0&&gdy===0)return;
+      dragInfo.lastX=pt.x;dragInfo.lastY=pt.y;
+      for(var gi=0;gi<multiSel.length;gi++){
+        var gDp=multiSel[gi];
+        var gIsDef=gDp.indexOf('d_')===0;
+        var gKey=gDp.replace(/^[od]_/,'');
+        var gStore=getCurPosStore(gIsDef);
+        var gPool=gIsDef?getCurDefPlayers(card):getCurOffPlayers(card);
+        var gCur=(card[gStore]&&card[gStore][gKey])||gPool[gKey];
+        if(!gCur)continue;
+        var gnx=Math.max(20,Math.min(FW-20,gCur.x+gdx));
+        var gny=Math.max(5,Math.min(FH-5,gCur.y+gdy));
+        if(!card[gStore])card[gStore]={};
+        card[gStore][gKey]={x:gnx,y:gny};
+        // Update SVG elements live for smooth drag
+        var gEls=svg.querySelectorAll('[data-dp="'+gDp+'"]');
+        for(var gei=0;gei<gEls.length;gei++){
+          var gTag=gEls[gei].tagName;
+          if(gTag==='circle'||gTag==='ellipse'){gEls[gei].setAttribute('cx',gnx);gEls[gei].setAttribute('cy',gny)}
+          else if(gTag==='rect'){
+            var gw=parseFloat(gEls[gei].getAttribute('width'))||20;
+            var gh=parseFloat(gEls[gei].getAttribute('height'))||20;
+            gEls[gei].setAttribute('x',gnx-gw/2);gEls[gei].setAttribute('y',gny-gh/2);
+          }
+          var gNxt=gEls[gei].nextElementSibling;
+          if(gNxt&&gNxt.tagName==='text'&&gNxt.getAttribute('pointer-events')==='none'){
+            gNxt.setAttribute('x',gnx);
+            gNxt.setAttribute('y',gny+(gIsDef?5:3));
+          }
+        }
+        // Move attached route waypoints with the player
+        if(card.routePts&&card.routePts[gKey]){
+          for(var grp=0;grp<card.routePts[gKey].length;grp++){
+            card.routePts[gKey][grp].x+=gdx;
+            card.routePts[gKey][grp].y+=gdy;
+          }
+        }
+      }
+      return;
+    }
 
     // Resize drag
     if(dragInfo.isResize){
