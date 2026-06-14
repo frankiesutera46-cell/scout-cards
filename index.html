@@ -3064,8 +3064,9 @@ function render(){
   h+='</div>';
   h+='</div>';
 
-  // Quick Text stamp bar
-  h+='<div class="quick-text-bar" id="qtBar">';
+  // Quick Text stamp bar — visually hidden, but kept in DOM so the iPad sidebar's quick-text
+  // buttons can delegate clicks to these qt-btns (which carry the actual click handlers).
+  h+='<div class="quick-text-bar" id="qtBar" style="display:none">';
   h+='<span class="qt-label">Quick Text</span>';
   for(var qi=0;qi<quickTexts.length;qi++){
     h+='<button class="qt-btn" data-qt="'+qi+'">'+esc(quickTexts[qi])+'</button>';
