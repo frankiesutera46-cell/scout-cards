@@ -2618,9 +2618,9 @@ function render(){
   h+='</div>';
   h+='</div>';
 
-  h+='<aside class="ipad-side">';
-  // Collapse toggle (right-edge tab)
+  // Collapse toggle — rendered OUTSIDE the .ipad-side so the sidebar's transform doesn't drag it off-screen
   h+='<button class="is-collapse" id="ipadSideToggle" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
+  h+='<aside class="ipad-side">';
   // FORMATION
   h+='<div class="is-section" data-issec="form"><button class="is-label is-toggle">FORMATION<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
   for(var ipfi=0;ipfi<IPAD_FORMS.length;ipfi++){var fr=IPAD_FORMS[ipfi];
