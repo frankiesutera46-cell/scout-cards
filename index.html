@@ -2580,14 +2580,6 @@ function render(){
       h+='<button class="btn btn-pri" id="btnPrintScript" style="margin-top:10px;width:100%;font-size:11px">&#x1F5A8; Print Script</button>';
     }
   } else {
-    // Tag filter bar
-    h+='<div class="tag-filter">';
-    h+='<button class="tf-btn'+(activeTagFilter===null?' tf-on':'')+'" data-tf="all">All</button>';
-    for(var tfi=0;tfi<TAG_OPTIONS.length;tfi++){
-      h+='<button class="tf-btn'+(activeTagFilter===TAG_OPTIONS[tfi]?' tf-on':'')+'" data-tf="'+TAG_OPTIONS[tfi]+'">'+TAG_OPTIONS[tfi]+'</button>';
-    }
-    h+='</div>';
-
     // Card list
     for(var ci=0;ci<cards.length;ci++){
       var cc=cards[ci];var cfm=FORMATIONS[cc.fk];
@@ -2711,14 +2703,6 @@ function render(){
   h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
   h+='<button class="flip-btn" id="bFlip">&#x2194; Flip Play</button>';
   h+='<button class="flip-btn" id="bResetPos" title="Reset all player positions to formation defaults">&#x21bb; Reset Pos</button>';
-  // Tag toggles
-  h+='<div class="tag-row">';
-  for(var tti=0;tti<TAG_OPTIONS.length;tti++){
-    var tg=TAG_OPTIONS[tti];
-    var tgOn=card.tags&&card.tags.indexOf(tg)>=0;
-    h+='<button class="tag-btn'+(tgOn?' tag-on':'')+'" data-tag="'+tg+'">'+tg+'</button>';
-  }
-  h+='</div>';
   h+='<select id="fSel">';
   var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]&&!card._offPreset?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
   if(offPresets.length){h+='<option disabled>──────────</option>';for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}}
