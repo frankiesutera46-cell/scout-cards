@@ -417,9 +417,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   /* Fixed left sidebar — settings only, wider with bigger buttons */
   .ipad-side{display:flex;flex-direction:column;position:fixed;left:0;top:108px;bottom:0;width:172px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);overflow-y:auto;z-index:50;padding:10px 10px 16px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
   .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
-  /* Collapse arrow tab on right edge of sidebar (fixed so parent overflow doesn't clip) */
-  .is-collapse{position:fixed;left:172px;top:140px;width:22px;height:44px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:60;padding:0;box-shadow:2px 0 6px rgba(0,0,0,.15);transition:left .25s ease;touch-action:manipulation}
-  .is-collapse svg{width:14px;height:14px;transition:transform .25s ease}
+  /* Collapse handle — centered vertically on left edge so it can't hide behind topbar */
+  .is-collapse{position:fixed;left:172px;top:50%;transform:translateY(-50%);width:28px;height:72px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 8px 8px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;padding:0;box-shadow:3px 0 10px rgba(0,0,0,.25);transition:left .25s ease;touch-action:manipulation}
+  .is-collapse svg{width:18px;height:18px;transition:transform .25s ease}
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:6px}
