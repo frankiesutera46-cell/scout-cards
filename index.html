@@ -410,28 +410,34 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   .it-width{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:4px;cursor:pointer;flex-shrink:0;transition:.1s;touch-action:manipulation}
   .it-width span{display:block;background:#3A3A38;border-radius:50%}
   .it-width.it-on{background:rgba(26,60,43,.1);border-color:#1A3C2B}
-  /* Fixed left sidebar — settings only (formation/defense/hash/quick text) */
-  .ipad-side{display:flex;flex-direction:column;position:fixed;left:0;top:96px;bottom:0;width:148px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);overflow-y:auto;z-index:50;padding:6px 6px 12px;gap:8px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
-  .layout.ipad-side-collapsed .ipad-side{transform:translateX(-148px)}
-  /* Collapse arrow tab on right edge of sidebar (fixed to viewport so parent overflow doesn't clip) */
-  .is-collapse{position:fixed;left:148px;top:174px;width:22px;height:44px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:60;padding:0;box-shadow:2px 0 6px rgba(0,0,0,.15);transition:left .25s ease;touch-action:manipulation}
+  /* Compact existing topbar — recover ~20px vertical */
+  .topbar-row1{height:38px;padding:0 12px;gap:10px}
+  .topbar-row2{height:32px;padding:0 12px;gap:4px}
+  .topbar .brand .logo-mark{width:22px;height:30px}
+  /* Fixed left sidebar — settings only, wider with bigger buttons */
+  .ipad-side{display:flex;flex-direction:column;position:fixed;left:0;top:108px;bottom:0;width:172px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);overflow-y:auto;z-index:50;padding:10px 10px 16px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
+  .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
+  /* Collapse arrow tab on right edge of sidebar (fixed so parent overflow doesn't clip) */
+  .is-collapse{position:fixed;left:172px;top:140px;width:22px;height:44px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:60;padding:0;box-shadow:2px 0 6px rgba(0,0,0,.15);transition:left .25s ease;touch-action:manipulation}
   .is-collapse svg{width:14px;height:14px;transition:transform .25s ease}
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
-  .is-section{display:flex;flex-direction:column;gap:4px}
-  .is-label{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.45);font-weight:600;padding:2px 2px 0}
-  .is-grid{display:grid;gap:4px}
-  .is-grid-form{grid-template-columns:repeat(2,1fr)}
+  .is-section{display:flex;flex-direction:column;gap:6px}
+  .is-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.5);font-weight:700;padding:0 2px}
+  .is-grid{display:grid;gap:5px}
+  .is-grid-form{grid-template-columns:1fr}     /* full-width single column for formation */
   .is-grid-hash{grid-template-columns:repeat(3,1fr)}
   .is-grid-qt{grid-template-columns:repeat(2,1fr)}
-  .is-btn{display:flex;align-items:center;justify-content:center;min-height:30px;padding:4px 6px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:#3A3A38;cursor:pointer;transition:.1s;touch-action:manipulation;text-align:center;line-height:1.1}
+  .is-btn{display:flex;align-items:center;justify-content:center;min-height:38px;padding:6px 10px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:6px;font-family:'Space Grotesk','Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:600;color:#3A3A38;cursor:pointer;transition:.1s;touch-action:manipulation;text-align:center;line-height:1.1;letter-spacing:.01em}
   .is-btn:active{transform:scale(.95)}
   .is-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
   .is-btn.is-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+  /* Quick text smaller (still 2-column) */
+  .is-grid-qt .is-btn{font-size:11px;min-height:32px;padding:4px 6px;font-family:'JetBrains Mono',monospace}
   /* Field area: push right to clear the sidebar, top-align the play card */
-  .field-wrap{margin-left:148px;padding:4px;align-items:flex-start;justify-content:center;transition:margin-left .25s ease}
+  .field-wrap{margin-left:172px;padding:4px;align-items:flex-start;justify-content:center;transition:margin-left .25s ease}
   .layout.ipad-side-collapsed .field-wrap{margin-left:0}
-  .field-wrap svg{max-height:calc(100vh - 150px);max-width:100%;width:100%;height:auto}
+  .field-wrap svg{max-height:calc(100vh - 140px);max-width:100%;width:100%;height:auto}
   /* Off-canvas panels — sidebar (cards) and rp (settings) still slide from edges */
 
   .panel-toggle{display:inline-flex}
@@ -2546,11 +2552,11 @@ function render(){
 
   // ===== iPad fixed-left tool rail (hidden on desktop via CSS) =====
   var IPAD_FORMS=[
-    ['doubR','2x2 R'],['doubL','2x2 L'],
-    ['3x1R','3x1 R'],['3x1L','3x1 L'],
+    ['doubR','Doubles R'],['doubL','Doubles L'],
+    ['3x1R','Trips R'],['3x1L','Trips L'],
     ['treyR','Trey R'],['treyL','Trey L'],
     ['deuceR','Deuce R'],['deuceL','Deuce L'],
-    ['empty','Empty'],['bunchR','Bunch R'],['bunchL','Bunch L'],
+    ['empty','Empty 3x2'],['bunchR','Bunch R'],['bunchL','Bunch L'],
     ['iform','I-Form'],['pistol','Pistol']
   ];
   var IPAD_DEFS=[
@@ -2558,7 +2564,7 @@ function render(){
     ['odd','3-4 Odd'],['tite','Tite'],
     ['nickel','Nickel'],['dime','Dime'],['bear','Bear']
   ];
-  var IPAD_HASHES=[['L','L'],['M','Mid'],['R','R']];
+  var IPAD_HASHES=[['L','Left'],['M','Mid'],['R','Right']];
   // Horizontal top toolbar (drawing tools — always visible on iPad)
   h+='<div class="ipad-top">';
   // Tools
