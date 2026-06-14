@@ -3248,16 +3248,25 @@ function bind(){
         selLine=clickedIdx;selPlayer=null;selTextBox=null;
         render();e.preventDefault();return;
       }
-      // Box-select mode — start marquee on empty area, or toggle player in/out on player tap
+      // Box-select mode — start marquee on empty area, or set up group drag / toggle on player tap
       if(selectMode){
         var msTarget=findPlayerEl(e.target);
         if(msTarget){
-          // Toggle this player in/out of multiSel
           var msDp=msTarget.getAttribute('data-dp');
           if(msDp&&msDp.indexOf('rsz_')!==0&&msDp.indexOf('t_')!==0){
-            var msIdx=multiSel.indexOf(msDp);
+            var inMs=multiSel.indexOf(msDp)>=0;
+            // If player is already in the multi-selection, set up a potential group drag.
+            // pointerup with no movement will toggle them out instead.
+            if(inMs&&multiSel.length>1){
+              var pt=svgPoint(svg,e);
+              pushUndo();
+              dragInfo={isGroup:true,lastX:pt.x,lastY:pt.y,moved:false,tapToggleDp:msDp};
+              e.preventDefault();
+              return;
+            }
+            // Not in multi-sel yet — toggle immediately so user sees the selection grow
             pushUndo();
-            if(msIdx>=0)multiSel.splice(msIdx,1);else multiSel.push(msDp);
+            if(inMs)multiSel.splice(multiSel.indexOf(msDp),1);else multiSel.push(msDp);
             render();e.preventDefault();return;
           }
         }
@@ -5113,6 +5122,12 @@ function bindDrag(){
       var wasMoved=dragInfo.moved;
       var shouldEdit=dragInfo.editOnRelease&&!wasMoved;
       var editIdx=dragInfo.idx;
+      // Tap-without-move on a multi-selected player in select mode — toggle them out
+      var tapToggleDp=dragInfo.tapToggleDp;
+      if(tapToggleDp&&!wasMoved){
+        var tIdx=multiSel.indexOf(tapToggleDp);
+        if(tIdx>=0)multiSel.splice(tIdx,1);
+      }
       dragInfo=null;
       if(shouldEdit){
         var card2=cards[activeIdx];
