@@ -423,13 +423,16 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
   .layout.ipad-side-collapsed .is-collapse{left:0}
   .layout.ipad-side-collapsed .is-collapse svg{transform:rotate(180deg)}
   .is-section{display:flex;flex-direction:column;gap:6px}
-  /* Section label looks like a clear row so it doesn't visually vanish when collapsed */
-  .is-label{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#1A3C2B;font-weight:700;padding:8px 10px;background:rgba(26,60,43,.06);border:1px solid rgba(26,60,43,.12);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation;min-height:34px}
-  .is-label.is-toggle:hover{background:rgba(26,60,43,.12)}
+  /* Section header is a solid green pill that stays visible even when collapsed */
+  .is-label{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#F7F7F5;font-weight:700;padding:10px 12px;background:#1A3C2B;border:1px solid #1A3C2B;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;touch-action:manipulation;min-height:40px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .is-label.is-toggle:hover{background:#143020}
   .is-label.is-toggle:active{opacity:.7}
-  .is-chev{font-size:11px;transition:transform .15s ease;color:#1A3C2B;font-weight:bold}
+  .is-chev{font-size:14px;transition:transform .2s ease;color:#F7F7F5;font-weight:bold;line-height:1}
   .is-section.is-collapsed .is-chev{transform:rotate(-90deg)}
   .is-section.is-collapsed .is-grid{display:none}
+  /* Visual cue that a section is collapsed — lighter green */
+  .is-section.is-collapsed .is-label{background:#3a5a4a;border-color:#3a5a4a}
+  .is-section.is-collapsed .is-label:hover{background:#2d4a3c}
   .is-grid{display:grid;gap:5px}
   .is-grid-form{grid-template-columns:1fr}     /* full-width single column for formation */
   .is-grid-hash{grid-template-columns:repeat(3,1fr)}
