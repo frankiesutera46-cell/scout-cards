@@ -69,8 +69,11 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .topbar-row1{display:flex;align-items:center;gap:14px;padding:0 20px;height:44px;border-bottom:1px solid rgba(247,247,245,.08)}
 .topbar-row2{display:flex;align-items:center;gap:6px;padding:0 20px;height:36px;background:rgba(0,0,0,.15)}
 .topbar .brand{display:flex;align-items:center;gap:10px}
-.topbar .brand .logo-mark{width:24px;height:34px;display:flex;align-items:center;justify-content:center}
-.topbar .brand .logo-mark svg{width:24px;height:34px}
+.topbar .brand .logo-mark{width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+.topbar .brand .logo-mark svg,
+.topbar .brand .logo-mark img{width:36px;height:36px;object-fit:contain}
+.topbar .brand .brand-wordmark{display:flex;align-items:center;height:36px}
+.topbar .brand .brand-wordmark img{height:30px;width:auto;object-fit:contain;display:block}
 .topbar .brand span{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:18px;letter-spacing:0.08em;text-transform:uppercase;color:#F7F7F5}
 .topbar .brand .sub{font-family:'Oswald',sans-serif;font-size:7px;color:#B8A88A;letter-spacing:0.3em;font-weight:600;text-transform:uppercase}
 .topbar input{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:5px 10px;border-radius:2px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:border .15s}
@@ -736,7 +739,9 @@ select:focus{
   /* Compact existing topbar — recover ~20px vertical */
   .topbar-row1{height:38px;padding:0 12px;gap:10px}
   .topbar-row2{height:32px;padding:0 12px;gap:4px}
-  .topbar .brand .logo-mark{width:22px;height:30px}
+  .topbar .brand .logo-mark{width:32px;height:32px}
+  .topbar .brand .logo-mark img{width:32px;height:32px}
+  .topbar .brand .brand-wordmark img{height:26px}
   /* Fixed left sidebar — settings only, wider with bigger buttons */
   .ipad-side{display:flex !important;flex-direction:column;position:fixed;left:0;top:108px;bottom:0;width:172px;background:var(--pencil);border-right:1px solid var(--pencil);overflow-y:auto;z-index:50;padding:10px 10px 16px;gap:14px;-webkit-overflow-scrolling:touch;transition:transform .25s ease}
   .layout.ipad-side-collapsed .ipad-side{transform:translateX(-172px)}
@@ -2581,8 +2586,8 @@ function render(){
   h+='<div class="topbar">';
   // Row 1: Brand, week, title, user
   h+='<div class="topbar-row1"><div class="brand">';
-  h+='<div class="logo-mark"><svg viewBox="0 0 130 190" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="0" width="5.5" height="50" rx="2.75" fill="#B8A88A" transform="rotate(14,80,25)"/><circle cx="92" cy="0" r="3.5" fill="#B8A88A"/><rect x="25" y="46" width="80" height="130" rx="4" fill="#F5F0E8"/><rect x="25" y="46" width="24" height="130" fill="#E0D9CC"/><polygon points="22,46 112,46 107,56 27,56" fill="#D6CEBD"/><polygon points="27,56 65,46 107,56" fill="#F5F0E8" stroke="#D6CEBD" stroke-width="0.6"/><rect x="25" y="158" width="80" height="6" fill="#B8A88A"/></svg></div>';
-  h+='<div><span>Juice Box</span><div class="sub">Football</div></div></div>';
+  h+='<div class="logo-mark"><img src="juice-icon.png" alt="Juice Box" /></div>';
+  h+='<div class="brand-wordmark"><img src="juice-wordmark.png" alt="Juice"/></div></div>';
   h+='<select class="week-sel" id="weekSel">';
   for(var gi=0;gi<games.length;gi++){
     h+='<option value="'+gi+'"'+(gi===activeGameIdx?' selected':'')+'>'+esc(games[gi].name)+'</option>';
