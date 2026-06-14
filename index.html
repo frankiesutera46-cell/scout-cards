@@ -3526,12 +3526,19 @@ function bind(){
       var t=document.querySelector('[data-dw="'+w+'"]');if(t)t.click();
     });
   });
-  // Sidebar collapse toggle (iPad only)
+  // Sidebar collapse toggle (iPad only) — persists across renders via localStorage
+  var layoutEl2=document.querySelector('.layout');
+  if(layoutEl2&&localStorage.getItem(lsKey('ipadSideCollapsed'))==='1'){
+    layoutEl2.classList.add('ipad-side-collapsed');
+  }
   var ipadSideTog=document.getElementById('ipadSideToggle');
   if(ipadSideTog){
     ipadSideTog.addEventListener('click',function(){
       var l=document.querySelector('.layout');
-      if(l)l.classList.toggle('ipad-side-collapsed');
+      if(l){
+        var on=l.classList.toggle('ipad-side-collapsed');
+        try{localStorage.setItem(lsKey('ipadSideCollapsed'),on?'1':'0')}catch(_){}
+      }
     });
   }
   // Section collapse toggles (FORMATION / DEFENSE / HASH / QUICK TEXT)
