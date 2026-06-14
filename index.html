@@ -3007,7 +3007,7 @@ function bind(){
           var pt2=svgPoint(svg,e);
           var tb=getCurTB(card)[selTextBox];
           dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false,editOnRelease:wasAlreadySel2};
-          render();bindDrag();
+          // Don't render() here — destroying the SVG mid-touch breaks drag on iPad. pointerup renders at end.
           e.preventDefault();return;
         }
         // Create text box at click point and immediately inline edit
@@ -3241,7 +3241,7 @@ function bind(){
           var curPos=curCard2.lpos[labelKey]||defaults[labelKey]||{x:pt2.x,y:pt2.y};
           pushUndo();dragInfo={key:labelKey,isLabel:true,offX:pt2.x-curPos.x,offY:pt2.y-curPos.y,moved:false};
           e.preventDefault();
-          render();bindDrag();
+          // Don't render() here — destroying the SVG mid-touch breaks drag on iPad. pointerup renders at end.
           return;
         }
 
@@ -3258,9 +3258,8 @@ function bind(){
         if(pp){
           pushUndo();dragInfo={key:pk,isDef:isDef,offX:pt.x-pp.x,offY:pt.y-pp.y,moved:false};
         }
-        render();
-        // Rebind after render
-        bindDrag();
+        // Don't render() here — on touch devices, destroying the SVG mid-touch breaks the drag.
+        // pointermove updates positions via setAttribute directly; pointerup renders at the end.
         e.preventDefault();
       }else{
         // Clicked empty area — deselect label
