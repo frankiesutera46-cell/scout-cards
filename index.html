@@ -185,6 +185,9 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 .color-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:0;line-height:24px;text-align:center;padding:0;transition:.12s}
 .color-dot:hover{transform:scale(1.15)}
 .color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
+.shade-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(58,58,56,.2);background:#fff;color:#3A3A38;font-weight:600;transition:.12s;flex:1;text-align:center;touch-action:manipulation}
+.shade-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.shade-btn.shade-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
 .tag-filter{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(58,58,56,.1)}
 .tf-btn{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer;border:1px solid transparent;background:none;color:rgba(58,58,56,.4);font-weight:500;transition:.12s;letter-spacing:0.05em;text-transform:uppercase}
 .tf-btn:hover{color:#1A3C2B}
@@ -386,6 +389,7 @@ body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans'
 /* iPad layout elements — hidden on desktop */
 .ipad-side{display:none}
 .ipad-top{display:none}
+.is-collapse{display:none}
 
 /* ===== iPad / Tablet off-canvas panels ===== */
 @media (pointer: coarse){
@@ -1159,7 +1163,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:''}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{}}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -2133,11 +2137,21 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // CENTER: black outline square, no letter, white fill
       var sz=11;
       s+='<rect x="'+(pp.x-sz)+'" y="'+(pp.y-sz)+'" width="'+(sz*2)+'" height="'+(sz*2)+'" rx="1" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
-      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
+      // Defensive shade overlay on Center
+      var cShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
+      if(cShade==='left'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
+      else if(cShade==='right'){s+='<rect x="'+(pp.x)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
+      else if(cShade==='full'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz*2-4)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
+      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(cShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
     } else if(pp.side==='ol'){
       // OL: black outline circle, no letter unless custom
       s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
-      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
+      // Defensive shade overlay — left/right half or full
+      var oShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
+      if(oShade==='left'){s+='<path d="M '+pp.x+' '+(pp.y-R+1)+' A '+(R-1)+' '+(R-1)+' 0 0 0 '+pp.x+' '+(pp.y+R-1)+' Z" fill="#222" pointer-events="none"/>';}
+      else if(oShade==='right'){s+='<path d="M '+pp.x+' '+(pp.y-R+1)+' A '+(R-1)+' '+(R-1)+' 0 0 1 '+pp.x+' '+(pp.y+R-1)+' Z" fill="#222" pointer-events="none"/>';}
+      else if(oShade==='full'){s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+(R-1)+'" fill="#222" pointer-events="none"/>';}
+      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(oShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
     } else if(pp.side==='qb'){
       // QB: black outline circle with label
       var qlbl=cl[pk]||'Q';
@@ -2817,6 +2831,18 @@ function render(){
     h+='</div></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
     h+='<input type="text" id="clI" placeholder="e.g. 7, WR1, etc" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    // Defensive shade picker (OL/C only) — draws a half/full fill on the OL to show defender alignment
+    if(pl&&(pl.side==='ol'||pl.side==='c')){
+      var curShade=(card.olShade&&card.olShade[selPlayer])||'';
+      h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Defender Shade</label><div style="display:flex;gap:4px;margin-top:4px">';
+      var shadeOpts=[['','None'],['left','Left'],['right','Right'],['full','Full']];
+      for(var sni=0;sni<shadeOpts.length;sni++){
+        var sv=shadeOpts[sni][0],sn=shadeOpts[sni][1];
+        var isShOn=curShade===sv;
+        h+='<button class="shade-btn'+(isShOn?' shade-on':'')+'" data-shade="'+sv+'">'+sn+'</button>';
+      }
+      h+='</div></div>';
+    }
     // Circle color picker
     var pcColors=[['#ffffff','W'],['#22862a','G'],['#cc0000','R'],['#d4a017','Y'],['#0055cc','B'],['#9333ea','P']];
     var curPc=(card.cl._pc&&card.cl._pc[selPlayer])||'';
@@ -4312,6 +4338,18 @@ function bind(){
       render();
     }})(dcBtns[dcbi].getAttribute('data-dc')));
   }
+  // === OL/C DEFENDER SHADE BUTTONS ===
+  var shBtns=document.querySelectorAll('.shade-btn[data-shade]');
+  for(var sbi=0;sbi<shBtns.length;sbi++){
+    shBtns[sbi].addEventListener('click',(function(sv){return function(){
+      if(!selPlayer)return;
+      pushUndo();
+      if(!card.olShade)card.olShade={};
+      if(sv)card.olShade[selPlayer]=sv;
+      else delete card.olShade[selPlayer];
+      render();
+    }})(shBtns[sbi].getAttribute('data-shade')));
+  }
 
   // === TAG TOGGLE BUTTONS ===
   var tagBtns=document.querySelectorAll('.tag-btn');
@@ -4751,7 +4789,9 @@ function bindDrag(){
         }
         return;
       }
-      if(wasMoved)render();
+      // Always render on pointerup — selection state set in pointerdown needs to be reflected
+      // (we no longer render() in pointerdown because it broke touch drag on iPad)
+      render();
     }
   };
 
