@@ -2135,8 +2135,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
         s+='<text x="'+pp.x+'" y="'+(pp.y+20)+'" text-anchor="middle" fill="'+noteCol+'" font-size="9" font-family="Arial,sans-serif" font-weight="bold" font-style="italic" pointer-events="none">'+esc(pnMap[pk])+'</text>';
       }
     } else if(pp.side==='c'){
-      // CENTER: small black-outline oval (matches OL)
-      var crx=8,cry=11;
+      // CENTER: small black-outline oval (matches OL) — horizontal (wider than tall)
+      var crx=11,cry=8;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+crx+'" ry="'+cry+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       // Defensive shade overlay on Center oval
       var cShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
@@ -2146,8 +2146,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(cShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
       if(isSel){s+='<rect x="'+(pp.x-crx-3)+'" y="'+(pp.y-cry-3)+'" width="'+(crx*2+6)+'" height="'+(cry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='ol'){
-      // OL: small black-outline oval
-      var orx=8,ory=11;
+      // OL: small black-outline oval — horizontal (wider than tall)
+      var orx=11,ory=8;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+orx+'" ry="'+ory+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       // Defensive shade overlay — left/right half or full
       var oShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
@@ -2165,12 +2165,12 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
       if(isSel){s+='<rect x="'+(pp.x-qrx-3)+'" y="'+(pp.y-qry-3)+'" width="'+(qrx*2+6)+'" height="'+(qry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='wr'||pp.side==='rb'||pp.side==='te'){
-      // Skill players: taller-than-wide ovals
+      // Skill players: horizontal (wider than tall) ovals
       var defFills={'wr':['#cc0000','#990000'],'rb':['#22862a','#1a6b21'],'te':['#d4a017','#b8860b']};
       var customPc=cl._pc&&cl._pc[pk];
       var pFill=isSel?'#1A3C2B':(customPc||defFills[pp.side][0]);
       var pStroke=isSel?'#1A3C2B':(customPc||defFills[pp.side][1]);
-      var srx=10,sry=13;
+      var srx=13,sry=10;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+srx+'" ry="'+sry+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
       s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
       if(isSel){s+='<rect x="'+(pp.x-srx-3)+'" y="'+(pp.y-sry-3)+'" width="'+(srx*2+6)+'" height="'+(sry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
