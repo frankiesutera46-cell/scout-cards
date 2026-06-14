@@ -1801,7 +1801,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{}}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs'}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -2106,7 +2106,9 @@ function scoutToPdPos(pos,isOff){
 }
 
 function getHashOffset(card){
-  return HASH_OFFSETS[card.hash] || 0;
+  var pos=getHashPositions(card);
+  var offsets={M:0, L:pos.HL-CX, R:pos.HR-CX, LM:pos.MID_L-CX, RM:pos.MID_R-CX};
+  return offsets[card.hash] || 0;
 }
 
 function getOffPlayers(card){
@@ -2314,23 +2316,46 @@ function getCurTB(card){var k=getCurTBKey();if(!card[k])card[k]=[];return card[k
 // Hash positions (stored globally for use in formation offsets)
 var SL=12, SR=FW-12;
 var FIELD_W = SR - SL; // 640
-var HL = SL + FIELD_W * 0.333;  // left hash ~253
-var HR = SR - FIELD_W * 0.333;  // right hash ~467
-var MID_L = (SL + HL) / 2 + 20; // left-middle ~166
-var MID_R = (HR + SR) / 2 - 20; // right-middle ~554
 
-// Hash position offsets: how far to shift the center of the formation
-// CX is the default center (360). Each hash position moves it.
+// Field types: hash-mark distance from each sideline as a fraction of field width.
+//   HS:   53'4" / 160' = 0.333  (widest hashes)
+//   NCAA: 60'   / 160' = 0.375
+//   NFL:  70'9" / 160' = 0.442  (narrowest hashes, basically in the middle)
+//   BLANK: no field lines at all
+var FIELD_TYPES = {
+  hs:    { name:'High School', hashRatio:0.333 },
+  ncaa:  { name:'College',     hashRatio:0.375 },
+  nfl:   { name:'NFL',         hashRatio:0.442 },
+  blank: { name:'Blank',       blank:true }
+};
+function fieldTypeOf(card){
+  var ft=card&&card.fieldType;
+  return (ft&&FIELD_TYPES[ft])?ft:'hs';
+}
+function getHashPositions(card){
+  var cfg=FIELD_TYPES[fieldTypeOf(card)];
+  var ratio=(cfg&&cfg.hashRatio)||0.333;
+  var hl=SL+FIELD_W*ratio;
+  var hr=SR-FIELD_W*ratio;
+  return {HL:hl, HR:hr, MID_L:(SL+hl)/2+20, MID_R:(hr+SR)/2-20};
+}
+// Back-compat globals — default to HS so any code that reads HL/HR before a card
+// is known still gets sensible values. buildField() and getHashOffset() use the
+// card-aware getter above.
+var HL = SL + FIELD_W * 0.333;
+var HR = SR - FIELD_W * 0.333;
+var MID_L = (SL + HL) / 2 + 20;
+var MID_R = (HR + SR) / 2 - 20;
 var HASH_OFFSETS = {
   'M': 0,
-  'L': HL - CX,       // shift left to left hash (~-107)
-  'R': HR - CX,       // shift right to right hash (~+107)
-  'LM': MID_L - CX,   // shift to left-middle (~-194)
-  'RM': MID_R - CX    // shift to right-middle (~+194)
+  'L': HL - CX,
+  'R': HR - CX,
+  'LM': MID_L - CX,
+  'RM': MID_R - CX
 };
 
 var HDR_H=26; // header band height at top of card
-function buildField(){
+function buildField(card){
   var s='';
 
   // White field background
@@ -2340,75 +2365,82 @@ function buildField(){
   s+='<defs><clipPath id="fieldClip"><rect x="0" y="'+HDR_H+'" width="'+FW+'" height="'+(FH-HDR_H)+'"/></clipPath></defs>';
   s+='<g clip-path="url(#fieldClip)">';
 
-  // Yard lines every 5 yards
-  for(var i=0;i<=TOTAL_YARDS/5;i++){
-    var yy = MARGIN_TOP + i * Y5;
-    if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
-    var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
-    var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
-    // Skip the yard line where the dashed LOS is drawn
-    var usePdLos=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
-    var skipIdx=usePdLos?pdLosIdx:losIdx;
-    if(i===skipIdx) continue;
-    s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
-  }
+  // Blank field: skip all yard lines, hashes, numbers, sidelines, LOS — just an empty page
+  var ft=fieldTypeOf(card);
+  var isBlank=(ft==='blank');
 
-  // Hash marks EVERY 1 YARD at both hash positions + sideline ticks
-  var Y1 = YPX; // 1 yard in pixels
-  for(var yd=0;yd<=TOTAL_YARDS;yd++){
-    var hy = MARGIN_TOP + yd * Y1;
-    if(hy < HDR_H || hy > FH - 2) continue;
-    var is5 = (yd % 5 === 0);
-    var tickW = is5 ? 5 : 3;
-    var sw = is5 ? 1.2 : 0.7;
-    var col = is5 ? '#999' : '#bbb';
-    // Left hash ticks
-    s+='<line x1="'+(HL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(HL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
-    // Right hash ticks
-    s+='<line x1="'+(HR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(HR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
-    // Sideline ticks (only on 5-yard lines)
-    if(is5){
-      s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
-      s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
-    }
-  }
-
-  // Yard numbers
-  var usePdYardNums2=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
-  if(usePdYardNums2){
-    // 40, 50, 40, 30 from top to bottom (every 10 yards)
-    var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
-    for(var ni=0;ni<pdNums.length;ni++){
-      var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
-      if(yy<HDR_H||yy>FH-MARGIN_BOT) continue;
-      var lnx=SL+85,rnx=SR-85;
-      s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
-      s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
-    }
-  } else {
-    // Scout mode: only 10 and 20 above LOS (defensive side)
+  if(!isBlank){
+    // Yard lines every 5 yards
     for(var i=0;i<=TOTAL_YARDS/5;i++){
       var yy = MARGIN_TOP + i * Y5;
-      if(yy < HDR_H || yy > FH - MARGIN_BOT) continue;
-      var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
-      if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
-      var label = yardsFromLOS.toString();
-      var lnx = SL + 85;
-      var rnx = SR - 85;
-      s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
-      s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+      if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
+      var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
+      var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
+      // Skip the yard line where the dashed LOS is drawn
+      var usePdLos=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+      var skipIdx=usePdLos?pdLosIdx:losIdx;
+      if(i===skipIdx) continue;
+      s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
     }
+
+    // Hash marks EVERY 1 YARD at both hash positions + sideline ticks (field-type aware)
+    var hp=getHashPositions(card);
+    var hashL=hp.HL, hashR=hp.HR;
+    var Y1 = YPX; // 1 yard in pixels
+    for(var yd=0;yd<=TOTAL_YARDS;yd++){
+      var hy = MARGIN_TOP + yd * Y1;
+      if(hy < HDR_H || hy > FH - 2) continue;
+      var is5 = (yd % 5 === 0);
+      var tickW = is5 ? 5 : 3;
+      var sw = is5 ? 1.2 : 0.7;
+      var col = is5 ? '#999' : '#bbb';
+      // Left hash ticks
+      s+='<line x1="'+(hashL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      // Right hash ticks
+      s+='<line x1="'+(hashR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      // Sideline ticks (only on 5-yard lines)
+      if(is5){
+        s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
+        s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
+      }
+    }
+
+    // Yard numbers
+    var usePdYardNums2=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+    if(usePdYardNums2){
+      // 40, 50, 40, 30 from top to bottom (every 10 yards)
+      var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
+      for(var ni=0;ni<pdNums.length;ni++){
+        var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
+        if(yy<HDR_H||yy>FH-MARGIN_BOT) continue;
+        var lnx=SL+85,rnx=SR-85;
+        s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
+        s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
+      }
+    } else {
+      // Scout mode: only 10 and 20 above LOS (defensive side)
+      for(var i=0;i<=TOTAL_YARDS/5;i++){
+        var yy = MARGIN_TOP + i * Y5;
+        if(yy < HDR_H || yy > FH - MARGIN_BOT) continue;
+        var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
+        if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
+        var label = yardsFromLOS.toString();
+        var lnx = SL + 85;
+        var rnx = SR - 85;
+        s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+        s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+      }
+    }
+
+    // Sidelines (start from header line, not top)
+    s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+    s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+
+    // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
+    var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+    var losLineY=usePdLayout?PD_LOS_Y:LOS_Y;
+    s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
   }
-
-  // Sidelines (start from header line, not top)
-  s+='<line x1="'+SL+'" y1="'+HDR_H+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
-  s+='<line x1="'+SR+'" y1="'+HDR_H+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
-
-  // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
-  // PD defensive and scout offensive both use the higher LOS (PD_LOS_Y)
-  var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
-  var losLineY=usePdLayout?PD_LOS_Y:LOS_Y;
-  s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
 
   s+='</g>'; // end fieldClip
 
@@ -3321,6 +3353,14 @@ function render(){
   // Collapse toggle — rendered OUTSIDE the .ipad-side so the sidebar's transform doesn't drag it off-screen
   h+='<button class="is-collapse" id="ipadSideToggle" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
   h+='<aside class="ipad-side">';
+  // FIELD
+  var curFt=fieldTypeOf(card);
+  var fts=[['hs','HIGH SCHOOL'],['ncaa','COLLEGE'],['nfl','NFL'],['blank','BLANK']];
+  h+='<div class="is-section" data-issec="field"><button class="is-label is-toggle">FIELD<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
+  for(var fti=0;fti<fts.length;fti++){var ft=fts[fti];
+    h+='<button class="is-btn'+(curFt===ft[0]?' is-on':'')+'" data-isft="'+ft[0]+'">'+ft[1]+'</button>';
+  }
+  h+='</div></div>';
   // FORMATION
   h+='<div class="is-section" data-issec="form"><button class="is-label is-toggle">FORMATION<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
   for(var ipfi=0;ipfi<IPAD_FORMS.length;ipfi++){var fr=IPAD_FORMS[ipfi];
@@ -3351,6 +3391,8 @@ function render(){
   h+='<div class="eh">';
   h+='<button class="panel-toggle" id="togSidebar" title="Cards list" aria-label="Show cards list"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>';
   h+='<span class="cnum">#'+(activeIdx+1)+'</span>';
+  var curFtSel=fieldTypeOf(card);
+  h+='<select id="ftSel" title="Field type"><option value="hs"'+(curFtSel==='hs'?' selected':'')+'>High School</option><option value="ncaa"'+(curFtSel==='ncaa'?' selected':'')+'>College</option><option value="nfl"'+(curFtSel==='nfl'?' selected':'')+'>NFL</option><option value="blank"'+(curFtSel==='blank'?' selected':'')+'>Blank</option></select>';
   h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
   h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
   h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
@@ -3438,7 +3480,7 @@ function render(){
   // Field SVG
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
   h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
-  h+=buildField();
+  h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
   if(appMode==='playdesign'&&viewPerspective==='def'){
@@ -4284,6 +4326,19 @@ function bind(){
 
   var pI=document.getElementById('pI');if(pI)pI.addEventListener('input',function(){card.play=this.value;upSB()});
   var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
+  var ftSel=document.getElementById('ftSel');if(ftSel)ftSel.addEventListener('change',function(){
+    var oldHo=getHashOffset(card);
+    card.fieldType=this.value;
+    var newHo=getHashOffset(card);var delta=newHo-oldHo;
+    if(delta!==0){
+      var stores=[card.opos,card.dpos,card.pdOpos,card.pdDpos];
+      for(var si=0;si<stores.length;si++){var st=stores[si];if(!st)continue;
+        var ks=Object.keys(st);for(var ki=0;ki<ks.length;ki++){st[ks[ki]].x+=delta;
+          if(st[ks[ki]].x<SL+15)st[ks[ki]].x=SL+15;if(st[ks[ki]].x>SR-15)st[ks[ki]].x=SR-15;}}
+      if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x+=delta}}}}
+    }
+    render();
+  });
   var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){
     var oldHo=getHashOffset(card);
     card.hash=this.value;
@@ -4530,6 +4585,24 @@ function bind(){
       sec.classList.toggle('is-collapsed');
       ipadSec[key]=sec.classList.contains('is-collapsed');
       saveIpadSecState(ipadSec);
+    });
+  });
+  document.querySelectorAll('.ipad-side [data-isft]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var newFt=this.getAttribute('data-isft');
+      var oldHo=getHashOffset(card);
+      card.fieldType=newFt;
+      // Hash positions shift with the field type — slide existing player overrides + route
+      // waypoints by the delta so the formation visually stays at the same hash spot.
+      var newHo=getHashOffset(card);var delta=newHo-oldHo;
+      if(delta!==0){
+        var stores=[card.opos,card.dpos,card.pdOpos,card.pdDpos];
+        for(var si=0;si<stores.length;si++){var st=stores[si];if(!st)continue;
+          var ks=Object.keys(st);for(var ki=0;ki<ks.length;ki++){st[ks[ki]].x+=delta;
+            if(st[ks[ki]].x<SL+15)st[ks[ki]].x=SL+15;if(st[ks[ki]].x>SR-15)st[ks[ki]].x=SR-15;}}
+        if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x+=delta}}}}
+      }
+      render();
     });
   });
   document.querySelectorAll('.ipad-side [data-isfk]').forEach(function(btn){
@@ -5991,7 +6064,7 @@ function buildFullSVG(card,forPlayDesign){
   if(isPD)appMode='playdesign'; else appMode='scout';
   var totalH=isPD?FH+180:FH;
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+totalH+'" width="'+FW*2+'" height="'+totalH*2+'">';
-  svg += buildField();
+  svg += buildField(card);
   svg += buildDrawnLines(getCurLines(card));
   if(isPD){
     var fOff=getPDOffPlayers(card);
@@ -6220,7 +6293,7 @@ async function exportPrintView(){
       // For PD: render field-only SVG (no notes baked in)
       var prevM=appMode;appMode='playdesign';
       var pdSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+FH+'" width="'+FW*2+'" height="'+FH*2+'">';
-      pdSvg+=buildField();pdSvg+=buildDrawnLines(getCurLines(card));
+      pdSvg+=buildField(card);pdSvg+=buildDrawnLines(getCurLines(card));
       var fOff=getPDOffPlayers(card);var fDef=getPDDefPlayers(card);
       pdSvg+=buildPlayers(fOff,{},null,'o_',false,card.cl,null,false);
       pdSvg+=buildPlayers(fDef,card.asgn,null,'d_',true,card.cl,card.routePts,true,true,card.pn);
