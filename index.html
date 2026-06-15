@@ -785,7 +785,10 @@ select:focus{
 .color-dot:hover{transform:scale(1.15)}
 .color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
 /* Floating player context popup — two-row, categories on bottom, sub-options on top */
-.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:auto;opacity:.7;transition:opacity .12s ease}
+.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:none;opacity:.7;transition:opacity .12s ease}
+/* Only the interactive children of the popup catch pointer events — the popup background
+   itself passes through so a drag-to-draw across the popup doesn't get hijacked. */
+.player-popup>*{pointer-events:auto}
 .player-popup:hover,.player-popup:focus-within{opacity:1}
 .pp-sub{display:flex;gap:5px;align-items:center;padding-bottom:5px;border-bottom:1px solid rgba(58,58,56,.1);white-space:nowrap;flex-wrap:wrap;justify-content:center}
 .pp-cats{display:flex;gap:5px;align-items:center;justify-content:center}
@@ -4137,6 +4140,9 @@ function bind(){
           if(!card.asgn[rbKey]){card.asgn[rbKey]='custom'}
           var rbStart=card.routePts[rbKey][card.routePts[rbKey].length-1];
           dragInfo={isRouteBuild:true,player:rbKey,side:rbSide,startX:rbStart.x,startY:rbStart.y,moved:false};
+          // Capture the pointer on the SVG so pointermove keeps firing even when the cursor
+          // crosses over the player popup or other overlays during the drag.
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
           e.preventDefault();return;
         }
       }
