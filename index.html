@@ -2362,39 +2362,45 @@ function buildField(card){
       s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
     }
 
-    // Hash marks EVERY 1 YARD at both hash positions + sideline ticks (field-type aware)
+    // Hash marks EVERY 1 YARD at both hash positions + sideline ticks (field-type aware).
+    // Skip the tick on 5-yard intervals — the horizontal yard line already marks that yard,
+    // so a tick on top of it would double up visually.
     var hp=getHashPositions(card);
     var hashL=hp.HL, hashR=hp.HR;
     var Y1 = YPX; // 1 yard in pixels
     for(var yd=0;yd<=TOTAL_YARDS;yd++){
       var hy = MARGIN_TOP + yd * Y1;
       if(hy < hh || hy > FH - 2) continue;
-      var is5 = (yd % 5 === 0);
-      var tickW = is5 ? 5 : 3;
-      var sw = is5 ? 1.2 : 0.7;
-      var col = is5 ? '#999' : '#bbb';
+      if(yd % 5 === 0) continue; // skip — yard line carries this one
+      var tickW = 3;
+      var sw = 0.7;
+      var col = '#bbb';
       // Left hash ticks
       s+='<line x1="'+(hashL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
       // Right hash ticks
       s+='<line x1="'+(hashR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
-      // Sideline ticks (only on 5-yard lines)
-      if(is5){
-        s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
-        s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
-      }
+      // Sideline ticks at EVERY yard (matches CHLK look — continuous dashes at the edge)
+      s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
     }
 
-    // Yard numbers
+    // Yard numbers — rotated 90° (real-football style, like CHLK). Left side reads bottom-to-top,
+    // right side reads top-to-bottom, both facing the field.
     var usePdYardNums2=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+    function ynum(lbl,lnx,rnx,yy){
+      // text-anchor:middle keeps the number centered on yy after rotation around the anchor point
+      var out='';
+      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(-90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      return out;
+    }
     if(usePdYardNums2){
       // 40, 50, 40, 30 from top to bottom (every 10 yards)
       var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
       for(var ni=0;ni<pdNums.length;ni++){
         var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
         if(yy<hh||yy>FH-MARGIN_BOT) continue;
-        var lnx=SL+85,rnx=SR-85;
-        s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
-        s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+pdNums[ni].lbl+'</text>';
+        s+=ynum(pdNums[ni].lbl, SL+30, SR-30, yy);
       }
     } else {
       // Scout mode: only 10 and 20 above LOS (defensive side)
@@ -2403,11 +2409,7 @@ function buildField(card){
         if(yy < hh || yy > FH - MARGIN_BOT) continue;
         var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
         if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
-        var label = yardsFromLOS.toString();
-        var lnx = SL + 85;
-        var rnx = SR - 85;
-        s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
-        s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+        s+=ynum(yardsFromLOS.toString(), SL+30, SR-30, yy);
       }
     }
 
