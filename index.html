@@ -4442,11 +4442,10 @@ function render(){
     h+=dockButton({id:'btnViewOff',title:'Offense View',label:'OFF',on:viewPerspective==='off'});
     h+=dockButton({id:'btnPlayDesign',title:appMode==='playdesign'?'Scout Cards':'Play Designer',icon:'whistle',on:appMode==='playdesign'});
     h+='</div>';
-    // Group 2: Navigation and drawing tools
-    h+='<div class="tb-group" data-dock-key="nav">';
+    // Group 2: Navigation and drawing tools — kept inline (no radial popup)
+    h+='<div class="tb-group" data-dock-key="nav" data-no-radial="1">';
     h+='<button class="tb'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/></svg></button>';
     h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
-    h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg></button>';
     h+='</div>';
     // Group 3: Markup tools (Circle, Rect, Text)
     h+='<div class="tb-group" data-dock-key="mark">';
@@ -4487,8 +4486,8 @@ function render(){
     h+=dockButton({id:'tbUndo',title:'Undo',icon:'undo',disabled:undoStack.length===0});
     h+=dockButton({id:'tbRedo',title:'Redo',icon:'redo',disabled:redoStack.length===0});
     h+='</div>';
-    // Group 8: Delete / Clear
-    h+='<div class="tb-group" data-dock-key="edit">';
+    // Group 8: Delete / Clear — kept inline (no radial popup)
+    h+='<div class="tb-group" data-dock-key="edit" data-no-radial="1">';
     h+='<button class="tb-action" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
     h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     h+='</div>';
