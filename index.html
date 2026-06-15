@@ -2799,7 +2799,9 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var isPassPro=(ra==='bpass');
       // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
       // width (thin/med/thick), and end-cap (arrow/block/dot/none). Other route types keep their built-in look.
-      var customStyle=(ra==='custom'&&card.routeStyle&&card.routeStyle[rk2])?card.routeStyle[rk2]:null;
+      // buildPlayers has no `card` parameter — reach for the active card via the global `cards` array.
+      var _bpCard=cards[activeIdx];
+      var customStyle=(ra==='custom'&&_bpCard&&_bpCard.routeStyle&&_bpCard.routeStyle[rk2])?_bpCard.routeStyle[rk2]:null;
       var dashStr=isMot?' stroke-dasharray="6,4"':'';
       if(customStyle){
         if(customStyle.style==='dashed')dashStr=' stroke-dasharray="8,5"';
