@@ -2793,16 +2793,43 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       if(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3){d=smoothPath(drawPts)}
       else{d='M '+drawPts[0].x+' '+drawPts[0].y;for(var j=1;j<drawPts.length;j++)d+=' L '+drawPts[j].x+' '+drawPts[j].y}
       var isPassPro=(ra==='bpass');
-      var dash=isMot?' stroke-dasharray="6,4"':'';
+      // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
+      // width (thin/med/thick), and end-cap (arrow/block/dot/none). Other route types keep their built-in look.
+      var customStyle=(ra==='custom'&&card.routeStyle&&card.routeStyle[rk2])?card.routeStyle[rk2]:null;
+      var dashStr=isMot?' stroke-dasharray="6,4"':'';
+      if(customStyle){
+        if(customStyle.style==='dashed')dashStr=' stroke-dasharray="8,5"';
+        else if(customStyle.style==='dotted')dashStr=' stroke-dasharray="2,5"';
+        else dashStr='';
+      }
       // Bump stroke when this player is being edited so the line stays clearly visible under
       // the waypoint handles on iPad (where the handles + finger occlusion can hide a thin line).
       var isThisSel=(sel===rk2&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
-      var sw=(isBlk?2.5:2)+(isThisSel?1.5:0);
-      routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
+      var baseSw=isBlk?2.5:2;
+      if(customStyle){
+        baseSw=customStyle.width==='thin'?1.5:customStyle.width==='thick'?4:2.5;
+      }
+      var sw=baseSw+(isThisSel?1.5:0);
+      routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
       // Invisible hit-area on top of the route for easier clicking — wider than the visible stroke
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       var ep=pts[pts.length-1];
-      if(!isBlk){
+      // Custom-route endpoint cap — overrides default arrow/block. Falls back to arrow for normal routes.
+      var customEnd=customStyle?customStyle.end:null;
+      if(ra==='custom'&&customEnd==='none'){
+        // no endpoint marker
+      } else if(ra==='custom'&&customEnd==='dot'){
+        routeSvg+='<circle cx="'+ep.x.toFixed(1)+'" cy="'+ep.y.toFixed(1)+'" r="5" fill="'+rt.c+'"/>';
+      } else if(ra==='custom'&&customEnd==='block'){
+        if(pts.length>=2){
+          var lpB=pts[pts.length-2];
+          var angB=Math.atan2(ep.y-lpB.y,ep.x-lpB.x);
+          var bpx1=ep.x+7*Math.cos(angB+1.57),bpy1=ep.y+7*Math.sin(angB+1.57);
+          var bpx2=ep.x+7*Math.cos(angB-1.57),bpy2=ep.y+7*Math.sin(angB-1.57);
+          routeSvg+='<line x1="'+bpx1+'" y1="'+bpy1+'" x2="'+bpx2+'" y2="'+bpy2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+        }
+      } else if(!isBlk){
+        // Default: arrow tip
         if(pts.length>=2){
           var lp=pts[pts.length-2];
           var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
@@ -2911,7 +2938,9 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
 // ===== WAYPOINT HANDLES =====
 function buildWaypointHandles(card,players){
   if(!selPlayer)return '';
-  if(selSide!=='off'&&!(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'))return '';
+  // Allow anchor + waypoints for offense always, and for defense in both scout mode (to draw
+  // defender assignments/blitz paths) and play-design defense view.
+  if(selSide!=='off'&&selSide!=='def')return '';
   if(!players[selPlayer])return '';
   var pp=players[selPlayer];
   var pts=card.routePts&&card.routePts[selPlayer];
@@ -3528,17 +3557,17 @@ function render(){
   } else if(viewPerspective==='off'){
     // Scout offensive: offense top (routes down), defense bottom (no routes)
     h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts,true,true);
-    h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+    h+=buildPlayers(rDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true);
     h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
-    h+=buildWaypointHandles(card,rOff);
+    h+=buildWaypointHandles(card,selSide==='def'?rDef:rOff);
   } else {
     // Scout defensive (default): defense top (no routes), offense bottom (routes up)
-    h+=buildPlayers(rDef,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+    h+=buildPlayers(rDef,card.asgn,selSide==='def'?selPlayer:null,'d_',true,card.cl,card.routePts,true,true);
     h+=buildPlayers(rOff,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
     h+=buildDrawnLines(getCurLines(card));
     h+=buildTextLabels(card);h+=buildTextBoxes(card);
-    h+=buildWaypointHandles(card,rOff);
+    h+=buildWaypointHandles(card,selSide==='def'?rDef:rOff);
   }
   h+='</svg>';
   // Floating two-level player context popup — categories on bottom, sub-options on top when active
@@ -3557,6 +3586,10 @@ function render(){
       if(ppIsOl)cats.push(['shade','Shade']);
       if(ppIsSkill)cats.push(['route','Route']);
       if(ppIsOl||ppIsSkill)cats.push(['block','Block']);
+      // 'Line' tab shows when the player has a hand-drawn (custom) route — lets you pick
+      // style/width/end the same way the freehand draw tool does.
+      var ppHasCustom=card.asgn[selPlayer]==='custom';
+      if(ppHasCustom)cats.push(['line','Line']);
       h+='<div class="player-popup" id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'">';
       // Sub-options row (only when a category is active)
       if(popupCat){
@@ -3596,6 +3629,29 @@ function render(){
             h+='<button class="pp-btn'+(curB===bk?' act':'')+'" data-pp-route="'+bk+'">'+bn+'</button>';
           }
           if(curB){h+='<button class="pp-btn" data-pp-route="">&#x2715;</button>';}
+        } else if(popupCat==='line'){
+          // Line options for hand-drawn (custom) routes — style / width / end-cap.
+          var rs=(card.routeStyle&&card.routeStyle[selPlayer])||{};
+          var curLstyle=rs.style||'solid';
+          var curLwidth=rs.width||'med';
+          var curLend=rs.end||'arrow';
+          var styleOpts=[['solid','—'],['dashed','--'],['dotted','···']];
+          for(var sli=0;sli<styleOpts.length;sli++){
+            var sv2=styleOpts[sli][0],sn2=styleOpts[sli][1];
+            h+='<button class="pp-btn'+(curLstyle===sv2?' act':'')+'" data-pp-line="style:'+sv2+'" title="Style: '+sv2+'">'+sn2+'</button>';
+          }
+          h+='<span class="pp-sep" style="display:inline-block;width:1px;height:18px;background:rgba(0,0,0,.15);margin:0 4px"></span>';
+          var widthOpts=[['thin','S'],['med','M'],['thick','L']];
+          for(var wli=0;wli<widthOpts.length;wli++){
+            var wv=widthOpts[wli][0],wn=widthOpts[wli][1];
+            h+='<button class="pp-btn'+(curLwidth===wv?' act':'')+'" data-pp-line="width:'+wv+'" title="Width: '+wv+'">'+wn+'</button>';
+          }
+          h+='<span class="pp-sep" style="display:inline-block;width:1px;height:18px;background:rgba(0,0,0,.15);margin:0 4px"></span>';
+          var endOpts=[['arrow','↗'],['block','—|'],['dot','●'],['none','◯']];
+          for(var eli=0;eli<endOpts.length;eli++){
+            var ev=endOpts[eli][0],en=endOpts[eli][1];
+            h+='<button class="pp-btn'+(curLend===ev?' act':'')+'" data-pp-line="end:'+ev+'" title="End: '+ev+'">'+en+'</button>';
+          }
         }
         h+='</div>';
       }
@@ -4274,6 +4330,18 @@ function bind(){
         if(!card.olShade)card.olShade={};
         var v=this.getAttribute('data-pp-shade');
         if(v)card.olShade[selPlayer]=v;else delete card.olShade[selPlayer];
+        render();
+      });
+    });
+    // Line option buttons (style/width/end for hand-drawn custom routes)
+    pPop.querySelectorAll('[data-pp-line]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!selPlayer)return;
+        var kv=this.getAttribute('data-pp-line').split(':');
+        var key=kv[0],val=kv[1];
+        if(!card.routeStyle)card.routeStyle={};
+        if(!card.routeStyle[selPlayer])card.routeStyle[selPlayer]={style:'solid',width:'med',end:'arrow'};
+        card.routeStyle[selPlayer][key]=val;
         render();
       });
     });
@@ -6027,6 +6095,8 @@ function bindDrag(){
         if(wasMoved && dragInfo.lastX!==undefined && dragInfo.lastY!==undefined && card.routePts && card.routePts[rbPlayer]){
           pushUndo();
           card.routePts[rbPlayer].push({x:dragInfo.lastX,y:dragInfo.lastY});
+          // Open the Line tab in the popup so style/width/end options are immediately reachable
+          popupCat='line';
         }
         dragInfo=null;
         render();
