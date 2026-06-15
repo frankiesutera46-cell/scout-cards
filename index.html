@@ -2359,7 +2359,7 @@ function buildField(card){
       var usePdLos=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
       var skipIdx=usePdLos?pdLosIdx:losIdx;
       if(i===skipIdx) continue;
-      s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
+      s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7" opacity="0.7"/>';
     }
 
     // Hash marks EVERY 1 YARD at both hash positions + sideline ticks (field-type aware).
@@ -2375,13 +2375,14 @@ function buildField(card){
       var tickW = 3;
       var sw = 0.7;
       var col = '#bbb';
+      var op = ' opacity="0.7"';
       // Left hash ticks
-      s+='<line x1="'+(hashL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      s+='<line x1="'+(hashL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"'+op+'/>';
       // Right hash ticks
-      s+='<line x1="'+(hashR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      s+='<line x1="'+(hashR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(hashR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"'+op+'/>';
       // Sideline ticks at EVERY yard (matches CHLK look — continuous dashes at the edge)
-      s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
-      s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+      s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"'+op+'/>';
+      s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"'+op+'/>';
     }
 
     // Yard numbers — rotated 90° (real-football style). Top of each digit faces the SIDELINE
@@ -2394,13 +2395,14 @@ function buildField(card){
     var numHashRatio=(ftForNums==='nfl')?FIELD_TYPES.nfl.hashRatio:FIELD_TYPES.hs.hashRatio;
     var numLnx=SL+(FIELD_W*numHashRatio)/2;     // midpoint between left sideline and left hash
     var numRnx=SR-(FIELD_W*numHashRatio)/2;     // midpoint between right sideline and right hash
-    var numFsz=30;                              // bumped from 22
+    var numFsz=36;                              // a touch bigger
+    var numLetterSp=4;                          // breathing room between the two digits
     function ynum(lbl,lnx,rnx,yy){
       // Left side: rotate +90° → top of digit points LEFT (toward left sideline)
       // Right side: rotate -90° → top of digit points RIGHT (toward right sideline)
       var out='';
-      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
-      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" opacity="0.55" transform="rotate(90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" opacity="0.55" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
       return out;
     }
     if(usePdYardNums2){
