@@ -2790,7 +2790,10 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       else{d='M '+drawPts[0].x+' '+drawPts[0].y;for(var j=1;j<drawPts.length;j++)d+=' L '+drawPts[j].x+' '+drawPts[j].y}
       var isPassPro=(ra==='bpass');
       var dash=isMot?' stroke-dasharray="6,4"':'';
-      var sw=isBlk?2.5:2;
+      // Bump stroke when this player is being edited so the line stays clearly visible under
+      // the waypoint handles on iPad (where the handles + finger occlusion can hide a thin line).
+      var isThisSel=(sel===rk2&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
+      var sw=(isBlk?2.5:2)+(isThisSel?1.5:0);
       routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
       // Invisible hit-area on top of the route for easier clicking — wider than the visible stroke
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
@@ -5728,12 +5731,14 @@ function bindDrag(){
         // Update handle position directly
         var wpEl=svg.querySelector('[data-wp="'+dragInfo.player+'_'+dragInfo.wpIdx+'"]');
         if(wpEl){wpEl.setAttribute('cx',nx);wpEl.setAttribute('cy',ny)}
-        // Update route path
+        // Update route path (visible) AND the wider invisible hit-area path so they stay in sync
         var routeEl=svg.querySelector('[data-route="'+dragInfo.player+'"]');
         if(routeEl&&wpPts.length>=2){
           var d='M '+wpPts[0].x.toFixed(1)+' '+wpPts[0].y.toFixed(1);
           for(var wi=1;wi<wpPts.length;wi++){d+=' L '+wpPts[wi].x.toFixed(1)+' '+wpPts[wi].y.toFixed(1)}
           routeEl.setAttribute('d',d);
+          var hitEl=svg.querySelector('[data-routehit="'+(selSide==='def'?'d_':'o_')+dragInfo.player+'"]');
+          if(hitEl)hitEl.setAttribute('d',d);
         }
       }
       return;
