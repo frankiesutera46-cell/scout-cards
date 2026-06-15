@@ -2384,14 +2384,23 @@ function buildField(card){
       s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
     }
 
-    // Yard numbers — rotated 90° (real-football style, like CHLK). Left side reads bottom-to-top,
-    // right side reads top-to-bottom, both facing the field.
+    // Yard numbers — rotated 90° (real-football style). Top of each digit faces the SIDELINE
+    // (away from the middle). Numbers sit at the midpoint between sideline and hash mark —
+    // HS hash is used for both HS and College (numbers stay in the same spot), NFL hash is
+    // used for NFL (its hashes are narrower, so the number slides closer to the middle).
     var usePdYardNums2=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
+    // Pick the hash-distance ratio for number placement: NFL uses its own; everything else uses HS.
+    var ftForNums=fieldTypeOf(card);
+    var numHashRatio=(ftForNums==='nfl')?FIELD_TYPES.nfl.hashRatio:FIELD_TYPES.hs.hashRatio;
+    var numLnx=SL+(FIELD_W*numHashRatio)/2;     // midpoint between left sideline and left hash
+    var numRnx=SR-(FIELD_W*numHashRatio)/2;     // midpoint between right sideline and right hash
+    var numFsz=30;                              // bumped from 22
     function ynum(lbl,lnx,rnx,yy){
-      // text-anchor:middle keeps the number centered on yy after rotation around the anchor point
+      // Left side: rotate +90° → top of digit points LEFT (toward left sideline)
+      // Right side: rotate -90° → top of digit points RIGHT (toward right sideline)
       var out='';
-      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(-90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
-      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
       return out;
     }
     if(usePdYardNums2){
@@ -2400,7 +2409,7 @@ function buildField(card){
       for(var ni=0;ni<pdNums.length;ni++){
         var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
         if(yy<hh||yy>FH-MARGIN_BOT) continue;
-        s+=ynum(pdNums[ni].lbl, SL+30, SR-30, yy);
+        s+=ynum(pdNums[ni].lbl, numLnx, numRnx, yy);
       }
     } else {
       // Scout mode: only 10 and 20 above LOS (defensive side)
@@ -2409,7 +2418,7 @@ function buildField(card){
         if(yy < hh || yy > FH - MARGIN_BOT) continue;
         var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
         if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
-        s+=ynum(yardsFromLOS.toString(), SL+30, SR-30, yy);
+        s+=ynum(yardsFromLOS.toString(), numLnx, numRnx, yy);
       }
     }
 
