@@ -4444,8 +4444,8 @@ function render(){
     h+='</div>';
     // Group 2: Navigation and drawing tools — kept inline (no radial popup)
     h+='<div class="tb-group" data-dock-key="nav" data-no-radial="1">';
-    h+='<button class="tb'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/></svg></button>';
-    h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
+    h+='<button class="tb-action'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)" aria-label="Select"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
+    h+='<button class="tb-action'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen" aria-label="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
     h+='</div>';
     // Group 3: Markup tools (Circle, Rect, Text)
     h+='<div class="tb-group" data-dock-key="mark">';
