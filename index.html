@@ -70,6 +70,23 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 }
 
 /* ---- TOP BAR ---- */
+.app-shell{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.app-shell .topbar{flex:0 0 auto}
+.app-shell .layout{flex:1;height:auto;min-height:0}
+.app-shell.coach-view .demo-banner,
+.app-shell.coach-view .topbar{display:none}
+.app-shell.coach-view .layout{height:100vh}
+.app-shell.coach-view .eh,
+.app-shell.coach-view .sidebar,
+.app-shell.coach-view .rp,
+.app-shell.coach-view .panel-backdrop,
+.app-shell.coach-view .mobile-panel-rail,
+.app-shell.coach-view .ipad-side,
+.app-shell.coach-view .is-collapse{display:none !important}
+.app-shell.coach-view .field-wrap{margin-left:0 !important;padding:6px 6px 96px}
+.app-shell.coach-view .field-wrap svg{border-color:rgba(32,32,31,.24);box-shadow:0 18px 42px rgba(0,0,0,.12)}
+.app-shell.coach-view.coach-fit .field-wrap{align-items:center}
+.app-shell.coach-view.coach-fit .field-wrap svg{width:min(100%, calc((100vh - 108px) * 1.384615));height:auto;aspect-ratio:720/520}
 .topbar{background:#1A3C2B;display:flex;flex-direction:column}
 .topbar-row1{display:flex;align-items:center;gap:14px;padding:0 20px;height:44px;border-bottom:1px solid rgba(247,247,245,.08)}
 .topbar-row2{display:flex;align-items:center;gap:6px;padding:0 20px;height:36px;background:rgba(0,0,0,.15)}
@@ -86,6 +103,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .topbar .game-input{flex:1;max-width:280px}
 .topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .topbar .count{font-family:'JetBrains Mono',monospace;color:rgba(247,247,245,.5);font-size:10px;font-weight:400;letter-spacing:0.1em}
+.topbar-card-count{font-family:'JetBrains Mono',monospace;color:rgba(247,247,245,.45);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .topbar-row2 .tb-sep{width:1px;height:18px;background:rgba(247,247,245,.15);margin:0 2px}
 
 /* ---- BUTTONS ---- */
@@ -350,7 +368,9 @@ select:focus{
 
 /* --- Field-wrap: paper edge around the play card SVG --- */
 .field-wrap{
-  background:var(--paper) !important;
+  background-color:#F4F4F2 !important;
+  background-image:radial-gradient(rgba(45,45,45,.16) 1.35px,transparent 1.35px) !important;
+  background-size:28px 28px !important;
 }
 /* (the .field-wrap svg itself is left untouched — that's our work surface) */
 
@@ -659,7 +679,7 @@ select:focus{
 /* ==================== END HAND-DRAWN LAYER ==================== */
 
 /* ---- LAYOUT ---- */
-.layout{display:flex;height:calc(100vh - 52px)}
+.layout{display:flex;height:calc(100vh - 103px)}
 
 /* ---- SIDEBAR ---- */
 .sidebar{width:220px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);display:flex;flex-direction:column;padding:14px 12px;gap:2px;overflow-y:auto;flex-shrink:0}
@@ -693,11 +713,23 @@ select:focus{
 
 /* ---- BODY ---- */
 .eb{display:flex;flex:1;min-height:0}
-.field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
-.field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
+.field-wrap{
+  flex:1;
+  padding:6px 6px 96px;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  min-width:0;
+  min-height:0;
+  background-color:#EEEEEC;
+  background-image:radial-gradient(rgba(45,45,45,.14) 1.35px,transparent 1.35px);
+  background-size:28px 28px;
+  position:relative;
+}
+.field-wrap svg{width:100%;height:100%;max-height:none;display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
 .field-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-.field-col .field-wrap{flex:1;min-height:0;padding:8px}
-.field-col .field-wrap svg{max-height:calc(100vh - 200px)}
+.field-col .field-wrap{flex:1;min-height:0;padding:6px 6px 96px}
+.field-col .field-wrap svg{max-height:none}
 .inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
 .inline-edit-multi{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:4px 6px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:3px;min-width:100px;min-height:40px;resize:both;line-height:1.3}
 .pd-notes{display:flex;gap:12px;padding:0 12px 8px;background:#EEEEEC;flex-shrink:0}
@@ -706,7 +738,8 @@ select:focus{
 .pd-notes textarea{width:100%;min-height:60px;border:1px solid rgba(58,58,56,.2);border-top:none;padding:8px;font-family:'Space Grotesk',sans-serif;font-size:12px;resize:vertical;background:#fff;box-sizing:border-box}
 
 /* ---- RIGHT PANEL ---- */
-.rp{width:230px;border-left:1px solid rgba(58,58,56,.12);padding:14px;overflow-y:auto;flex-shrink:0;background:#F7F7F5}
+.rp{width:280px;border-left:1px solid rgba(58,58,56,.12);padding:14px;overflow-y:auto;flex-shrink:0;background:#F7F7F5}
+.rp.rp-player{padding:14px;background:#F7F7F5}
 .rp-title{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);margin-bottom:5px;margin-top:14px;font-weight:500}
 .rp-title:first-child{margin-top:0}
 .rp-wrap{display:flex;flex-wrap:wrap;gap:3px}
@@ -722,21 +755,148 @@ select:focus{
 .ns input,.ns textarea{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:6px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px;transition:border .15s}
 .ns input:focus,.ns textarea:focus{outline:none;border-color:#1A3C2B}
 .ns textarea{height:44px;resize:none}
+.card-setup{display:flex;flex-direction:column;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(58,58,56,.1)}
+.card-setup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.card-setup-kicker{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(58,58,56,.45);font-weight:700}
+.card-setup-title{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.1;font-weight:800;color:#1A3C2B;margin-top:2px}
+.card-setup-meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:rgba(58,58,56,.55);background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:8px;padding:4px 7px;white-space:nowrap}
+.card-setup-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(78px,.48fr);gap:8px}
+.card-control{min-width:0}
+.card-control-wide{grid-column:1/-1}
+.card-control label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:700}
+.rp .card-control input,.rp .card-control select{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:7px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;min-height:34px}
+.card-control .flip-btn{width:100%;min-height:34px;border-radius:6px}
+.card-setup-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.card-setup-actions .flip-btn{min-width:0;padding:7px 6px;border-radius:8px;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-setup-actions .flip-btn.on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.player-inspector + .card-setup,.np + .card-setup{margin-top:12px}
+.side-help{padding:12px 6px;margin-top:10px;border-top:0}
+.player-inspector{display:flex;flex-direction:column;gap:12px;padding:14px;background:#fff}
+.pi-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(58,58,56,.1)}
+.pi-avatar{width:38px;height:38px;border-radius:14px;background:#1A3C2B;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800;line-height:1;flex:0 0 auto}
+.pi-avatar.pi-defense{background:#ede4ff;color:#7c3aed}
+.pi-meta{min-width:0;flex:1}
+.pi-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;color:#20201f;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-sub{margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(58,58,56,.48);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-nav{display:flex;align-items:center;gap:3px}
+.pi-nav-btn{width:30px;height:30px;border:1px solid rgba(58,58,56,.14);border-radius:10px;background:#fff;color:#3A3A38;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;cursor:pointer}
+.pi-nav-btn:hover{background:#f2f2f1}
+.pi-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.pi-action{min-height:34px;border:1px solid rgba(58,58,56,.14);border-radius:10px;background:#F7F7F5;color:#3A3A38;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.pi-action:hover{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
+.pi-action.warn{color:#d94b3d;border-color:rgba(217,75,61,.24);background:#fff7f5}
+.pi-field{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.pi-field label,.pi-block label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:700}
+.pi-field input{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:8px 9px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px}
+.pi-block{padding-top:10px;border-top:1px solid rgba(58,58,56,.1)}
+.pi-color-row{display:flex;flex-wrap:wrap;gap:5px}
+.pi-assignment{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F7F7F5;border:1px solid rgba(58,58,56,.1);border-radius:12px}
+.pi-assignment-main{min-width:0}
+.pi-assignment-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:#20201f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-assignment-kicker{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(58,58,56,.45);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.pi-routes{display:flex;flex-direction:column;gap:8px}
+.pi-route-group-title{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:rgba(58,58,56,.45);font-weight:700;margin-bottom:4px}
+.pi-help{font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.45;color:rgba(58,58,56,.48);text-align:center;padding:6px 4px}
 
 /* Defensive front selector */
 .front-sel{margin-top:10px;padding-top:10px;border-top:1px solid rgba(58,58,56,.1)}
 .front-sel label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500}
 .front-sel select{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:5px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px}
 
-/* ---- DRAW TOOLBAR (Hudl-style) ---- */
-.draw-bar{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);flex-wrap:wrap}
-.draw-bar .tb-group{display:flex;align-items:center;gap:1px;background:rgba(58,58,56,.06);border-radius:5px;padding:2px}
+/* ---- DRAW TOOLBAR (FigJam-inspired floating dock) ---- */
+.draw-bar{
+  --dock-accent:#8b5cf6;
+  --dock-accent-soft:#ede4ff;
+  --dock-ink:#20201f;
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  z-index:7600;
+  display:flex;
+  align-items:center;
+  gap:0;
+  padding:8px 10px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(32,32,31,.12);
+  border-radius:24px;
+  box-shadow:0 18px 44px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+  backdrop-filter:blur(16px);
+  flex-wrap:nowrap;
+  max-width:calc(100vw - 28px);
+}
+.draw-bar .tb-group{display:flex;align-items:center;gap:0;background:transparent;border-radius:18px;padding:0 8px;position:relative}
+.draw-bar .tb-group:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  right:0;
+  top:6px;
+  width:1px;
+  height:32px;
+  background:rgba(32,32,31,.12);
+}
+.draw-bar .tb-group.radial-compact,
+.ipad-top .it-group.radial-compact{
+  background:transparent;
+  gap:0;
+}
+.draw-bar .tb-group.radial-compact>button:not(.radial-launcher),
+.ipad-top .it-group.radial-compact>button:not(.radial-launcher){
+  display:none !important;
+}
+.radial-launcher{
+  position:relative;
+}
+.radial-launcher:after{
+  content:'';
+  position:absolute;
+  right:3px;
+  bottom:3px;
+  width:5px;
+  height:5px;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  transform:rotate(45deg);
+  opacity:.55;
+  pointer-events:none;
+}
 .draw-bar .sep{width:1px;height:20px;background:rgba(58,58,56,.12);margin:0 2px}
 .tb{width:32px;height:32px;border-radius:4px;border:none;background:transparent;color:#5a5a58;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0;position:relative}
 .tb:hover{background:rgba(26,60,43,.08);color:#1A3C2B}
 .tb.on{background:#4A90D9;color:#fff;box-shadow:0 1px 3px rgba(74,144,217,.3)}
 .tb.eraser-on{background:#FF8C69;color:#fff;box-shadow:0 1px 3px rgba(255,140,105,.3)}
 .tb.text-on{background:#FF8C69;color:#fff;box-shadow:0 1px 3px rgba(255,140,105,.3)}
+.draw-bar .tb.radial-launcher{
+  width:44px;
+  height:44px;
+  border:none !important;
+  border-radius:16px !important;
+  background:transparent !important;
+  color:#222 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+.draw-bar .tb.radial-launcher:hover,
+.draw-bar .tb.radial-launcher:focus-visible{
+  background:#f2f2f1 !important;
+  color:#111 !important;
+  outline:none;
+}
+.draw-bar .tb.radial-launcher.on,
+.draw-bar .tb.radial-launcher.text-on,
+.draw-bar .tb.radial-launcher.eraser-on{
+  background:var(--dock-accent-soft) !important;
+  color:var(--dock-accent) !important;
+}
+.draw-bar .tb.radial-launcher svg{width:23px;height:23px;stroke-width:1.9}
+.draw-bar .tb.radial-launcher .radial-dot{
+  width:24px;
+  height:24px;
+  border-radius:8px;
+  border:2px solid rgba(0,0,0,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);
+}
+.draw-bar .tb.radial-launcher .radial-width{background:currentColor}
 .tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tb .tb-label{display:none}
 .draw-bar .color-btn{width:22px;height:22px;border-radius:50%;border:2px solid rgba(58,58,56,.08);cursor:pointer;transition:.15s;padding:0}
@@ -749,10 +909,221 @@ select:focus{
 .draw-bar .preset-btn.act{color:#fff}
 .draw-bar .preset-btn:hover{background:rgba(58,58,56,.06)}
 .draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.12);padding:3px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px}
-.draw-bar .tb-action{width:32px;height:32px;border-radius:4px;border:none;background:transparent;color:#5a5a58;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
-.draw-bar .tb-action:hover{background:rgba(58,58,56,.08);color:#3A3A38}
+.draw-bar .tb-action{width:44px;height:44px;border-radius:16px;border:none;background:transparent;color:var(--dock-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0;position:relative}
+.draw-bar .tb-action:hover{background:#f2f2f1;color:#111}
+.draw-bar .tb-action.on{background:var(--dock-accent-soft);color:var(--dock-accent)}
+.draw-bar .tb-action.coach-on{background:#1A3C2B;color:#F7F7F5}
+.draw-bar .tb-action.dock-primary-action{background:#f4f0e7;color:#1A3C2B}
+.draw-bar .tb-action.dock-primary-action:hover{background:#ede6d7;color:#102519}
+.draw-bar .tb.radial-launcher.dock-primary-action{background:#f4f0e7 !important;color:#1A3C2B !important}
+.draw-bar .tb.radial-launcher.dock-primary-action:hover{background:#ede6d7 !important;color:#102519 !important}
 .draw-bar .tb-action.danger:hover{background:rgba(239,68,68,.08);color:#ef4444}
-.draw-bar .tb-action svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.draw-bar .tb-action:disabled{opacity:.32;cursor:default;pointer-events:none}
+.draw-bar .tb-action svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.draw-bar .tb-action .dock-text,
+.dock-menu-option .dock-text{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:.02em;line-height:1}
+.dock-badge{
+  position:absolute;
+  right:5px;
+  top:5px;
+  min-width:14px;
+  height:14px;
+  padding:0 3px;
+  border-radius:999px;
+  background:#ef4444;
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-size:8px;
+  font-weight:800;
+  line-height:14px;
+  text-align:center;
+  box-shadow:0 0 0 2px #fff;
+  pointer-events:none;
+}
+.radial-tools{
+  position:fixed;
+  left:0;
+  top:0;
+  width:0;
+  height:0;
+  z-index:8000;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.94);
+  transition:opacity .12s ease,transform .12s ease;
+}
+.radial-tools.open{
+  pointer-events:auto;
+  opacity:1;
+  transform:scale(1);
+}
+.radial-tools .radial-option{
+  position:absolute;
+  width:44px;
+  height:44px;
+  margin:-22px 0 0 -22px;
+  border:1px solid rgba(32,32,31,.1);
+  border-radius:16px;
+  background:#fff;
+  color:#222;
+  box-shadow:0 10px 24px rgba(0,0,0,.16),0 1px 4px rgba(0,0,0,.08);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+  transform:translate(var(--rx),var(--ry));
+  transition:transform .12s ease,background .1s ease,color .1s ease,box-shadow .1s ease;
+  touch-action:manipulation;
+}
+.radial-tools .radial-option:hover,
+.radial-tools .radial-option:focus-visible{
+  background:#f2f2f1;
+  color:#111;
+  outline:none;
+  box-shadow:0 12px 26px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.08);
+  transform:translate(var(--rx),var(--ry)) scale(1.08);
+}
+.radial-tools .radial-option.active{
+  background:#ede4ff;
+  color:#8b5cf6;
+  border-color:rgba(139,92,246,.28);
+}
+.radial-tools .radial-option svg{
+  width:22px;
+  height:22px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.radial-tools .radial-option .radial-dot{
+  width:24px;
+  height:24px;
+  border-radius:8px;
+  border:2px solid rgba(32,32,31,.1);
+}
+.radial-tools .radial-option .radial-width{
+  display:block;
+  border-radius:50%;
+  background:currentColor;
+}
+.radial-tools .radial-hint{
+  display:none;
+}
+.radial-tools .radial-close{
+  position:absolute;
+  width:28px;
+  height:28px;
+  margin:-14px 0 0 -14px;
+  border:1px solid rgba(32,32,31,.12);
+  border-radius:50%;
+  background:#f5f5f4;
+  color:rgba(32,32,31,.52);
+  font-size:14px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(0,0,0,.12);
+}
+.dock-menu{
+  position:fixed;
+  left:0;
+  top:0;
+  z-index:8000;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:8px;
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(32,32,31,.12);
+  border-radius:18px;
+  box-shadow:0 18px 44px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+  backdrop-filter:blur(16px);
+  transform:translate(-50%,-100%);
+}
+.dock-menu-option{
+  width:44px;
+  height:44px;
+  border:1px solid transparent;
+  border-radius:14px;
+  background:transparent;
+  color:#222;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+  transition:background .1s ease,color .1s ease,transform .1s ease,border-color .1s ease;
+  touch-action:manipulation;
+}
+.dock-menu-option:hover,
+.dock-menu-option:focus-visible{
+  background:#f2f2f1;
+  outline:none;
+  transform:translateY(-1px);
+}
+.dock-menu-option.active{
+  background:#ede4ff;
+  color:#8b5cf6;
+  border-color:rgba(139,92,246,.22);
+}
+.dock-menu-option.primary{
+  background:#f4f0e7;
+  color:#1A3C2B;
+}
+.dock-menu-option.primary:hover,
+.dock-menu-option.primary:focus-visible{
+  background:#ede6d7;
+  color:#102519;
+}
+.dock-menu-option svg{
+  width:22px;
+  height:22px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.dock-menu-option .radial-dot{
+  width:24px;
+  height:24px;
+  border-radius:8px;
+  border:2px solid rgba(32,32,31,.1);
+}
+.dock-menu-option .radial-width{
+  display:block;
+  border-radius:50%;
+  background:currentColor;
+}
+.dock-menu-close{
+  width:30px;
+  height:30px;
+  border:1px solid rgba(32,32,31,.1);
+  border-radius:50%;
+  background:#f5f5f4;
+  color:rgba(32,32,31,.55);
+  font-size:14px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  margin-left:2px;
+}
+.dock-menu-sep{
+  width:1px;
+  height:30px;
+  background:rgba(32,32,31,.12);
+  margin:0 3px;
+  flex:0 0 auto;
+}
 .field-wrap svg.drawing{cursor:crosshair}
 .field-wrap svg.drawing [data-dp]{pointer-events:none}
 .field-wrap svg [data-dp^="rsz_"]{cursor:nwse-resize}
@@ -784,24 +1155,68 @@ select:focus{
 .color-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:0;line-height:24px;text-align:center;padding:0;transition:.12s}
 .color-dot:hover{transform:scale(1.15)}
 .color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
-/* Floating player context popup — two-row, categories on bottom, sub-options on top */
-.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:none;opacity:.7;transition:opacity .12s ease}
+/* Floating player context popup — radial categories at the selected field object */
+.player-popup{position:absolute;width:0;height:0;background:transparent;border:0;box-shadow:none;padding:0;display:block;z-index:7601;font-family:'JetBrains Mono',monospace;pointer-events:none;opacity:1;transition:opacity .12s ease}
 /* Only the interactive children of the popup catch pointer events — the popup background
    itself passes through so a drag-to-draw across the popup doesn't get hijacked. */
 .player-popup>*{pointer-events:auto}
 .player-popup:hover,.player-popup:focus-within{opacity:1}
-.pp-sub{display:flex;gap:5px;align-items:center;padding-bottom:5px;border-bottom:1px solid rgba(58,58,56,.1);white-space:nowrap;flex-wrap:wrap;justify-content:center}
-.pp-cats{display:flex;gap:5px;align-items:center;justify-content:center}
-.pp-cat{padding:5px 10px;font-size:10px;font-weight:600;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:4px;cursor:pointer;color:#3A3A38;font-family:inherit;transition:.1s;touch-action:manipulation}
-.pp-cat:hover{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
-.pp-cat.act{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
+.pp-sub{
+  position:absolute;
+  left:0;
+  top:-62px;
+  transform:translate(-50%,-100%);
+  display:flex;
+  gap:5px;
+  align-items:center;
+  padding:8px;
+  border:1px solid rgba(32,32,31,.12);
+  border-radius:16px;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 14px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);
+  backdrop-filter:blur(14px);
+  white-space:nowrap;
+  flex-wrap:wrap;
+  justify-content:center;
+  width:max-content;
+  max-width:360px;
+}
+.pp-cats{position:absolute;left:0;top:0;width:0;height:0}
+.pp-cat{
+  position:absolute;
+  left:0;
+  top:0;
+  width:48px;
+  height:48px;
+  margin:-24px 0 0 -24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  background:#fff;
+  border:1px solid rgba(32,32,31,.12);
+  border-radius:50%;
+  box-shadow:0 12px 28px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.08);
+  cursor:pointer;
+  color:#222;
+  font-family:inherit;
+  transition:transform .1s ease,background .1s ease,color .1s ease,border-color .1s ease;
+  touch-action:manipulation;
+  transform:translate(var(--rx),var(--ry));
+}
+.pp-cat:hover{background:#f2f2f1;color:#111;transform:translate(var(--rx),var(--ry)) scale(1.06)}
+.pp-cat.act{background:#ede4ff;color:#8b5cf6;border-color:rgba(139,92,246,.28)}
 .pp-input{width:48px;padding:5px 6px;font-size:11px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit;text-align:center}
 .pp-color{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.1);cursor:pointer;padding:0;transition:.1s;touch-action:manipulation}
-.pp-color.act{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
+.pp-color.act{border-color:#8b5cf6;outline:2px solid rgba(139,92,246,.24);outline-offset:1px}
 .pp-color:active{transform:scale(.9)}
 .pp-btn{padding:5px 8px;font-size:10px;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:4px;cursor:pointer;font-weight:600;color:#3A3A38;font-family:inherit;transition:.1s;touch-action:manipulation}
-.pp-btn:hover{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
-.pp-btn.act{background:#1A3C2B;color:#fff;border-color:#1A3C2B}
+.pp-btn:hover{background:#f2f2f1;color:#111;border-color:rgba(32,32,31,.16)}
+.pp-btn.act{background:#ede4ff;color:#8b5cf6;border-color:rgba(139,92,246,.28)}
 .pp-sep{width:1px;height:20px;background:rgba(58,58,56,.15);margin:0 2px;flex-shrink:0}
 
 .shade-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(58,58,56,.2);background:#fff;color:#3A3A38;font-weight:600;transition:.12s;flex:1;text-align:center;touch-action:manipulation}
@@ -1004,6 +1419,8 @@ select:focus{
 .panel-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .panel-toggle svg circle{fill:currentColor;stroke:none}
 .panel-toggle.active{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.mobile-panel-rail{display:none;position:fixed;left:10px;right:10px;top:84px;z-index:7601;align-items:center;justify-content:space-between;pointer-events:none}
+.mobile-panel-rail .panel-toggle{pointer-events:auto;box-shadow:0 10px 26px rgba(0,0,0,.18);background:#fff}
 
 /* iPad layout elements — hidden on desktop (forced; media query below re-enables on touch) */
 .ipad-side{display:none !important}
@@ -1019,14 +1436,34 @@ select:focus{
   .eh{padding:6px 8px;gap:6px;flex-wrap:nowrap;overflow-x:auto}
   .eh select#hSel, .eh select#fSel, .eh select#dfSel{display:none}
   .eh .tag-row{display:none !important}
-  /* Horizontal top toolbar (drawing tools) — CHLK-style */
-  .ipad-top{display:flex !important;align-items:center;justify-content:flex-start;gap:6px;padding:6px 10px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;white-space:nowrap}
-  .it-group{display:flex;align-items:center;gap:2px}
-  .it-sep{width:1px;height:24px;background:rgba(58,58,56,.15);margin:0 4px;flex-shrink:0}
-  .it-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:4px;color:#3A3A38;cursor:pointer;padding:0;flex-shrink:0;transition:.1s;touch-action:manipulation}
-  .it-btn svg{width:20px;height:20px}
+  /* Floating bottom dock for drawing tools — FigJam-inspired */
+  .ipad-top{
+    display:flex !important;
+    position:fixed;
+    left:50%;
+    bottom:calc(18px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    z-index:7600;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    padding:8px 10px;
+    background:rgba(255,255,255,.96);
+    border:1px solid rgba(32,32,31,.12);
+    border-radius:24px;
+    box-shadow:0 18px 44px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+    backdrop-filter:blur(16px);
+    overflow:visible;
+    flex-wrap:nowrap;
+    white-space:nowrap;
+  }
+  .it-group{display:flex;align-items:center;gap:0;padding:0 8px;position:relative}
+  .it-group:not(:last-child)::after{content:'';position:absolute;right:0;top:6px;width:1px;height:32px;background:rgba(32,32,31,.12)}
+  .it-sep{display:none}
+  .it-btn{display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:transparent;border:none;border-radius:16px;color:#222;cursor:pointer;padding:0;flex-shrink:0;transition:.1s;touch-action:manipulation}
+  .it-btn svg{width:23px;height:23px}
   .it-btn:active{transform:scale(.95)}
-  .it-btn.it-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+  .it-btn.it-on{background:#ede4ff;color:#8b5cf6;border-color:transparent}
   .it-color{width:26px;height:26px;border-radius:50%;border:2px solid rgba(58,58,56,.1);padding:0;cursor:pointer;flex-shrink:0;transition:.1s;touch-action:manipulation}
   .it-color.it-on{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.25);outline-offset:1px}
   .it-color:active{transform:scale(.9)}
@@ -1069,12 +1506,14 @@ select:focus{
   /* Quick text smaller (still 2-column) */
   .is-grid-qt .is-btn{font-size:11px;min-height:32px;padding:4px 6px;font-family:'JetBrains Mono',monospace}
   /* Field area: push right to clear the sidebar, top-align the play card */
-  .field-wrap{margin-left:172px;padding:4px;align-items:flex-start;justify-content:center;transition:margin-left .25s ease}
+  .field-wrap{margin-left:172px;padding:4px 4px 96px;align-items:stretch;justify-content:center;transition:margin-left .25s ease}
   .layout.ipad-side-collapsed .field-wrap{margin-left:0}
-  .field-wrap svg{max-height:calc(100vh - 140px);max-width:100%;width:100%;height:auto}
+  .field-wrap svg{max-height:none;max-width:100%;width:100%;height:100%}
   /* Off-canvas panels — sidebar (cards) and rp (settings) still slide from edges */
 
   .panel-toggle{display:inline-flex}
+  .mobile-panel-rail{display:flex;top:calc(92px + env(safe-area-inset-top))}
+  .mobile-panel-rail .panel-toggle{display:inline-flex}
   .layout{position:relative;overflow:hidden}
   /* Sidebar slides in from the left */
   .sidebar{position:fixed;top:52px;left:0;bottom:0;width:300px;max-width:80vw;z-index:200;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 20px rgba(0,0,0,.15)}
@@ -1082,6 +1521,25 @@ select:focus{
   /* Right panel slides in from the right */
   .rp{position:fixed;top:52px;right:0;bottom:0;width:340px;max-width:85vw;z-index:200;transform:translateX(100%);transition:transform .25s ease;box-shadow:-2px 0 20px rgba(0,0,0,.15)}
   .layout.show-rp .rp{transform:translateX(0)}
+  .layout.has-player-selection .rp{
+    left:12px;
+    right:12px;
+    top:auto;
+    bottom:calc(92px + env(safe-area-inset-bottom));
+    width:auto;
+    max-width:none;
+    max-height:46vh;
+    transform:none !important;
+    z-index:7200;
+    border:1px solid rgba(32,32,31,.12);
+    border-radius:18px;
+    box-shadow:0 18px 44px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+    padding:0;
+    overflow-y:auto;
+  }
+  .layout.has-player-selection .player-inspector{padding:12px;gap:10px}
+  .layout.has-player-selection .pi-head{padding-bottom:10px}
+  .layout.has-player-selection .pi-actions{grid-template-columns:repeat(3,1fr)}
   /* Backdrop when any panel is open */
   .panel-backdrop{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
   .layout.show-sidebar .panel-backdrop, .layout.show-rp .panel-backdrop{display:block}
@@ -1104,8 +1562,57 @@ select:focus{
   .quick-text-bar .qt-edit{padding:5px 8px;font-size:10px;min-height:32px}
   .quick-text-bar .qt-label{font-size:9px;margin-right:2px}
   /* Field area — kill the centering padding so card sits at top + uses all available height */
-  .field-wrap{padding:2px;align-items:flex-start}
-  .field-wrap svg{max-height:calc(100vh - 220px)}
+  .field-wrap{padding:2px 2px 96px;align-items:stretch}
+  .field-wrap svg{max-height:none;height:100%}
+}
+
+@media (max-width:900px){
+  .topbar-row1{height:auto !important;min-height:56px;padding:6px 8px;gap:8px;flex-wrap:wrap}
+  .topbar .brand .brand-wordmark img{height:38px}
+  .topbar .week-sel{max-width:128px}
+  .topbar .game-input{min-width:140px;max-width:none;flex:1}
+  .topbar-card-count,.topbar .user-info{display:none}
+  .layout{position:relative;overflow:hidden}
+  .panel-toggle{display:inline-flex}
+  .mobile-panel-rail{display:flex;top:74px}
+  .mobile-panel-rail .panel-toggle{display:inline-flex}
+  .sidebar{position:fixed;top:68px;left:0;bottom:0;width:300px;max-width:82vw;z-index:200;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 20px rgba(0,0,0,.15)}
+  .layout.show-sidebar .sidebar{transform:translateX(0)}
+  .rp{position:fixed;top:68px;right:0;bottom:0;width:340px;max-width:88vw;z-index:200;transform:translateX(100%);transition:transform .25s ease;box-shadow:-2px 0 20px rgba(0,0,0,.15)}
+  .layout.show-rp .rp{transform:translateX(0)}
+  .layout.has-player-selection .rp{
+    left:8px;
+    right:8px;
+    top:auto;
+    bottom:88px;
+    width:auto;
+    max-width:none;
+    max-height:50vh;
+    transform:none !important;
+    z-index:7200;
+    border:1px solid rgba(32,32,31,.12);
+    border-radius:18px;
+    box-shadow:0 18px 44px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+    padding:0;
+    overflow-y:auto;
+  }
+  .layout.has-player-selection .player-inspector{padding:12px}
+  .panel-backdrop{display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
+  .layout.show-sidebar .panel-backdrop,
+  .layout.show-rp .panel-backdrop{display:block}
+  .eh{gap:4px;padding:4px 6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .eh .pn{min-width:150px}
+  .field-wrap{margin-left:0;padding:4px 4px 96px;align-items:stretch}
+  .field-wrap svg{width:100%;height:100%;max-height:none}
+  .draw-bar{width:max-content;max-width:calc(100vw - 8px);padding:6px}
+  .draw-bar .tb-group{padding:0 2px}
+  .draw-bar .tb-action,
+  .draw-bar .tb.radial-launcher{width:36px;height:40px;border-radius:13px}
+  .draw-bar .tb-action svg,
+  .draw-bar .tb.radial-launcher svg{width:20px;height:20px}
+  .draw-bar .tb-action .dock-text,
+  .dock-menu-option .dock-text{font-size:8px}
+  .draw-bar .tb-group:not(:last-child)::after{top:7px;height:26px}
 }
 </style>
 </head>
@@ -1800,6 +2307,8 @@ var selSide='off';
 var gameTitle='Week 1';
 var dragInfo=null;
 var viewPerspective='def'; // 'def' or 'off'
+var coachView=false;
+var coachFit=false;
 
 function getPlayDesigns(){return games[activeGameIdx].playDesigns||(games[activeGameIdx].playDesigns=[])}
 
@@ -1817,7 +2326,7 @@ function switchMode(mode){
   }
   activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
   drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;currentLine=null;currentShape=null;currentStraightLine=null;
-  undoStack=[];
+  undoStack=[];redoStack=[];
   render();
 }
 
@@ -1836,7 +2345,7 @@ function switchGame(idx){
     cards=games[idx].cards;
   }
   activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
-  undoStack=[];
+  undoStack=[];redoStack=[];
   render();
 }
 function addGame(name){
@@ -1853,14 +2362,27 @@ function deleteGame(idx){
 
 // Undo stack
 var undoStack=[];
+var redoStack=[];
 var MAX_UNDO=50;
-function pushUndo(){
+function pushUndo(preserveRedo){
   undoStack.push(JSON.stringify(cards));
   if(undoStack.length>MAX_UNDO)undoStack.shift();
+  if(!preserveRedo)redoStack=[];
 }
 function popUndo(){
   if(undoStack.length===0)return false;
+  redoStack.push(JSON.stringify(cards));
+  if(redoStack.length>MAX_UNDO)redoStack.shift();
   var snap=JSON.parse(undoStack.pop());
+  cards=snap;
+  if(activeIdx>=cards.length)activeIdx=cards.length-1;
+  selPlayer=null;selLine=null;selTextBox=null;selLabel=null;
+  return true;
+}
+function popRedo(){
+  if(redoStack.length===0)return false;
+  pushUndo(true);
+  var snap=JSON.parse(redoStack.pop());
   cards=snap;
   if(activeIdx>=cards.length)activeIdx=cards.length-1;
   selPlayer=null;selLine=null;selTextBox=null;selLabel=null;
@@ -1945,7 +2467,7 @@ function migrateLocalStorage(){
 }
 // Reload all user-scoped data after login
 function reloadUserData(){
-  loadScript();loadBranding();loadPlaybooks();loadQuickTexts();loadGlossary();loadPresets();
+  loadScript();loadBranding();loadPlaybooks();loadQuickTexts();loadGlossary();loadPresets();loadDockRecent();
 }
 
 // Feature 5: Practice Script
@@ -2043,6 +2565,249 @@ function loadPresets(){
 }
 function savePresets(){
   try{localStorage.setItem(lsKey('scoutPresets'),JSON.stringify({off:offPresets,def:defPresets,route:routePresets,croutes:customRoutes,savedPlays:savedPlays}))}catch(e){}
+}
+var radialToolState={menu:null,closeTimer:null,longTimer:null,longTarget:null,suppressClick:false};
+var dockRecent={};
+function loadDockRecent(){try{var r=localStorage.getItem(lsKey('scoutDockRecent'));dockRecent=r?JSON.parse(r):{}}catch(e){dockRecent={}}}
+function saveDockRecent(){try{localStorage.setItem(lsKey('scoutDockRecent'),JSON.stringify(dockRecent))}catch(e){}}
+loadDockRecent();
+function radialSourceSelector(){
+  return 'button.tb:not(.radial-launcher),button.tb-action:not(.radial-launcher),button.color-btn:not(.radial-launcher),button.width-btn:not(.radial-launcher),button.it-btn:not(.radial-launcher),button.it-color:not(.radial-launcher),button.it-width:not(.radial-launcher)';
+}
+function radialButtonKey(btn){
+  return btn.getAttribute('data-dock-action')||btn.id||btn.getAttribute('data-lstyle')||btn.getAttribute('data-dc')||btn.getAttribute('data-dw')||btn.getAttribute('data-istool')||btn.getAttribute('data-islstyle')||btn.getAttribute('data-iscolor')||btn.getAttribute('data-iswidth')||btn.getAttribute('title')||'tool';
+}
+function rememberDockAction(group,btn){
+  var key=group&&group.getAttribute('data-dock-key');
+  if(!key||!btn)return;
+  dockRecent[key]=radialButtonKey(btn);
+  saveDockRecent();
+}
+function recentDockSource(group,buttons){
+  var key=group&&group.getAttribute('data-dock-key');
+  var recent=key?dockRecent[key]:null;
+  if(!recent)return null;
+  for(var i=0;i<buttons.length;i++){
+    if(radialButtonKey(buttons[i])===recent)return buttons[i];
+  }
+  return null;
+}
+function radialActiveSource(buttons,group){
+  var primary=null;
+  for(var i=0;i<buttons.length;i++){
+    var b=buttons[i];
+    if(b.classList.contains('on')||b.classList.contains('act')||b.classList.contains('it-on')||b.classList.contains('text-on')||b.classList.contains('eraser-on'))return b;
+    if(!primary&&b.classList.contains('dock-primary-action'))primary=b;
+  }
+  if(primary)return primary;
+  var recent=recentDockSource(group,buttons);
+  if(recent)return recent;
+  return buttons[0];
+}
+function syncRadialLauncher(group,buttons){
+  var launcher=group.querySelector('.radial-launcher');
+  var active=radialActiveSource(buttons,group);
+  if(!launcher){
+    launcher=document.createElement('button');
+    launcher.type='button';
+    group.insertBefore(launcher,group.firstChild);
+  }
+  var isIpad=!!group.closest('.ipad-top');
+  var isActive=active&&(active.classList.contains('on')||active.classList.contains('act')||active.classList.contains('it-on')||active.classList.contains('text-on')||active.classList.contains('eraser-on'));
+  launcher.className=(isIpad?'it-btn':'tb')+' radial-launcher'+(isIpad&&isActive?' it-on':'')+(!isIpad&&isActive?' on':'')+(!isIpad&&active&&active.classList.contains('dock-primary-action')?' dock-primary-action':'');
+  launcher.innerHTML=radialButtonMarkup(active);
+  launcher.setAttribute('title','Choose '+radialButtonLabel(active));
+  launcher.setAttribute('aria-label','Choose '+radialButtonLabel(active));
+  if(launcher.getAttribute('data-radial-ready')!=='1'){
+    launcher.setAttribute('data-radial-ready','1');
+    launcher.addEventListener('mouseenter',function(){
+      if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+      showRadialTools(this,'hover');
+    });
+    launcher.addEventListener('mouseover',function(e){
+      if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+      if(e.relatedTarget&&this.contains(e.relatedTarget))return;
+      showRadialTools(this,'hover');
+    });
+    launcher.addEventListener('mouseleave',function(){
+      if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+      scheduleRadialClose();
+    });
+    launcher.addEventListener('mouseout',function(e){
+      if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+      if(e.relatedTarget&&this.contains(e.relatedTarget))return;
+      scheduleRadialClose();
+    });
+    launcher.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse')return;
+      clearTimeout(radialToolState.longTimer);
+      radialToolState.longTarget=this;
+      radialToolState.longTimer=setTimeout(function(){
+        radialToolState.suppressClick=true;
+        showRadialTools(radialToolState.longTarget,'hold');
+      },320);
+    });
+    launcher.addEventListener('pointerup',function(){
+      clearTimeout(radialToolState.longTimer);
+      radialToolState.longTarget=null;
+    });
+    launcher.addEventListener('pointercancel',function(){
+      clearTimeout(radialToolState.longTimer);
+      radialToolState.longTarget=null;
+      radialToolState.suppressClick=false;
+    });
+    launcher.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      showRadialTools(this,'select');
+      radialToolState.suppressClick=false;
+    });
+  }
+}
+function setupRadialToolMenus(){
+  var groups=document.querySelectorAll('.draw-bar .tb-group, .ipad-top .it-group');
+  for(var gi=0;gi<groups.length;gi++){
+    var group=groups[gi];
+    if(group.getAttribute('data-no-radial')==='1')continue;
+    var buttons=group.querySelectorAll(radialSourceSelector());
+    if(buttons.length<2)continue;
+    group.classList.add('radial-compact');
+    syncRadialLauncher(group,Array.prototype.slice.call(buttons));
+    for(var bi=0;bi<buttons.length;bi++){
+      var btn=buttons[bi];
+      if(btn.getAttribute('data-radial-ready')==='1')continue;
+      btn.setAttribute('data-radial-ready','1');
+      btn.addEventListener('mouseenter',function(e){
+        if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+        showRadialTools(this,'hover');
+      });
+      btn.addEventListener('mouseover',function(e){
+        if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+        if(e.relatedTarget&&this.contains(e.relatedTarget))return;
+        showRadialTools(this,'hover');
+      });
+      btn.addEventListener('mouseleave',function(){
+        if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+        scheduleRadialClose();
+      });
+      btn.addEventListener('mouseout',function(e){
+        if(!window.matchMedia||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+        if(e.relatedTarget&&this.contains(e.relatedTarget))return;
+        scheduleRadialClose();
+      });
+      btn.addEventListener('pointerdown',function(e){
+        if(e.pointerType==='mouse')return;
+        clearTimeout(radialToolState.longTimer);
+        radialToolState.longTarget=this;
+        radialToolState.longTimer=setTimeout(function(){
+          radialToolState.suppressClick=true;
+          showRadialTools(radialToolState.longTarget,'hold');
+        },420);
+      });
+      btn.addEventListener('pointerup',function(e){
+        clearTimeout(radialToolState.longTimer);
+        radialToolState.longTarget=null;
+        if(radialToolState.suppressClick){
+          if(e&&e.preventDefault)e.preventDefault();
+          if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();
+        }
+        setTimeout(function(){radialToolState.suppressClick=false},0);
+      });
+      btn.addEventListener('pointercancel',function(){
+        clearTimeout(radialToolState.longTimer);
+        radialToolState.longTarget=null;
+        radialToolState.suppressClick=false;
+      });
+      btn.addEventListener('click',function(e){
+        if(radialToolState.suppressClick){
+          e.preventDefault();
+          e.stopPropagation();
+          radialToolState.suppressClick=false;
+        }
+      },true);
+    }
+  }
+}
+function scheduleRadialClose(){
+  clearTimeout(radialToolState.closeTimer);
+  radialToolState.closeTimer=setTimeout(function(){hideRadialTools()},180);
+}
+function hideRadialTools(){
+  clearTimeout(radialToolState.closeTimer);
+  if(radialToolState.menu){
+    radialToolState.menu.remove();
+    radialToolState.menu=null;
+  }
+}
+function radialButtonLabel(btn){
+  var color=btn.getAttribute('data-dc')||btn.getAttribute('data-iscolor');
+  if(color)return 'Color '+color;
+  var width=btn.getAttribute('data-dw')||btn.getAttribute('data-iswidth');
+  if(width)return 'Width '+width;
+  return btn.getAttribute('title')||btn.getAttribute('aria-label')||btn.textContent.trim()||'Tool';
+}
+function radialButtonMarkup(btn){
+  var color=btn.getAttribute('data-dc')||btn.getAttribute('data-iscolor');
+  if(color)return '<span class="radial-dot" style="background:'+esc(color)+'"></span>';
+  var width=btn.getAttribute('data-dw')||btn.getAttribute('data-iswidth');
+  if(width){
+    var size=Math.max(5,Math.min(18,parseFloat(width)*3));
+    return '<span class="radial-width" style="width:'+size+'px;height:'+size+'px"></span>';
+  }
+  var svg=btn.querySelector('svg');
+  if(svg)return svg.outerHTML;
+  return '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;font-weight:700">'+esc((btn.textContent.trim()||'?').substring(0,3))+'</span>';
+}
+function showRadialTools(anchor,mode){
+  if(!anchor||!anchor.parentElement)return;
+  var group=anchor.parentElement;
+  var buttons=Array.prototype.slice.call(group.querySelectorAll(radialSourceSelector()));
+  if(buttons.length<2)return;
+  hideRadialTools();
+  var rect=anchor.getBoundingClientRect();
+  var menu=document.createElement('div');
+  menu.className='dock-menu open';
+  menu.style.left=(rect.left+rect.width/2)+'px';
+  menu.style.top=(rect.top-10)+'px';
+  menu.addEventListener('mouseenter',function(){clearTimeout(radialToolState.closeTimer)});
+  menu.addEventListener('mouseleave',function(){if(mode==='hover')scheduleRadialClose()});
+  for(var i=0;i<buttons.length;i++){
+    var source=buttons[i];
+    if(source.getAttribute('data-dock-break')==='before'){
+      var sep=document.createElement('div');
+      sep.className='dock-menu-sep';
+      menu.appendChild(sep);
+    }
+    var opt=document.createElement('button');
+    opt.type='button';
+    opt.className='dock-menu-option'+((source.classList.contains('on')||source.classList.contains('act')||source.classList.contains('it-on')||source.classList.contains('text-on')||source.classList.contains('eraser-on'))?' active':'')+(source.classList.contains('dock-primary-action')?' primary':'');
+    opt.setAttribute('title',radialButtonLabel(source));
+    opt.innerHTML=radialButtonMarkup(source);
+    opt.addEventListener('click',(function(btn){return function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      rememberDockAction(group,btn);
+      syncRadialLauncher(group,buttons);
+      hideRadialTools();
+      btn.click();
+    }})(source));
+    menu.appendChild(opt);
+  }
+  if(mode!=='hover'){
+    var close=document.createElement('button');
+    close.type='button';
+    close.className='dock-menu-close';
+    close.innerHTML='&times;';
+    close.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();hideRadialTools()});
+    menu.appendChild(close);
+  }
+  document.body.appendChild(menu);
+  var mr=menu.getBoundingClientRect();
+  var center=parseFloat(menu.style.left);
+  if(mr.left<8)center+=8-mr.left;
+  if(mr.right>window.innerWidth-8)center-=mr.right-(window.innerWidth-8);
+  menu.style.left=center+'px';
+  radialToolState.menu=menu;
 }
 function rebuildCustomRoutes(){
   // Remove old custom entries
@@ -2280,6 +3045,35 @@ function getCurDefPlayers(card){
 function getCurPosStore(isDef){
   if(appMode==='playdesign') return isDef?(viewPerspective==='off'?'pdDposOff':'pdDpos'):(viewPerspective==='off'?'pdOposOff':'pdOpos');
   return isDef?(viewPerspective==='off'?'dposOff':'dpos'):(viewPerspective==='off'?'oposOff':'opos');
+}
+function selectAdjacentPlayer(delta){
+  if(!selPlayer)return false;
+  var keys=playerKeysForSide(cards[activeIdx],selSide);
+  if(!keys.length)return false;
+  var idx=keys.indexOf(selPlayer);
+  if(idx<0)idx=0;
+  idx=(idx+delta+keys.length)%keys.length;
+  selPlayer=keys[idx];
+  popupCat=null;selLabel=null;selLine=null;selTextBox=null;
+  return true;
+}
+function resetSelectedPlayerPosition(){
+  if(!selPlayer)return false;
+  var card=cards[activeIdx];
+  var isDef=selSide==='def';
+  var before=(isDef?getCurDefPlayers(card):getCurOffPlayers(card))[selPlayer];
+  var posStore=getCurPosStore(isDef);
+  if(!card[posStore]||!card[posStore][selPlayer])return false;
+  delete card[posStore][selPlayer];
+  var after=(isDef?getCurDefPlayers(card):getCurOffPlayers(card))[selPlayer];
+  if(before&&after&&card.routePts&&card.routePts[selPlayer]){
+    var dx=after.x-before.x,dy=after.y-before.y;
+    for(var i=0;i<card.routePts[selPlayer].length;i++){
+      card.routePts[selPlayer][i].x+=dx;
+      card.routePts[selPlayer][i].y+=dy;
+    }
+  }
+  return true;
 }
 
 // Unified helper: get the correct lines array key for current perspective
@@ -3023,12 +3817,195 @@ function buildTextBoxes(card){
 // ===== RENDER =====
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+function dockIcon(name){
+  var paths={
+    present:'<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M12 16v4"/><path d="M8 20h8"/><path d="M8.5 12.5l2.5-2.5 2 2 3-4"/>',
+    cursor:'<path d="M5 4l14 7-6 2-2 6L5 4z"/>',
+    draw:'<path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    line:'<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>',
+    palette:'<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="15.5" cy="10" r="1"/><path d="M13 16.5c0 1.1.9 1.8 2 1.3 1.7-.8 3-2.2 3-4.1"/>',
+    width:'<path d="M5 8h14"/><path d="M5 13h14" stroke-width="2.7"/><path d="M5 18h14" stroke-width="4"/>',
+    undo:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    redo:'<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/>',
+    trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+    x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>',
+    load:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    pdf:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M7 15h2.2a1.8 1.8 0 0 0 0-3.6H7v5.2"/><path d="M12.5 16.6v-5.2h1.4c1.5 0 2.6 1 2.6 2.6s-1.1 2.6-2.6 2.6h-1.4"/>',
+    image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-4.5-4.5L7 20"/>',
+    share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.7l6.8-4.4"/><path d="M8.6 13.3l6.8 4.4"/>',
+    report:'<path d="M8 3h8l4 4v14H4V3h4z"/><path d="M16 3v5h4"/><path d="M8 12h8"/><path d="M8 16h8"/>',
+    team:'<path d="M12 21s8-4.5 8-11V5l-8-3-8 3v5c0 6.5 8 11 8 11z"/><path d="M9 11l2 2 4-4"/>',
+    book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/>',
+    help:'<circle cx="12" cy="12" r="10"/><path d="M9.2 9a3 3 0 1 1 5.1 2.1c-.9.8-1.8 1.3-1.8 2.9"/><circle cx="12" cy="17" r=".8"/>',
+    whistle:'<path d="M7 10a6 6 0 1 0 11.2 3H22v-3h-6"/><circle cx="10" cy="13" r="2"/><path d="M4 5l4 4"/><path d="M2 7l4 4"/>',
+    grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+    grid2:'<rect x="4" y="4" width="16" height="7" rx="1.2"/><rect x="4" y="13" width="16" height="7" rx="1.2"/>',
+    grid4:'<rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/>',
+    grid6:'<rect x="3.5" y="4" width="4.8" height="6" rx=".8"/><rect x="9.6" y="4" width="4.8" height="6" rx=".8"/><rect x="15.7" y="4" width="4.8" height="6" rx=".8"/><rect x="3.5" y="14" width="4.8" height="6" rx=".8"/><rect x="9.6" y="14" width="4.8" height="6" rx=".8"/><rect x="15.7" y="14" width="4.8" height="6" rx=".8"/>',
+    flip:'<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+    reset:'<path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/>',
+    prev:'<path d="M15 18l-6-6 6-6"/><path d="M21 18l-6-6 6-6"/>',
+    next:'<path d="M9 18l6-6-6-6"/><path d="M3 18l6-6-6-6"/>',
+    fit:'<path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/><path d="M9 4L4 9"/><path d="M15 4l5 5"/><path d="M9 20l-5-5"/><path d="M15 20l5-5"/>',
+    fill:'<path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/><path d="M4 4l6 6"/><path d="M20 4l-6 6"/><path d="M4 20l6-6"/><path d="M20 20l-6-6"/>'
+  };
+  return '<svg viewBox="0 0 24 24">'+(paths[name]||paths.help)+'</svg>';
+}
+
+function dockButton(o){
+  o=o||{};
+  var cls=o.cls||'tb-action';
+  if(o.on)cls+=' on';
+  if(o.coachOn)cls+=' coach-on';
+  if(o.danger)cls+=' danger';
+  var attrs='';
+  if(o.id)attrs+=' id="'+esc(o.id)+'"';
+  if(o.title)attrs+=' title="'+esc(o.title)+'" aria-label="'+esc(o.title)+'"';
+  if(o.disabled)attrs+=' disabled aria-disabled="true"';
+  if(o.data){var keys=Object.keys(o.data);for(var i=0;i<keys.length;i++){attrs+=' data-'+keys[i]+'="'+esc(o.data[keys[i]])+'"'}}
+  var inner=o.icon?dockIcon(o.icon):'<span class="dock-text">'+esc(o.label||'')+'</span>';
+  if(o.badge)inner+='<span class="dock-badge">'+esc(o.badge)+'</span>';
+  return '<button class="'+cls+'" type="button"'+attrs+'>'+inner+'</button>';
+}
+
+function playerAssignmentName(card,key){
+  var rk=card.asgn&&card.asgn[key];
+  if(!rk)return 'No assignment';
+  if(rk==='custom')return 'Custom route';
+  return ROUTES[rk]?ROUTES[rk].n:rk;
+}
+function playerKeysForSide(card,side){
+  var players=side==='def'?getCurDefPlayers(card):getCurOffPlayers(card);
+  return Object.keys(players||{});
+}
+function routeGroupsForPlayer(side,player){
+  if(side==='def'){
+    return (appMode==='playdesign'&&viewPerspective==='def')?['Vertical','Intermediate','Quick/Short']:[];
+  }
+  if(!player)return Object.keys(RGROUPS);
+  if(player.side==='ol'||player.side==='c')return ['Block','Run'];
+  if(player.side==='rb')return ['Quick/Short','Run','Block','Motion','Vertical','Intermediate'];
+  if(player.side==='wr'||player.side==='te')return ['Vertical','Intermediate','Quick/Short','Block','Motion'];
+  return ['Run','Block'];
+}
+function renderPlayerRouteGroups(card,key,groupNames){
+  var h='';
+  for(var gi=0;gi<groupNames.length;gi++){
+    var g=groupNames[gi];
+    var rks=RGROUPS[g];
+    if(!rks)continue;
+    h+='<div><div class="pi-route-group-title">'+esc(g)+'</div><div class="rp-wrap">';
+    for(var rii=0;rii<rks.length;rii++){
+      var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[key]===rkk;
+      h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
+      if(rkk.indexOf('cr_')===0){h+='<button class="btn-del" data-delcr="'+rkk.substring(3)+'" style="font-size:10px;padding:0 3px;margin-left:-4px">&times;</button>'}
+    }
+    h+='</div></div>';
+  }
+  return h;
+}
+function selectedPlayerInspectorHtml(card,side,key){
+  var isDef=side==='def';
+  var players=isDef?getCurDefPlayers(card):getCurOffPlayers(card);
+  var player=players[key]||{};
+  var defaultLabel=player.l||key;
+  var label=card.cl[key]||defaultLabel;
+  var assignment=playerAssignmentName(card,key);
+  var keys=playerKeysForSide(card,side);
+  var idx=keys.indexOf(key);
+  var sideLabel=isDef?'Defense':'Offense';
+  var roleLabel=isDef?'Alignment':((player.side==='ol'||player.side==='c')?'Block / Shade':'Route / Motion');
+  var hasRoute=!!(card.asgn[key]&&card.routePts&&card.routePts[key]);
+  var h='<div class="player-inspector">';
+  h+='<div class="pi-head">';
+  h+='<div class="pi-avatar'+(isDef?' pi-defense':'')+'">'+esc(label.substring(0,3))+'</div>';
+  h+='<div class="pi-meta"><div class="pi-title">'+esc(label)+' - '+sideLabel+'</div>';
+  h+='<div class="pi-sub">'+esc(roleLabel)+' · '+esc(assignment)+(idx>=0?' · '+(idx+1)+'/'+keys.length:'')+'</div></div>';
+  h+='<div class="pi-nav"><button class="pi-nav-btn" data-player-nav="-1" title="Previous Player" aria-label="Previous Player">&lsaquo;</button><button class="pi-nav-btn" data-player-nav="1" title="Next Player" aria-label="Next Player">&rsaquo;</button></div>';
+  h+='</div>';
+  h+='<div class="pi-actions">';
+  h+='<button class="pi-action" id="bResetPlayerPos">Reset Pos</button>';
+  if(hasRoute)h+='<button class="pi-action" id="bFlipRoute">Flip</button>';
+  if(card.asgn[key])h+='<button class="pi-action warn" id="bClr">Clear</button>';
+  h+='</div>';
+  h+='<div class="pi-field"><div><label>Player Label</label><input type="text" id="clI" placeholder="'+(isDef?'e.g. 55, MLB':'e.g. 7, WR1')+'" value="'+esc(card.cl[key]||'')+'" maxlength="4"/></div>';
+  h+='<div><label>'+esc(isDef?'Letter':'Circle')+'</label><div class="pi-color-row">';
+  if(isDef){
+    var dcColors=[['#222222','Blk'],['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#9333ea','P'],['#d4a017','Y']];
+    var curDc=(card.cl._dc&&card.cl._dc[key])||'';
+    for(var dci=0;dci<dcColors.length;dci++){var dcv=dcColors[dci][0],dcn=dcColors[dci][1];h+='<button class="color-dot'+(curDc===dcv?' color-dot-on':'')+'" data-dc="'+dcv+'" title="'+dcn+'" style="background:'+dcv+';border:2px solid '+dcv+'">'+dcn+'</button>'}
+    if(curDc)h+='<button class="color-dot" data-dc="" title="Reset color" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
+  }else{
+    var pcColors=[['#ffffff','W'],['#22862a','G'],['#cc0000','R'],['#d4a017','Y'],['#0055cc','B'],['#9333ea','P']];
+    var curPc=(card.cl._pc&&card.cl._pc[key])||'';
+    for(var pci=0;pci<pcColors.length;pci++){var pcv=pcColors[pci][0],pcn=pcColors[pci][1];h+='<button class="color-dot'+(curPc===pcv?' color-dot-on':'')+'" data-pc="'+pcv+'" title="'+pcn+'" style="background:'+pcv+';'+(pcv==='#ffffff'?'border:2px solid #999':'border:2px solid '+pcv)+'">'+pcn+'</button>'}
+    if(curPc)h+='<button class="color-dot" data-pc="" title="Reset color" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
+  }
+  h+='</div></div></div>';
+  h+='<div class="pi-assignment"><div class="pi-assignment-main"><div class="pi-assignment-title">'+esc(assignment)+'</div><div class="pi-assignment-kicker">'+esc(isDef?'Current defensive assignment':'Current offensive assignment')+'</div></div></div>';
+  if(!isDef&&(player.side==='ol'||player.side==='c')){
+    var curShade=(card.olShade&&card.olShade[key])||'';
+    h+='<div class="pi-block"><label>Defender Shade</label><div style="display:flex;gap:4px;margin-top:4px">';
+    var shadeOpts=[['','None'],['left','Left'],['right','Right'],['full','Full']];
+    for(var sni=0;sni<shadeOpts.length;sni++){var sv=shadeOpts[sni][0],sn=shadeOpts[sni][1];h+='<button class="shade-btn'+(curShade===sv?' shade-on':'')+'" data-shade="'+sv+'">'+sn+'</button>'}
+    h+='</div></div>';
+  }
+  var groupNames=routeGroupsForPlayer(side,player);
+  if(groupNames.length){
+    h+='<div class="pi-block"><label>'+esc(isDef?'Coverage / Pressure Path':'Routes, Blocks, Motion')+'</label><div class="pi-routes">';
+    h+=renderPlayerRouteGroups(card,key,groupNames);
+    h+='</div></div>';
+  }else if(isDef){
+    h+='<div class="pi-help">Drag to reposition defender. Use Reset Pos to return to the front.</div>';
+  }
+  if(card.asgn[key]&&card.routePts&&card.routePts[key]&&card.routePts[key].length>=2){
+    h+='<div class="preset-section"><label>&#x1F4BE; Save Route as Preset</label>';
+    h+='<div class="save-preset-row"><input type="text" id="crName" placeholder="Route name..."/><button class="btn btn-pri" id="btnSaveCR">Save</button></div></div>';
+  }
+  h+='<div class="ns"><label>Note for '+esc(defaultLabel)+'</label>';
+  h+='<input type="text" id="pnI" placeholder="'+(isDef?'e.g. man #2 strong':'e.g. #4 - burns corner')+'" value="'+esc(card.pn[key]||'')+'"/></div>';
+  h+='</div>';
+  return h;
+}
+
+function cardSetupHtml(card){
+  var curFtSel=fieldTypeOf(card);
+  var hdrOnNow=(card.showHeader!==false);
+  var fks=Object.keys(FORMATIONS);
+  var dks=Object.keys(DEF_FRONTS);
+  var h='<div class="card-setup">';
+  h+='<div class="card-setup-head"><div><div class="card-setup-kicker">Card Setup</div><div class="card-setup-title">Card #'+(activeIdx+1)+'</div></div>';
+  h+='<div class="card-setup-meta">'+esc(HASH_LABELS[card.hash]||card.hash||'Middle')+'</div></div>';
+  h+='<div class="card-setup-main">';
+  h+='<div class="card-control card-control-wide"><label>Play Name</label><input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/></div>';
+  h+='<div class="card-control"><label>D&amp;D</label><input class="dd" type="text" id="dI" placeholder="D&amp;D" value="'+esc(card.dd)+'"/></div>';
+  h+='<div class="card-control"><label>Field</label><select id="ftSel" title="Field type"><option value="hs"'+(curFtSel==='hs'?' selected':'')+'>High School</option><option value="ncaa"'+(curFtSel==='ncaa'?' selected':'')+'>College</option><option value="nfl"'+(curFtSel==='nfl'?' selected':'')+'>NFL</option><option value="blank"'+(curFtSel==='blank'?' selected':'')+'>Blank</option></select></div>';
+  h+='<div class="card-control"><label>Hash</label><select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select></div>';
+  h+='<div class="card-control"><label>Header</label><button class="flip-btn'+(hdrOnNow?' on':'')+'" id="bToggleHdr" title="Show / hide the card header band">'+(hdrOnNow?'On':'Off')+'</button></div>';
+  h+='<div class="card-control card-control-wide"><label>Formation</label><select id="fSel">';
+  for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]&&!card._offPreset?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
+  if(offPresets.length){h+='<option disabled>──────────</option>';for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}}
+  h+='</select></div>';
+  h+='<div class="card-control card-control-wide"><label>Defense</label><select id="dfSel2">';
+  for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]&&!card._defPreset?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
+  if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi2=0;dpi2<defPresets.length;dpi2++){h+='<option value="defp_'+dpi2+'"'+(card._defPreset===dpi2?' selected':'')+'>'+esc(defPresets[dpi2].name)+'</option>'}}
+  h+='</select></div>';
+  h+='</div>';
+  h+='<div class="card-setup-actions">';
+  h+='<button class="flip-btn" id="bFlip" title="Mirror this play horizontally">Flip</button>';
+  h+='<button class="flip-btn" id="bResetPos" title="Reset all player positions to formation defaults">Reset</button>';
+  h+='</div>';
+  h+='</div>';
+  return h;
+}
+
 function render(){
   try{
   var card=cards[activeIdx];
   var oPlayers=getOffPlayers(card);
   var dPlayers=getDefPlayers(card);
-  var h='';
+  var h='<div class="app-shell'+(coachView?' coach-view':'')+(coachView&&coachFit?' coach-fit':'')+'">';
 
   // Demo banner
   if(demoMode){h+='<div class="demo-banner">You\'re in Demo Mode \u2014 Sign up to save your work! <button id="demoBannerSignUp">Sign Up Free</button></div>';}
@@ -3045,36 +4022,11 @@ function render(){
   h+='<button class="week-btn" id="weekAdd" title="New Week">+</button>';
   h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
   h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
+  h+='<span class="topbar-card-count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
   h+='<div class="right">';
   if(demoMode){h+='<span class="user-info" style="color:#C6A355">Demo Mode</span><button class="sign-out" id="btnExitDemo" style="color:#C6A355;border-color:rgba(198,163,85,.4)">Sign Up</button>';}
   else if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
   h+='</div></div>';
-  // Row 2: Actions
-  h+='<div class="topbar-row2">';
-  h+='<span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
-  h+='<div class="tb-sep"></div>';
-  h+='<button class="btn btn-sec" id="btnSv" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Save</button>';
-  h+='<button class="btn btn-sec" id="btnLd" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Load</button>';
-  h+='<div class="tb-sep"></div>';
-  h+='<button class="btn btn-sec" id="btnExportPDF" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">PDF</button>';
-  h+='<button class="btn btn-sec" id="btnExportPNG" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">PNG</button>';
-  h+='<select id="gridSel" class="sel" style="padding:3px 6px;font-size:9px">';
-  h+='<option value="">Grid</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
-  h+='</select>';
-  h+='<div class="tb-sep"></div>';
-  h+='<button class="btn btn-pri" id="btnShare" style="background:#3b82f6;padding:3px 12px;font-size:9px">Share</button>';
-  h+='<button class="btn btn-sec" id="btnReports" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
-  h+='<button class="btn btn-sec" id="btnBranding" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Team</button>';
-  h+='<button class="btn btn-sec" id="btnPlaybooks" style="color:#F7F7F5;border-color:rgba(247,247,245,.3);padding:3px 10px;font-size:9px">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
-  h+='<div style="margin-left:auto;display:flex;align-items:center;gap:6px">';
-  h+='<div style="display:inline-flex;border:1px solid rgba(247,247,245,.3);border-radius:3px;overflow:hidden">';
-  h+='<button class="btn btn-sec" id="btnViewDef" style="border:none;border-radius:0;font-size:9px;padding:3px 10px;'+(viewPerspective==='def'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">DEF</button>';
-  h+='<button class="btn btn-sec" id="btnViewOff" style="border:none;border-radius:0;font-size:9px;padding:3px 10px;'+(viewPerspective==='off'?'background:rgba(247,247,245,.15);color:#F7F7F5;font-weight:700':'color:rgba(247,247,245,.5)')+'">OFF</button>';
-  h+='</div>';
-  h+='<button class="btn btn-sec" id="btnPlayDesign" style="padding:3px 12px;font-size:9px;color:'+(appMode==='playdesign'?'#1A3C2B;background:#C6A355;border-color:#C6A355':'#C6A355;border-color:rgba(198,163,85,.4)')+';font-weight:700">'+(appMode==='playdesign'?'Scout Cards':'Play Designer')+'</button>';
-  h+='<button class="btn btn-sec" id="btnHelp" style="color:#B8A88A;border-color:rgba(184,168,138,.4);font-weight:700;padding:3px 8px;font-size:9px">?</button>';
-  h+='</div>';
-  h+='</div>';
   h+='</div>';
 
   // Team Branding Modal
@@ -3290,8 +4242,13 @@ function render(){
   // Bake iPad sidebar collapsed state into the layout HTML so render() doesn't briefly flash the sidebar before JS re-applies the class
   var ipadCollapsed='';
   try{if(localStorage.getItem(lsKey('ipadSideCollapsed'))==='1')ipadCollapsed=' ipad-side-collapsed'}catch(_){}
-  h+='<div class="layout'+ipadCollapsed+'">';
+  var playerSelectedClass=selPlayer?' has-player-selection':'';
+  h+='<div class="layout'+ipadCollapsed+playerSelectedClass+'">';
   h+='<div class="panel-backdrop" id="panelBackdrop"></div>';
+  h+='<div class="mobile-panel-rail">';
+  h+='<button class="panel-toggle" id="togSidebar" title="Cards list" aria-label="Show cards list"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>';
+  h+='<button class="panel-toggle" id="togRp" title="Card settings" aria-label="Show card settings panel"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>';
+  h+='</div>';
 
   // Sidebar
   h+='<aside class="sidebar"><div class="btns">';
@@ -3409,8 +4366,9 @@ function render(){
   h+='</div>';
   h+='<div class="it-sep"></div>';
   // Undo / Delete Selected
-  h+='<div class="it-group">';
+  h+='<div class="it-group" data-no-radial="1">';
   h+='<button class="it-btn" data-istool="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+  h+='<button class="it-btn" data-istool="redo" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg></button>';
   h+='<button class="it-btn" data-istool="del" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
   h+='</div>';
   h+='</div>';
@@ -3452,83 +4410,104 @@ function render(){
   h+='</div></div>';
   h+='</aside>';
 
-  // Header
-  h+='<div class="eh">';
-  h+='<button class="panel-toggle" id="togSidebar" title="Cards list" aria-label="Show cards list"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>';
-  h+='<span class="cnum">#'+(activeIdx+1)+'</span>';
-  var curFtSel=fieldTypeOf(card);
-  h+='<select id="ftSel" title="Field type"><option value="hs"'+(curFtSel==='hs'?' selected':'')+'>High School</option><option value="ncaa"'+(curFtSel==='ncaa'?' selected':'')+'>College</option><option value="nfl"'+(curFtSel==='nfl'?' selected':'')+'>NFL</option><option value="blank"'+(curFtSel==='blank'?' selected':'')+'>Blank</option></select>';
-  var hdrOnNow=(card.showHeader!==false);
-  h+='<button class="flip-btn'+(hdrOnNow?' on':'')+'" id="bToggleHdr" title="Show / hide the card header band">'+(hdrOnNow?'Header: On':'Header: Off')+'</button>';
-  h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
-  h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
-  h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
-  h+='<button class="flip-btn" id="bFlip">&#x2194; Flip Play</button>';
-  h+='<button class="flip-btn" id="bResetPos" title="Reset all player positions to formation defaults">&#x21bb; Reset Pos</button>';
-  h+='<select id="fSel">';
-  var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]&&!card._offPreset?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
-  if(offPresets.length){h+='<option disabled>──────────</option>';for(var opi2=0;opi2<offPresets.length;opi2++){h+='<option value="offp_'+opi2+'"'+(card._offPreset===opi2?' selected':'')+'>'+esc(offPresets[opi2].name)+'</option>'}}
-  h+='</select>';
-  h+='<select id="dfSel">';
-  var dks=Object.keys(DEF_FRONTS);for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]&&!card._defPreset?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
-  if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi2=0;dpi2<defPresets.length;dpi2++){h+='<option value="defp_'+dpi2+'"'+(card._defPreset===dpi2?' selected':'')+'>'+esc(defPresets[dpi2].name)+'</option>'}}
-  h+='</select>';
-  h+='<button class="btn-del" id="bDel">&#x2715;</button>';
-  h+='<button class="panel-toggle" id="togRp" title="Routes &amp; settings" aria-label="Show route settings panel"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>';
-  h+='</div>';
-
   // Body - draw toolbar first, then content
   // Draw toolbar
   h+='<div class="draw-bar">';
-  // Group 1: Drawing tools (Pen, Eraser)
-  h+='<div class="tb-group">';
-  h+='<button class="tb'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/></svg></button>';
-  h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
-  h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg></button>';
-  h+='</div>';
-  // Group 2: Shape tools (Circle, Rect, Text)
-  h+='<div class="tb-group">';
-  h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle" title="Circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
-  h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
-  h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText" title="Text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
-  h+='</div>';
-  // Group 3: Line styles (icons for each style)
-  h+='<div class="tb-group">';
-  var lineStyles=[
-    ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
-    ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
-    ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
-    ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
-  ];
-  for(var lsi=0;lsi<lineStyles.length;lsi++){
-    var ls=lineStyles[lsi];
-    h+='<button class="tb'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
+  if(coachView){
+    h+='<div class="tb-group" data-no-radial="1">';
+    h+=dockButton({id:'btnCoachView',title:'Exit Coach View',icon:'present',cls:'tb-action dock-primary-action',coachOn:true});
+    h+='</div>';
+    h+='<div class="tb-group" data-no-radial="1">';
+    h+=dockButton({id:'btnPrevCard',title:'Previous Card',icon:'prev',disabled:activeIdx<=0});
+    h+=dockButton({id:'btnNextCard',title:'Next Card',icon:'next',disabled:activeIdx>=cards.length-1});
+    h+='</div>';
+    h+='<div class="tb-group" data-no-radial="1">';
+    h+=dockButton({id:'btnCoachFit',title:coachFit?'Fill Field':'Fit Field',icon:coachFit?'fill':'fit',on:coachFit});
+    h+=dockButton({id:'btnViewDef',title:'Defense View',label:'DEF',on:viewPerspective==='def'});
+    h+=dockButton({id:'btnViewOff',title:'Offense View',label:'OFF',on:viewPerspective==='off'});
+    h+='</div>';
+    h+='<div class="tb-group" data-no-radial="1">';
+    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action'});
+    h+='</div>';
+  } else {
+    // Group 0: Coach presentation toggle
+    h+='<div class="tb-group">';
+    h+=dockButton({id:'btnCoachView',title:'Coach View',icon:'present',cls:'tb-action dock-primary-action'});
+    h+='</div>';
+    // Group 1: View and product mode
+    h+='<div class="tb-group" data-dock-key="view">';
+    h+=dockButton({id:'btnViewDef',title:'Defense View',label:'DEF',on:viewPerspective==='def'});
+    h+=dockButton({id:'btnViewOff',title:'Offense View',label:'OFF',on:viewPerspective==='off'});
+    h+=dockButton({id:'btnPlayDesign',title:appMode==='playdesign'?'Scout Cards':'Play Designer',icon:'whistle',on:appMode==='playdesign'});
+    h+='</div>';
+    // Group 2: Navigation and drawing tools
+    h+='<div class="tb-group" data-dock-key="nav">';
+    h+='<button class="tb'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/></svg></button>';
+    h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
+    h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg></button>';
+    h+='</div>';
+    // Group 3: Markup tools (Circle, Rect, Text)
+    h+='<div class="tb-group" data-dock-key="mark">';
+    h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle" title="Circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
+    h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
+    h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText" title="Text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
+    h+='</div>';
+    // Group 4: Line styles (icons for each style)
+    h+='<div class="tb-group" data-dock-key="line">';
+    var lineStyles=[
+      ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
+      ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
+      ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
+      ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
+    ];
+    for(var lsi=0;lsi<lineStyles.length;lsi++){
+      var ls=lineStyles[lsi];
+      h+='<button class="tb'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
+    }
+    h+='<button class="tb'+(drawDashed?' on':'')+'" id="tbDash" title="Dashed Line"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
+    h+='</div>';
+    // Group 5: Colors
+    h+='<div class="tb-group" data-dock-key="color" style="gap:3px;padding:2px 4px">';
+    for(var dci=0;dci<DRAW_COLORS.length;dci++){
+      var dc=DRAW_COLORS[dci];
+      h+='<button class="color-btn'+(drawColor===dc?' act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
+    }
+    h+='</div>';
+    // Group 6: Widths
+    h+='<div class="tb-group" data-dock-key="width" style="gap:2px;padding:2px 4px">';
+    for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
+      var dw=DRAW_WIDTHS[dwi];
+      h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*3)+'px;height:'+(4+dwi*3)+'px;border-radius:50%"></span></button>';
+    }
+    h+='</div>';
+    // Group 7: Undo / Redo - direct access for high-frequency coaching edits
+    h+='<div class="tb-group" data-no-radial="1">';
+    h+=dockButton({id:'tbUndo',title:'Undo',icon:'undo',disabled:undoStack.length===0});
+    h+=dockButton({id:'tbRedo',title:'Redo',icon:'redo',disabled:redoStack.length===0});
+    h+='</div>';
+    // Group 8: Delete / Clear
+    h+='<div class="tb-group" data-dock-key="edit">';
+    h+='<button class="tb-action" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
+    h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    h+='</div>';
+    // Group 9: Coach workflow, platform library, and exports
+    h+='<div class="tb-group" data-dock-key="workflow">';
+    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action'});
+    h+=dockButton({id:'btnExportPDF',title:'Export PDF',icon:'pdf',data:{'dock-break':'before'}});
+    h+=dockButton({id:'btnExportPNG',title:'Export PNG',icon:'image'});
+    h+=dockButton({title:'Print 2-up Grid',icon:'grid2',data:{'grid-export':'2','dock-action':'grid2'}});
+    h+=dockButton({title:'Print 4-up Grid',icon:'grid4',data:{'grid-export':'4','dock-action':'grid4'}});
+    h+=dockButton({title:'Print 6-up Grid',icon:'grid6',data:{'grid-export':'6','dock-action':'grid6'}});
+    h+=dockButton({id:'btnReports',title:'Scouting Reports',icon:'report',badge:getScoutReports().length?getScoutReports().length:'',data:{'dock-break':'before'}});
+    h+=dockButton({id:'btnPlaybooks',title:'Playbooks',icon:'book',badge:userPlaybooks.length?userPlaybooks.length:''});
+    h+=dockButton({id:'btnBranding',title:'Team Branding',icon:'team'});
+    if(appMode==='playdesign')h+=dockButton({title:'Saved Plays',icon:'book',badge:savedPlays.length?savedPlays.length:'',data:{'open-saved-plays':'1','dock-action':'saved-plays'}});
+    h+=dockButton({id:'btnScript',title:scriptMode?'Exit Practice Script':'Practice Script',icon:'whistle',on:scriptMode,data:{'dock-break':'before'}});
+    h+=dockButton({id:'btnSv',title:'Save',icon:'save'});
+    h+=dockButton({id:'btnLd',title:'Load',icon:'load'});
+    h+=dockButton({id:'btnHelp',title:'Help',icon:'help'});
+    h+='</div>';
   }
-  h+='</div>';
-  // Dashed toggle
-  h+='<div class="tb-group">';
-  h+='<button class="tb'+(drawDashed?' on':'')+'" id="tbDash" title="Dashed Line"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
-  h+='</div>';
-  // Group 5: Colors
-  h+='<div class="tb-group" style="gap:3px;padding:2px 4px">';
-  for(var dci=0;dci<DRAW_COLORS.length;dci++){
-    var dc=DRAW_COLORS[dci];
-    h+='<button class="color-btn'+(drawColor===dc?' act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
-  }
-  h+='</div>';
-  // Group 6: Widths
-  h+='<div class="tb-group" style="gap:2px;padding:2px 4px">';
-  for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
-    var dw=DRAW_WIDTHS[dwi];
-    h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*3)+'px;height:'+(4+dwi*3)+'px;border-radius:50%"></span></button>';
-  }
-  h+='</div>';
-  // Group 8: Undo / Clear
-  h+='<div class="tb-group">';
-  h+='<button class="tb-action" id="tbUndo" title="Undo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
-  h+='<button class="tb-action" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
-  h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-  h+='</div>';
   h+='</div>';
 
   // Quick Text stamp bar — visually hidden, but kept in DOM so the iPad sidebar's quick-text
@@ -3546,7 +4525,7 @@ function render(){
 
   // Field SVG
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
-  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" preserveAspectRatio="none" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
@@ -3608,7 +4587,7 @@ function render(){
           h+='<input class="pp-input" id="ppLabel" type="text" placeholder="Number / label" maxlength="4" value="'+esc(ppCl)+'" style="width:140px"/>';
         } else if(popupCat==='color'){
           var ppColors=[['#cc0000'],['#0055cc'],['#22862a'],['#d4a017'],['#9333ea'],['#ffffff']];
-          var curPpCol=(card.cl._pc&&card.cl._pc[selPlayer])||'';
+          var curPpCol=ppIsDef?((card.cl._dc&&card.cl._dc[selPlayer])||''):((card.cl._pc&&card.cl._pc[selPlayer])||'');
           for(var ppci=0;ppci<ppColors.length;ppci++){
             var ppc=ppColors[ppci][0];
             var ppOn=curPpCol===ppc;
@@ -3669,7 +4648,10 @@ function render(){
       h+='<div class="pp-cats">';
       for(var ci=0;ci<cats.length;ci++){
         var cat=cats[ci][0],cn=cats[ci][1];
-        h+='<button class="pp-cat'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'">'+cn+'</button>';
+        var catAngle=(35+((cats.length===1?55:(110*ci/(cats.length-1)))))*Math.PI/180;
+        var catRadius=58;
+        var catGlyph={label:'Lbl',color:'Clr',shade:'Shd',route:'Rte',block:'Blk',line:'Line'}[cat]||cn.substring(0,3);
+        h+='<button class="pp-cat'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'" style="--rx:'+(Math.cos(catAngle)*catRadius).toFixed(1)+'px;--ry:'+(Math.sin(catAngle)*catRadius).toFixed(1)+'px">'+catGlyph+'</button>';
       }
       h+='</div>';
       h+='</div>';
@@ -3683,7 +4665,7 @@ function render(){
   }
 
   // Right panel
-  h+='<div class="rp">';
+  h+='<div class="rp'+(selPlayer?' rp-player':'')+'">';
   var curTBs=getCurTB(card);
   if(selTextBox!==null&&curTBs&&curTBs[selTextBox]){
     var stb=curTBs[selTextBox];
@@ -3700,114 +4682,19 @@ function render(){
     for(var tsi=0;tsi<tbSizes.length;tsi++){h+='<option value="'+tbSizes[tsi]+'"'+(stb.size===tbSizes[tsi]?' selected':'')+'>'+tbSizes[tsi]+'px</option>'}
     h+='</select></div>';
     h+='<div class="np" style="padding:8px 0;font-size:10px;color:#6b6560">Double-click to edit text. Drag to move.</div>';
+    h+=cardSetupHtml(card);
   } else if(!selPlayer){
-    h+='<div class="np">Click a player to assign a route or drag to reposition</div>';
-  } else if(selSide==='off') {
-    var pl=oPlayers[selPlayer];
-    var curLabel=card.cl[selPlayer]||pl.l;
-    h+='<div class="sel-hdr"><span>'+curLabel+' — Route</span><div style="display:flex;gap:4px">';
-    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer])h+='<button class="clr-btn" id="bFlipRoute">Flip</button>';
-    if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
-    h+='</div></div>';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
-    h+='<input type="text" id="clI" placeholder="e.g. 7, WR1, etc" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
-    // Defensive shade picker (OL/C only) — draws a half/full fill on the OL to show defender alignment
-    if(pl&&(pl.side==='ol'||pl.side==='c')){
-      var curShade=(card.olShade&&card.olShade[selPlayer])||'';
-      h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Defender Shade</label><div style="display:flex;gap:4px;margin-top:4px">';
-      var shadeOpts=[['','None'],['left','Left'],['right','Right'],['full','Full']];
-      for(var sni=0;sni<shadeOpts.length;sni++){
-        var sv=shadeOpts[sni][0],sn=shadeOpts[sni][1];
-        var isShOn=curShade===sv;
-        h+='<button class="shade-btn'+(isShOn?' shade-on':'')+'" data-shade="'+sv+'">'+sn+'</button>';
-      }
-      h+='</div></div>';
-    }
-    // Circle color picker
-    var pcColors=[['#ffffff','W'],['#22862a','G'],['#cc0000','R'],['#d4a017','Y'],['#0055cc','B'],['#9333ea','P']];
-    var curPc=(card.cl._pc&&card.cl._pc[selPlayer])||'';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Circle Color</label><div style="display:flex;gap:4px;margin-top:4px">';
-    for(var pci=0;pci<pcColors.length;pci++){var pcv=pcColors[pci][0],pcn=pcColors[pci][1];h+='<button class="color-dot'+(curPc===pcv?' color-dot-on':'')+'" data-pc="'+pcv+'" style="background:'+pcv+';'+(pcv==='#ffffff'?'border:2px solid #999':'border:2px solid '+pcv)+'">'+pcn+'</button>'}
-    if(curPc)h+='<button class="color-dot" data-pc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
-    h+='</div></div>';
-    var gk=Object.keys(RGROUPS);
-    for(var gi=0;gi<gk.length;gi++){
-      h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
-      var rks=RGROUPS[gk[gi]];
-      for(var rii=0;rii<rks.length;rii++){
-        var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
-        h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
-        if(rkk.indexOf('cr_')===0){h+='<button class="btn-del" data-delcr="'+rkk.substring(3)+'" style="font-size:10px;padding:0 3px;margin-left:-4px">&times;</button>'}
-      }
-      h+='</div>';
-    }
-    // Save custom route preset (only when player has a route with waypoints)
-    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer]&&card.routePts[selPlayer].length>=2){
-      h+='<div class="preset-section"><label>&#x1F4BE; Save Route as Preset</label>';
-      h+='<div class="save-preset-row">';
-      h+='<input type="text" id="crName" placeholder="Route name..."/>';
-      h+='<button class="btn btn-pri" id="btnSaveCR">Save</button>';
-      h+='</div></div>';
-    }
-    h+='<div class="ns"><label>Note for '+(pl?pl.l:'')+'</label>';
-    h+='<input type="text" id="pnI" placeholder="e.g. #4 - burns corner" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
-  } else if(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'){
-    // Play Designer: defense gets route palette
-    var dpl=dPlayers[selPlayer];
-    var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
-    h+='<div class="sel-hdr"><span style="color:#C6A355">'+curDLabel+' — Assignment</span><div style="display:flex;gap:4px">';
-    if(card.asgn[selPlayer]&&card.routePts&&card.routePts[selPlayer])h+='<button class="clr-btn" id="bFlipRoute">Flip</button>';
-    if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
-    h+='</div></div>';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
-    h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
-    // Defender text color picker
-    var dcColors2=[['#222222','Blk'],['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#9333ea','P'],['#d4a017','Y']];
-    var curDc2=(card.cl._dc&&card.cl._dc[selPlayer])||'';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Letter Color</label><div style="display:flex;gap:4px;margin-top:4px">';
-    for(var dci2=0;dci2<dcColors2.length;dci2++){var dcv2=dcColors2[dci2][0],dcn2=dcColors2[dci2][1];h+='<button class="color-dot'+(curDc2===dcv2?' color-dot-on':'')+'" data-dc="'+dcv2+'" style="background:'+dcv2+';border:2px solid '+dcv2+'">'+dcn2+'</button>'}
-    if(curDc2)h+='<button class="color-dot" data-dc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
-    h+='</div></div>';
-    var gk=Object.keys(RGROUPS);
-    for(var gi=0;gi<gk.length;gi++){
-      h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
-      var rks=RGROUPS[gk[gi]];
-      for(var rii=0;rii<rks.length;rii++){
-        var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
-        h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
-        if(rkk.indexOf('cr_')===0){h+='<button class="btn-del" data-delcr="'+rkk.substring(3)+'" style="font-size:10px;padding:0 3px;margin-left:-4px">&times;</button>'}
-      }
-      h+='</div>';
-    }
-    h+='<div class="ns"><label>Note for '+(dpl?dpl.l:'')+'</label>';
-    h+='<input type="text" id="pnI" placeholder="e.g. man #2 strong" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
+    h+=cardSetupHtml(card);
+    h+='<div class="np side-help">Click a player to assign a route or drag to reposition</div>';
   } else {
-    var dpl=dPlayers[selPlayer];
-    var curDLabel=card.cl[selPlayer]||(dpl?dpl.l:'D');
-    h+='<div class="sel-hdr"><span style="color:#3b82f6">'+curDLabel+' — Defense</span></div>';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
-    h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
-    // Defender text color picker
-    var dcColors3=[['#222222','Blk'],['#cc0000','R'],['#0055cc','B'],['#22862a','G'],['#9333ea','P'],['#d4a017','Y']];
-    var curDc3=(card.cl._dc&&card.cl._dc[selPlayer])||'';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Letter Color</label><div style="display:flex;gap:4px;margin-top:4px">';
-    for(var dci3=0;dci3<dcColors3.length;dci3++){var dcv3=dcColors3[dci3][0],dcn3=dcColors3[dci3][1];h+='<button class="color-dot'+(curDc3===dcv3?' color-dot-on':'')+'" data-dc="'+dcv3+'" style="background:'+dcv3+';border:2px solid '+dcv3+'">'+dcn3+'</button>'}
-    if(curDc3)h+='<button class="color-dot" data-dc="" style="background:#eee;border:2px solid #ccc;font-size:9px">X</button>';
-    h+='</div></div>';
-    h+='<div class="np" style="padding:12px 0;font-size:11px">Drag to reposition defender</div>';
+    h+=selectedPlayerInspectorHtml(card,selSide,selPlayer);
+    h+=cardSetupHtml(card);
   }
 
   h+='<div class="ns"><label>Card Notes</label>';
   h+='<textarea id="nI" placeholder="Tendency notes...">'+esc(card.notes)+'</textarea></div>';
   h+='<div class="ns"><label>&#x1F3A5; Hudl Link</label>';
   h+='<input type="url" id="hudlI" placeholder="Paste Hudl clip URL..." value="'+esc(card.hudlUrl||'')+'" style="width:100%;font-size:11px;padding:5px 6px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit"/></div>';
-
-  // Defensive front selector
-  h+='<div class="front-sel"><label>Defensive Front</label>';
-  h+='<select id="dfSel2">';
-  for(var di2=0;di2<dks.length;di2++){h+='<option value="'+dks[di2]+'"'+(card.dfk===dks[di2]&&!card._defPreset?' selected':'')+'>'+DEF_FRONTS[dks[di2]].name+'</option>'}
-  if(defPresets.length){h+='<option disabled>──────────</option>';for(var dpi3=0;dpi3<defPresets.length;dpi3++){h+='<option value="defp_'+dpi3+'"'+(card._defPreset===dpi3?' selected':'')+'>'+esc(defPresets[dpi3].name)+'</option>'}}
-  h+='</select></div>';
 
   // === PRESET: Save/Load Offensive Formation ===
   h+='<div class="preset-section"><label>&#x1F4BE; Offensive Formation Presets</label>';
@@ -3852,6 +4739,7 @@ function render(){
   h+='</div>'; // eb
   h+='</div></main>'; // editor, main
   h+='</div>'; // layout
+  h+='</div>'; // app-shell
 
   document.getElementById('app').innerHTML=h;
   bind();
@@ -3912,6 +4800,7 @@ function bind(){
   var svg=document.getElementById('fSvg');
   if(svg){
     svg.addEventListener('pointerdown',function(e){
+      hideRadialTools();
       // Release iPad's implicit pointer capture on the touch target — otherwise after render()
       // destroys the target element, subsequent pointermove events go nowhere and drag is broken
       try{if(e.target&&e.target.releasePointerCapture&&e.pointerId!==undefined)e.target.releasePointerCapture(e.pointerId)}catch(_){}
@@ -4312,15 +5201,11 @@ function bind(){
           // Position relative to field-wrap (which has position:relative)
           var lx=sx-fwR.left;
           var ly=sy-fwR.top;
-          // Make visible briefly to measure
+          // Anchor the radial selector on the selected field object, with enough room
+          // for the orbiting action buttons and the upward detail tray.
           pPop.style.visibility='hidden';
-          pPop.style.left='0';pPop.style.top='0';
-          var ppW=pPop.offsetWidth,ppH=pPop.offsetHeight;
-          var finalX=Math.max(4,Math.min(fwR.width-ppW-4,lx-ppW/2));
-          // Prefer BELOW the player — routes nearly always run upward toward the defense,
-          // so a popup above the player blocks the route the coach is trying to edit.
-          var finalY=ly+22;
-          if(finalY+ppH>fwR.height-4)finalY=ly-ppH-16; // no room below — fall back to above
+          var finalX=Math.max(82,Math.min(fwR.width-82,lx));
+          var finalY=Math.max(132,Math.min(fwR.height-92,ly));
           pPop.style.left=finalX+'px';
           pPop.style.top=finalY+'px';
           pPop.style.visibility='visible';
@@ -4347,9 +5232,14 @@ function bind(){
     pPop.querySelectorAll('[data-pp-color]').forEach(function(b){
       b.addEventListener('click',function(){
         if(!selPlayer)return;
-        if(!card.cl._pc)card.cl._pc={};
         var v=this.getAttribute('data-pp-color');
-        if(v)card.cl._pc[selPlayer]=v;else delete card.cl._pc[selPlayer];
+        if(selSide==='def'){
+          if(!card.cl._dc)card.cl._dc={};
+          if(v)card.cl._dc[selPlayer]=v;else delete card.cl._dc[selPlayer];
+        }else{
+          if(!card.cl._pc)card.cl._pc={};
+          if(v)card.cl._pc[selPlayer]=v;else delete card.cl._pc[selPlayer];
+        }
         render();
       });
     });
@@ -4410,6 +5300,38 @@ function bind(){
     });
   }
 
+  setupRadialToolMenus();
+
+  var btnCoachView=document.getElementById('btnCoachView');
+  if(btnCoachView)btnCoachView.addEventListener('click',function(){
+    coachView=!coachView;
+    selPlayer=null;selTextBox=null;selLine=null;selLabel=null;popupCat=null;
+    hideRadialTools();
+    render();
+  });
+  var btnPrevCard=document.getElementById('btnPrevCard');
+  if(btnPrevCard)btnPrevCard.addEventListener('click',function(){
+    if(activeIdx<=0)return;
+    activeIdx--;
+    selPlayer=null;selTextBox=null;selLine=null;selLabel=null;popupCat=null;
+    hideRadialTools();
+    render();
+  });
+  var btnNextCard=document.getElementById('btnNextCard');
+  if(btnNextCard)btnNextCard.addEventListener('click',function(){
+    if(activeIdx>=cards.length-1)return;
+    activeIdx++;
+    selPlayer=null;selTextBox=null;selLine=null;selLabel=null;popupCat=null;
+    hideRadialTools();
+    render();
+  });
+  var btnCoachFit=document.getElementById('btnCoachFit');
+  if(btnCoachFit)btnCoachFit.addEventListener('click',function(){
+    coachFit=!coachFit;
+    hideRadialTools();
+    render();
+  });
+
   // Draw toolbar buttons
   var tbSelect=document.getElementById('tbSelect');
   if(tbSelect)tbSelect.addEventListener('click',function(){
@@ -4430,6 +5352,10 @@ function bind(){
   var tbUndo=document.getElementById('tbUndo');
   if(tbUndo)tbUndo.addEventListener('click',function(){
     if(popUndo()){render()}
+  });
+  var tbRedo=document.getElementById('tbRedo');
+  if(tbRedo)tbRedo.addEventListener('click',function(){
+    if(popRedo()){render()}
   });
   var tbDel=document.getElementById('tbDel');
   if(tbDel)tbDel.addEventListener('click',function(){deleteSelected()});
@@ -4491,6 +5417,20 @@ function bind(){
 
   var bClr=document.getElementById('bClr');
   if(bClr)bClr.addEventListener('click',function(){if(selPlayer){pushUndo();delete card.asgn[selPlayer];delete card.routePts[selPlayer];render()}});
+  var bResetPlayerPos=document.getElementById('bResetPlayerPos');
+  if(bResetPlayerPos)bResetPlayerPos.addEventListener('click',function(){
+    if(!selPlayer)return;
+    var posStore=getCurPosStore(selSide==='def');
+    if(!card[posStore]||!card[posStore][selPlayer])return;
+    pushUndo();
+    if(resetSelectedPlayerPosition())render();
+  });
+  var playerNavBtns=document.querySelectorAll('[data-player-nav]');
+  for(var pnbi=0;pnbi<playerNavBtns.length;pnbi++){
+    playerNavBtns[pnbi].addEventListener('click',(function(delta){return function(){
+      if(selectAdjacentPlayer(delta))render();
+    }})(parseInt(playerNavBtns[pnbi].getAttribute('data-player-nav'))||0));
+  }
 
   var bFlipRoute=document.getElementById('bFlipRoute');
   if(bFlipRoute)bFlipRoute.addEventListener('click',function(){
@@ -4706,6 +5646,8 @@ function bind(){
         selPlayer=null;selTextBox=null;popupCat=null;render();
       } else if(tool==='undo'){
         if(popUndo())render();
+      } else if(tool==='redo'){
+        if(popRedo())render();
       } else if(tool==='del'){
         deleteSelected();
       }
@@ -5157,10 +6099,12 @@ function bind(){
     savePresets();
     render();
   });
-  var btnSavedPlays=document.getElementById('btnSavedPlays');
+  var savedPlayBtns=document.querySelectorAll('#btnSavedPlays,[data-open-saved-plays]');
   var savedPlaysModal=document.getElementById('savedPlaysModal');
-  if(btnSavedPlays&&savedPlaysModal){
-    btnSavedPlays.addEventListener('click',function(){savedPlaysModal.style.display='flex'});
+  if(savedPlayBtns.length&&savedPlaysModal){
+    for(var spbi=0;spbi<savedPlayBtns.length;spbi++){
+      savedPlayBtns[spbi].addEventListener('click',function(){savedPlaysModal.style.display='flex'});
+    }
     document.getElementById('savedPlaysClose').addEventListener('click',function(){savedPlaysModal.style.display='none'});
     savedPlaysModal.addEventListener('click',function(e){if(e.target===savedPlaysModal)savedPlaysModal.style.display='none'});
     // Load play
@@ -5628,6 +6572,12 @@ function bind(){
   if(btnPrintScript)btnPrintScript.addEventListener('click',function(){exportScript()});
 
   // === GRID EXPORT ===
+  var gridBtns=document.querySelectorAll('[data-grid-export]');
+  for(var gbi=0;gbi<gridBtns.length;gbi++){
+    gridBtns[gbi].addEventListener('click',(function(perPage){return function(){
+      exportPlayGrid(perPage);
+    }})(parseInt(gridBtns[gbi].getAttribute('data-grid-export'))));
+  }
   var gridSel=document.getElementById('gridSel');
   if(gridSel)gridSel.addEventListener('change',function(){
     var v=parseInt(this.value);
@@ -7154,14 +8104,22 @@ document.addEventListener('keydown',function(e){
 
   var card=cards[activeIdx];
 
-  // Cmd/Ctrl+Z: undo
-  if((e.metaKey||e.ctrlKey)&&e.key==='z'){
-    if(popUndo()){render()}
+  // Cmd/Ctrl+Z: undo. Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y: redo.
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){
+    if(e.shiftKey){if(popRedo()){render()}}
+    else if(popUndo()){render()}
+    e.preventDefault();return;
+  }
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='y'){
+    if(popRedo()){render()}
     e.preventDefault();return;
   }
 
   // Escape: exit draw/eraser mode or deselect
   if(e.key==='Escape'){
+    if(coachView){
+      coachView=false;hideRadialTools();render();e.preventDefault();return;
+    }
     if(lineMode&&currentStraightLine&&currentStraightLine.pts.length>=2){
       commitStraightLine();lineMode=false;render();e.preventDefault();return;
     }
