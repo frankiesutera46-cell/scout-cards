@@ -2789,7 +2789,11 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var d;
       // Hand-drawn (custom) routes draw STRAIGHT segments between waypoints — each midpoint drag
       // creates its own bend without smoothing across other segments.
-      var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom');
+      // ALSO: when the player is currently selected (route being edited), render straight segments
+      // so the user sees exactly where each waypoint is — smoothing while editing makes it look
+      // like one continuous curve, hiding the segment structure.
+      var isThisSelTmp=(sel===rk2&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
+      var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom'||isThisSelTmp);
       if(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3){d=smoothPath(drawPts)}
       else{d='M '+drawPts[0].x+' '+drawPts[0].y;for(var j=1;j<drawPts.length;j++)d+=' L '+drawPts[j].x+' '+drawPts[j].y}
       var isPassPro=(ra==='bpass');
