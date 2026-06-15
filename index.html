@@ -1689,7 +1689,9 @@ bpull:{n:'Pull',t:'block',c:COL_BLOCK},
 breach:{n:'Reach',t:'block',c:COL_BLOCK},
 // Motion
 motl:{n:'Mot L',t:'motion',c:COL_MOTION},motr:{n:'Mot R',t:'motion',c:COL_MOTION},
-jetl:{n:'Jet L',t:'motion',c:COL_MOTION},jetr:{n:'Jet R',t:'motion',c:COL_MOTION}
+jetl:{n:'Jet L',t:'motion',c:COL_MOTION},jetr:{n:'Jet R',t:'motion',c:COL_MOTION},
+// Hand-drawn (CHLK-style chain segments) — pass-type so it draws an arrow endpoint
+custom:{n:'Custom',t:'pass',c:COL_ROUTE}
 };
 
 var RGROUPS={
@@ -2908,21 +2910,38 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
 function buildWaypointHandles(card,players){
   if(!selPlayer)return '';
   if(selSide!=='off'&&!(selSide==='def'&&appMode==='playdesign'&&viewPerspective==='def'))return '';
-  var ra=card.asgn[selPlayer];
-  if(!ra||!ROUTES[ra])return '';
-  var pts=card.routePts[selPlayer];
-  if(!pts||pts.length<2)return '';
+  if(!players[selPlayer])return '';
+  var pp=players[selPlayer];
+  var pts=card.routePts&&card.routePts[selPlayer];
+  var hasRoute=pts&&pts.length>=2;
   var s='';
-  // Waypoint drag handles (skip index 0 = player position)
-  for(var i=1;i<pts.length;i++){
-    s+='<circle cx="'+pts[i].x.toFixed(1)+'" cy="'+pts[i].y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-wp="'+selPlayer+'_'+i+'" style="cursor:grab" opacity="0.9"/>';
+  // Existing waypoint drag handles (skip index 0 = player position) — only when a route exists
+  if(hasRoute){
+    for(var i=1;i<pts.length;i++){
+      s+='<circle cx="'+pts[i].x.toFixed(1)+'" cy="'+pts[i].y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-wp="'+selPlayer+'_'+i+'" style="cursor:grab" opacity="0.9"/>';
+    }
+    // Curve / insert midpoint dots between consecutive waypoints — clicking & dragging splits the
+    // segment into two by inserting a new waypoint at the drag position (phase 2 of CHLK-style draw).
+    for(var j=0;j<pts.length-1;j++){
+      var mx=(pts[j].x+pts[j+1].x)/2;
+      var my=(pts[j].y+pts[j+1].y)/2;
+      s+='<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4" fill="rgba(120,120,120,0.55)" stroke="#fff" stroke-width="1" data-wpadd="'+selPlayer+'_'+j+'" style="cursor:grab" opacity="0.9"/>';
+    }
   }
-  // Midpoint circles for adding waypoints
-  for(var j=0;j<pts.length-1;j++){
-    var mx=(pts[j].x+pts[j+1].x)/2;
-    var my=(pts[j].y+pts[j+1].y)/2;
-    s+='<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4" fill="rgba(26,60,43,0.3)" stroke="#1A3C2B" stroke-width="1" data-wpadd="'+selPlayer+'_'+j+'" style="cursor:copy" opacity="0.6"/>';
+  // === CHLK-style "draw anchor" — bright green dot at the route's end (or at the player if no route).
+  // Drag from this dot to add a new segment to the route. Each release moves the anchor to the new endpoint
+  // so segments chain naturally. The visible-anchor target gets a transparent wider hit area for easy iPad touch.
+  var anchorX = hasRoute ? pts[pts.length-1].x : pp.x;
+  var anchorY = hasRoute ? pts[pts.length-1].y : pp.y;
+  // If anchor coincides with the player (no route yet), offset it slightly so it doesn't overlap the player tap target
+  if(!hasRoute){
+    anchorY -= 14; // 14px above the player
   }
+  var prefix=(selSide==='def')?'d_':'o_';
+  // Wide invisible hit area
+  s+='<circle cx="'+anchorX.toFixed(1)+'" cy="'+anchorY.toFixed(1)+'" r="18" fill="transparent" data-routebuild="'+prefix+selPlayer+'" style="cursor:crosshair"/>';
+  // Visible anchor — bright green with a white ring
+  s+='<circle cx="'+anchorX.toFixed(1)+'" cy="'+anchorY.toFixed(1)+'" r="7" fill="#22c55e" stroke="#fff" stroke-width="2" data-routebuild="'+prefix+selPlayer+'" style="cursor:crosshair;pointer-events:none"/>';
   return s;
 }
 
@@ -4007,10 +4026,15 @@ function bind(){
         var wpPlayer2=parts2.slice(0,-1).join('_');
         var wpPts2=card.routePts[wpPlayer2];
         if(wpPts2&&wpPts2[segIdx]!==undefined&&wpPts2[segIdx+1]!==undefined){
+          // Insert a new waypoint at the midpoint AND immediately enter drag-mode for it,
+          // so a single drag from the midpoint bends the segment into a curve (CHLK-style).
           var mx=(wpPts2[segIdx].x+wpPts2[segIdx+1].x)/2;
           var my=(wpPts2[segIdx].y+wpPts2[segIdx+1].y)/2;
-          wpPts2.splice(segIdx+1,0,{x:mx,y:my});
-          render();
+          var newIdx=segIdx+1;
+          wpPts2.splice(newIdx,0,{x:mx,y:my});
+          var ptMid=svgPoint(svg,e);
+          dragInfo={isWaypoint:true,player:wpPlayer2,wpIdx:newIdx,offX:ptMid.x-mx,offY:ptMid.y-my,moved:false};
+          // Don't render() in pointerdown — iPad pointer capture survives only if the SVG target stays alive
         }
         e.preventDefault();return;
       }
@@ -4025,6 +4049,32 @@ function bind(){
         dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false,editOnRelease:wasAlreadySel};
         // Don't render() in pointerdown — destroying the SVG mid-touch breaks iPad drag. pointerup renders at end.
         e.preventDefault();return;
+      }
+      // === CHLK-style chain-segment route drawing ===
+      // The green draw-anchor lives at the end of the current route (or at the player if no route yet).
+      // Drag from it → previews a straight segment; release → commits a new waypoint at the drop point.
+      var routeBuild=tgt2.getAttribute&&tgt2.getAttribute('data-routebuild');
+      if(routeBuild){
+        var rbPrefix=routeBuild.substring(0,2);
+        var rbKey=routeBuild.substring(2);
+        if(rbPrefix==='o_'||rbPrefix==='d_'){
+          var rbSide=(rbPrefix==='d_')?'def':'off';
+          // Ensure player is selected on the correct side (defensive guard — should already be)
+          selSide=rbSide;selPlayer=rbKey;
+          if(!card.routePts)card.routePts={};
+          // If no waypoints stored, seed pts[0] with the player's current position so the line draws from the player
+          var rbPlayers=(rbSide==='def')?getCurDefPlayers(card):getCurOffPlayers(card);
+          var rbPP=rbPlayers[rbKey];
+          if(!rbPP){e.preventDefault();return;}
+          if(!card.routePts[rbKey]||card.routePts[rbKey].length===0){
+            card.routePts[rbKey]=[{x:rbPP.x,y:rbPP.y}];
+          }
+          // Auto-assign 'custom' route so the line renders if no preset has been picked
+          if(!card.asgn[rbKey]){card.asgn[rbKey]='custom'}
+          var rbStart=card.routePts[rbKey][card.routePts[rbKey].length-1];
+          dragInfo={isRouteBuild:true,player:rbKey,side:rbSide,startX:rbStart.x,startY:rbStart.y,moved:false};
+          e.preventDefault();return;
+        }
       }
       // Route / block line click — select the owning player so the route's waypoints appear and can be dragged
       var routeHit=tgt2.getAttribute&&tgt2.getAttribute('data-routehit');
@@ -5708,8 +5758,32 @@ function bindDrag(){
       return;
     }
 
-    var nx=Math.max(20,Math.min(FW-20,pt.x-dragInfo.offX));
-    var ny=Math.max(5,Math.min(FH-5,pt.y-dragInfo.offY));
+    var nx=Math.max(20,Math.min(FW-20,pt.x-(dragInfo.offX||0)));
+    var ny=Math.max(5,Math.min(FH-5,pt.y-(dragInfo.offY||0)));
+
+    // CHLK-style segment build — draw a live dashed preview from the anchor to the current pointer
+    if(dragInfo.isRouteBuild){
+      dragInfo.moved=true;
+      // Stash the latest position so pointerup can commit it (the preview element is torn down on release).
+      dragInfo.lastX=nx;
+      dragInfo.lastY=ny;
+      var preview=svg.querySelector('#routeBuildPreview');
+      if(!preview){
+        preview=document.createElementNS('http://www.w3.org/2000/svg','line');
+        preview.id='routeBuildPreview';
+        preview.setAttribute('stroke','#22c55e');
+        preview.setAttribute('stroke-width','2');
+        preview.setAttribute('stroke-dasharray','6,4');
+        preview.setAttribute('stroke-linecap','round');
+        preview.setAttribute('pointer-events','none');
+        svg.appendChild(preview);
+      }
+      preview.setAttribute('x1',dragInfo.startX);
+      preview.setAttribute('y1',dragInfo.startY);
+      preview.setAttribute('x2',nx);
+      preview.setAttribute('y2',ny);
+      return;
+    }
 
     // Waypoint drag
     if(dragInfo.isWaypoint){
@@ -5940,6 +6014,21 @@ function bindDrag(){
       if(tapToggleDp&&!wasMoved){
         var tIdx=multiSel.indexOf(tapToggleDp);
         if(tIdx>=0)multiSel.splice(tIdx,1);
+      }
+      // CHLK-style route build — commit the new segment endpoint
+      if(dragInfo.isRouteBuild){
+        var card=cards[activeIdx];
+        var rbPlayer=dragInfo.player;
+        // Tear down preview line
+        var rbPrev=svg.querySelector('#routeBuildPreview');if(rbPrev)rbPrev.remove();
+        // Append the new endpoint to the player's routePts (if the user actually dragged)
+        if(wasMoved && dragInfo.lastX!==undefined && dragInfo.lastY!==undefined && card.routePts && card.routePts[rbPlayer]){
+          pushUndo();
+          card.routePts[rbPlayer].push({x:dragInfo.lastX,y:dragInfo.lastY});
+        }
+        dragInfo=null;
+        render();
+        return;
       }
       dragInfo=null;
       if(shouldEdit){
