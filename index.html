@@ -696,8 +696,8 @@ select:focus{
 .field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC;position:relative}
 .field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
 .field-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-.field-col .field-wrap{flex:1;min-height:0}
-.field-col .field-wrap svg{max-height:calc(100vh - 340px)}
+.field-col .field-wrap{flex:1;min-height:0;padding:8px}
+.field-col .field-wrap svg{max-height:calc(100vh - 200px)}
 .inline-edit{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:1px 4px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:2px;min-width:60px}
 .inline-edit-multi{position:absolute;border:2px solid #1A3C2B;background:#fff;font-family:Arial,sans-serif;font-weight:bold;padding:4px 6px;outline:none;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:3px;min-width:100px;min-height:40px;resize:both;line-height:1.3}
 .pd-notes{display:flex;gap:12px;padding:0 12px 8px;background:#EEEEEC;flex-shrink:0}
@@ -6098,7 +6098,8 @@ function buildFullSVG(card,forPlayDesign){
   var isPD=forPlayDesign||false;
   var prevMode=appMode;
   if(isPD)appMode='playdesign'; else appMode='scout';
-  var totalH=isPD?FH+180:FH;
+  // Notes section removed — Play Designer exports now match the scout card height (no extra 180px band).
+  var totalH=FH;
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+totalH+'" width="'+FW*2+'" height="'+totalH*2+'">';
   svg += buildField(card);
   svg += buildDrawnLines(getCurLines(card));
@@ -6115,25 +6116,6 @@ function buildFullSVG(card,forPlayDesign){
   }
   svg += buildTextLabels(card);
   svg += buildTextBoxes(card);
-  // Play Designer notes in export
-  if(isPD){
-    var ny=FH+10;
-    svg += '<rect x="0" y="'+FH+'" width="'+FW+'" height="180" fill="#fff"/>';
-    svg += '<line x1="'+FW/2+'" y1="'+ny+'" x2="'+FW/2+'" y2="'+(FH+175)+'" stroke="#ccc" stroke-width="1"/>';
-    svg += '<rect x="10" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
-    svg += '<text x="'+(FW/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+(card.frontTitle||'FRONTS: ADJUSTMENTS / STUNTS')+'</text>';
-    svg += '<rect x="'+(FW/2+10)+'" y="'+ny+'" width="'+(FW/2-20)+'" height="22" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>';
-    svg += '<text x="'+(FW*3/4)+'" y="'+(ny+15)+'" text-anchor="middle" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+(card.covTitle||'COVERAGE DETAILS')+'</text>';
-    // Render note text
-    var fnLines=(card.frontNotes||'').split('\n');
-    for(var fi=0;fi<fnLines.length&&fi<10;fi++){
-      svg += '<text x="15" y="'+(ny+38+fi*14)+'" font-size="10" font-family="Arial,sans-serif">'+esc(fnLines[fi])+'</text>';
-    }
-    var cnLines=(card.coverageNotes||'').split('\n');
-    for(var ci=0;ci<cnLines.length&&ci<10;ci++){
-      svg += '<text x="'+(FW/2+15)+'" y="'+(ny+38+ci*14)+'" font-size="10" font-family="Arial,sans-serif">'+esc(cnLines[ci])+'</text>';
-    }
-  }
   svg += '</svg>';
   appMode=prevMode;
   return svg;
@@ -6168,8 +6150,7 @@ async function exportPNG(){
   var card = cards[activeIdx];
   var isPD=appMode==='playdesign';
   var svgStr = buildFullSVG(card,isPD);
-  var eh=isPD?FH+180:FH;
-  var canvas = await svgToCanvas(svgStr, FW*2, eh*2);
+  var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
   if(!canvas){alert('Export failed');return}
   var link = document.createElement('a');
   link.download = (card.play||'card_'+(activeIdx+1)).replace(/[^a-zA-Z0-9]/g,'_')+'.png';
@@ -6179,7 +6160,7 @@ async function exportPNG(){
 
 async function exportPDF(){
   var isPD=appMode==='playdesign';
-  var pw = FW*2, ph = (isPD?FH+180:FH)*2;
+  var pw = FW*2, ph = FH*2;
   var canvases = [];
   for(var ci=0;ci<cards.length;ci++){
     var svgStr = buildFullSVG(cards[ci],isPD);
