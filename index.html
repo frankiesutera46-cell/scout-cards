@@ -27,24 +27,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Kalam:wght@400;700&family=Patrick+Hand&family=Inter+Tight:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,700&display=swap');
-/* ===== HAND-DRAWN DESIGN TOKENS =====
-   Applied app-wide except the play card SVG which stays clean for readability/print */
+/* ===== DESIGN TOKENS — Figma/Photoshop style =====
+   The chrome (topbar, sidebar, panels, buttons, inputs) inherits these. The play card
+   SVG is untouched so it stays clean for print/share. */
 :root{
-  --paper:#fdfbf7;            /* warm paper background */
-  --pencil:#2d2d2d;           /* soft pencil black */
-  --muted:#e5e0d8;            /* erased pencil / old paper */
-  --accent:#ff4d4d;           /* correction marker red */
-  --accent-2:#2d5da1;         /* blue ballpoint */
-  --postit:#fff9c4;           /* post-it yellow */
-  --font-display:'Kalam',cursive;      /* felt-tip marker */
-  --font-body:'Patrick Hand',cursive;  /* handwritten */
-  /* Wobbly border-radius values — irregular like hand-drawn shapes */
-  --wobbly:255px 15px 225px 15px / 15px 225px 15px 255px;
-  --wobbly-md:30px 8px 25px 12px / 12px 28px 8px 30px;
-  --wobbly-sm:12px 4px 10px 6px / 6px 12px 4px 10px;
-  --shadow-hard:4px 4px 0px 0px var(--pencil);
-  --shadow-hard-lg:8px 8px 0px 0px var(--pencil);
-  --shadow-hard-sm:2px 2px 0px 0px var(--pencil);
+  --paper:#f7f7f5;            /* off-white canvas */
+  --pencil:#20201f;           /* near-black ink */
+  --muted:#ececea;            /* hover/disabled surface */
+  --accent:#8b5cf6;            /* dock-accent purple */
+  --accent-soft:#ede4ff;       /* light purple — active button background */
+  --accent-2:#3b82f6;          /* blue accent */
+  --postit:#fff9c4;            /* card-list highlight (legacy) */
+  --surface:#ffffff;           /* primary card surface */
+  --surface-subtle:#fdfcfa;    /* slightly warm white for nested surfaces */
+  --border:rgba(32,32,31,.12); /* subtle 1px borders */
+  --border-strong:rgba(32,32,31,.22);
+  --ink-muted:#6b6660;         /* secondary text */
+  --font-display:'JetBrains Mono','SF Mono',Menlo,monospace;
+  --font-body:'JetBrains Mono','SF Mono',Menlo,monospace;
+  /* Modern rounded radii — replace the wobbly hand-drawn values */
+  --wobbly:24px;
+  --wobbly-md:14px;
+  --wobbly-sm:10px;
+  /* Soft layered shadows — replace the hard offset shadows */
+  --shadow-hard:0 14px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.06);
+  --shadow-hard-lg:0 24px 64px rgba(0,0,0,.16),0 4px 12px rgba(0,0,0,.08);
+  --shadow-hard-sm:0 4px 10px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -52,13 +60,13 @@ body{
   color:var(--pencil);
   font-family:var(--font-body),system-ui,-apple-system,sans-serif;
   overflow-x:hidden;
-  /* Subtle dot-grain paper texture */
-  background-image:radial-gradient(var(--muted) 1px,transparent 1px);
-  background-size:24px 24px;
-  font-size:16px;
+  /* Subtle dot-grain — keep but lighter so the workspace reads clean */
+  background-image:radial-gradient(rgba(32,32,31,.04) 1px,transparent 1px);
+  background-size:28px 28px;
+  font-size:14px;
   line-height:1.5;
 }
-h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:var(--pencil);line-height:1.2}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-display),monospace;font-weight:700;color:var(--pencil);line-height:1.2;letter-spacing:.01em}
 /* In PWA standalone mode (Add to Home Screen) — lock body so pull/bounce/refresh can't move the app */
 @media (display-mode: standalone){
   html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-overflow-scrolling:auto}
@@ -118,11 +126,12 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .btn-del{background:none;border:none;color:rgba(58,58,56,.35);font-size:13px;cursor:pointer;padding:2px 6px;font-family:'JetBrains Mono',monospace}
 .btn-del:hover{color:#FF8C69}
 
-/* ==================== HAND-DRAWN DESIGN LAYER ====================
-   Overrides applied to chrome (topbar, sidebar, panels, landing, buttons, inputs).
-   The play card SVG itself is intentionally untouched so it stays clean for print/share. */
+/* ==================== MODERN CHROME LAYER ====================
+   Clean Figma/Photoshop-style overrides applied to chrome (topbar, sidebar, panels,
+   landing, buttons, inputs). The play card SVG is intentionally untouched so it
+   stays clean for print/share. */
 
-/* --- Buttons: wobbly shape, hard offset shadow, marker-press interaction --- */
+/* --- Buttons: clean rounded surface, subtle border, dock-accent active --- */
 .btn,
 .lp-btn,
 .flip-btn,
@@ -136,16 +145,16 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .is-btn,
 .it-btn,
 .is-label.is-toggle{
-  font-family:var(--font-body),cursive !important;
-  border:2.5px solid var(--pencil) !important;
-  border-radius:var(--wobbly-md);
-  background:#fff;
-  color:var(--pencil);
-  box-shadow:var(--shadow-hard);
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  background:var(--surface) !important;
+  color:var(--pencil) !important;
+  box-shadow:none !important;
   text-transform:none;
-  letter-spacing:.02em;
-  font-weight:400;
-  transition:transform .1s ease,box-shadow .1s ease,background .1s ease,color .1s ease;
+  letter-spacing:.01em;
+  font-weight:600;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;
 }
 .btn:hover,
 .lp-btn:hover,
@@ -160,11 +169,11 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .is-btn:hover,
 .it-btn:hover,
 .is-label.is-toggle:hover{
-  background:var(--accent) !important;
-  color:#fff !important;
-  border-color:var(--pencil) !important;
-  box-shadow:var(--shadow-hard-sm) !important;
-  transform:translate(2px,2px);
+  background:#f2f2f1 !important;
+  color:#111 !important;
+  border-color:var(--border-strong) !important;
+  box-shadow:none !important;
+  transform:none !important;
 }
 .btn:active,
 .lp-btn:active,
@@ -172,10 +181,11 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .shade-btn:active,
 .pp-btn:active,
 .qt-btn:active{
+  background:#ececea !important;
   box-shadow:none !important;
-  transform:translate(4px,4px);
+  transform:none !important;
 }
-/* Primary button variant (filled red marker) */
+/* Primary / active state — dock-accent purple */
 .btn-pri,
 .lp-btn-pri,
 .flip-btn.on,
@@ -188,54 +198,59 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display),cursive;font-weight:700;color:
 .qt-btn.qt-on,
 .is-btn.is-on,
 .it-btn.it-on{
-  background:var(--accent) !important;
-  color:#fff !important;
-  border-color:var(--pencil) !important;
+  background:var(--accent-soft) !important;
+  color:var(--accent) !important;
+  border-color:rgba(139,92,246,.28) !important;
 }
 .btn-pri:hover,
 .lp-btn-pri:hover{
-  background:#e63939 !important;
+  background:#e0d3ff !important;
+  color:var(--accent) !important;
 }
 /* Secondary button variant (muted) */
 .btn-sec,
 .lp-btn-sec{
   background:var(--muted) !important;
   color:var(--pencil) !important;
+  border-color:var(--border) !important;
 }
 .btn-sec:hover,
 .lp-btn-sec:hover{
-  background:var(--accent-2) !important;
-  color:#fff !important;
+  background:#e0e0dc !important;
+  color:#111 !important;
 }
 /* Delete / close buttons stay smaller and quieter */
 .btn-del{
-  font-family:var(--font-body),cursive !important;
-  color:var(--pencil) !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  color:var(--ink-muted) !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
 }
-.btn-del:hover{color:var(--accent) !important;background:transparent !important}
+.btn-del:hover{color:#ef4444 !important;background:transparent !important;border-color:transparent !important}
 
-/* --- Toolbar buttons (.tb): keep them snappy but with pencil borders --- */
+/* --- Toolbar buttons (.tb) outside the dock: clean transparent --- */
 .tb{
-  border:2px solid var(--pencil) !important;
-  border-radius:var(--wobbly-sm);
-  background:#fff;
-  color:var(--pencil);
-  box-shadow:var(--shadow-hard-sm);
-  transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
+  border:1px solid transparent !important;
+  border-radius:10px !important;
+  background:transparent !important;
+  color:var(--pencil) !important;
+  box-shadow:none !important;
+  transition:background .12s ease,color .12s ease;
 }
 .tb:hover{
-  background:var(--accent);
-  color:#fff;
-  box-shadow:1px 1px 0px 0px var(--pencil);
-  transform:translate(1px,1px);
+  background:#f2f2f1 !important;
+  color:#111 !important;
+  box-shadow:none !important;
+  transform:none !important;
 }
 .tb.on,.tb.text-on,.tb.eraser-on{
-  background:var(--accent) !important;
-  color:#fff !important;
-  border-color:var(--pencil) !important;
+  background:var(--accent-soft) !important;
+  color:var(--accent) !important;
+  border-color:rgba(139,92,246,.28) !important;
 }
 
-/* --- Inputs: wobbly box, handwritten text --- */
+/* --- Inputs: clean rounded box --- */
 input[type="text"],
 input[type="url"],
 input[type="email"],
@@ -243,13 +258,14 @@ input[type="password"],
 input[type="number"],
 textarea,
 select{
-  font-family:var(--font-body),cursive !important;
-  border:2.5px solid var(--pencil) !important;
-  border-radius:var(--wobbly-sm) !important;
-  background:#fff;
-  color:var(--pencil);
-  padding:6px 10px;
-  font-size:15px;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  background:var(--surface) !important;
+  color:var(--pencil) !important;
+  padding:8px 12px;
+  font-size:13px;
+  box-shadow:none !important;
 }
 input[type="text"]:focus,
 input[type="url"]:focus,
@@ -259,11 +275,11 @@ input[type="number"]:focus,
 textarea:focus,
 select:focus{
   outline:none !important;
-  border-color:var(--accent-2) !important;
-  box-shadow:0 0 0 3px rgba(45,93,161,.2) !important;
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 3px rgba(139,92,246,.16) !important;
 }
 
-/* --- Cards & containers: wobbly shape, hard shadow, paper feel --- */
+/* --- Cards & containers: clean white panels --- */
 .sidebar,
 .rp,
 .editor,
@@ -273,75 +289,87 @@ select:focus{
 .lp-table,
 .preset-section,
 .front-sel{
-  background:#fff !important;
+  background:var(--surface) !important;
   color:var(--pencil);
 }
 .lp-fcard,
 .lp-step{
-  border:2.5px solid var(--pencil) !important;
-  border-radius:var(--wobbly-md) !important;
-  box-shadow:var(--shadow-hard) !important;
-}
-.lp-fcard:hover{
-  transform:rotate(-1deg) translate(2px,2px);
+  border:1px solid var(--border) !important;
+  border-radius:14px !important;
   box-shadow:var(--shadow-hard-sm) !important;
 }
+.lp-fcard:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-hard) !important;
+}
 
-/* --- Topbar: paper-ish pencil-lined banner --- */
+/* --- Topbar: clean dark surface --- */
 .topbar{
-  background:var(--pencil) !important;
-  border-bottom:3px solid var(--pencil);
+  background:#1f1f1e !important;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 .topbar .brand span,
 .topbar .brand .sub{
-  font-family:var(--font-display),cursive !important;
-  color:var(--paper) !important;
+  font-family:var(--font-display),monospace !important;
+  color:#f7f7f5 !important;
+  letter-spacing:.08em;
 }
 .topbar .week-sel,
 .topbar .week-btn,
 .topbar .sign-out{
-  font-family:var(--font-body),cursive !important;
-  background:var(--paper) !important;
-  color:var(--pencil) !important;
-  border:2px solid var(--paper) !important;
-  border-radius:var(--wobbly-sm) !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  background:rgba(255,255,255,.08) !important;
+  color:#f7f7f5 !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  border-radius:10px !important;
+}
+.topbar .week-sel:hover,
+.topbar .week-btn:hover,
+.topbar .sign-out:hover{
+  background:rgba(255,255,255,.14) !important;
+  border-color:rgba(255,255,255,.2) !important;
 }
 .topbar .week-sel option{
-  background:var(--pencil);
-  color:var(--paper);
+  background:#1f1f1e;
+  color:#f7f7f5;
 }
 
-/* --- Card list items (sidebar) — pencil-bordered notes --- */
+/* --- Card list items (sidebar) — clean rows with subtle hover --- */
 .ci{
-  font-family:var(--font-body),cursive !important;
-  border:2px solid transparent !important;
-  border-radius:var(--wobbly-sm) !important;
-  background:#fff;
-  margin-bottom:4px;
-  transition:transform .1s ease;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  background:var(--surface) !important;
+  margin-bottom:6px;
+  transition:background .12s,border-color .12s,transform .08s;
+  padding:10px 12px;
 }
 .ci:hover{
-  background:var(--postit) !important;
-  border-color:var(--pencil) !important;
-  transform:rotate(-.5deg);
+  background:#fafaf8 !important;
+  border-color:var(--border-strong) !important;
+  transform:none !important;
 }
 .ci.act{
-  background:var(--postit) !important;
-  border-color:var(--pencil) !important;
-  box-shadow:var(--shadow-hard-sm);
+  background:var(--accent-soft) !important;
+  border-color:rgba(139,92,246,.28) !important;
+  box-shadow:none !important;
 }
-.ci .cn{font-family:var(--font-display),cursive !important;font-weight:700}
-.ci .cm{font-family:var(--font-body),cursive !important}
+.ci.act .cn,
+.ci.act .cm{color:var(--accent) !important}
+.ci .cn{font-family:var(--font-display),monospace !important;font-weight:600;color:var(--pencil)}
+.ci .cm{font-family:var(--font-body),system-ui,sans-serif !important;color:var(--ink-muted)}
 
-/* --- Section labels / titles — felt-tip headings --- */
+/* --- Section labels / titles — clean monospace --- */
 .rp-title,
 .is-label,
 .qt-label,
 .script-period,
 .lp-section-title{
-  font-family:var(--font-display),cursive !important;
-  color:var(--pencil) !important;
-  font-weight:700;
+  font-family:var(--font-display),monospace !important;
+  color:var(--ink-muted) !important;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
 }
 
 /* --- Landing page anchor points --- */
@@ -366,25 +394,28 @@ select:focus{
   color:var(--pencil) !important;
 }
 
-/* --- Field-wrap: paper edge around the play card SVG --- */
+/* --- Field-wrap: clean light canvas around the play card SVG --- */
 .field-wrap{
-  background-color:#F4F4F2 !important;
-  background-image:radial-gradient(rgba(45,45,45,.16) 1.35px,transparent 1.35px) !important;
+  background-color:#f4f4f2 !important;
+  background-image:radial-gradient(rgba(32,32,31,.05) 1px,transparent 1px) !important;
   background-size:28px 28px !important;
 }
 /* (the .field-wrap svg itself is left untouched — that's our work surface) */
 
-/* --- Quick text bar — sticky-note vibe --- */
+/* --- Quick text bar — soft surface --- */
 .quick-text-bar{
-  background:var(--paper) !important;
+  background:var(--surface) !important;
+  border:1px solid var(--border) !important;
+  border-radius:14px !important;
+  box-shadow:var(--shadow-hard-sm) !important;
 }
 
-/* --- Demo banner — taped note across the top --- */
+/* --- Demo banner — soft notice strip --- */
 .demo-banner{
-  background:var(--postit) !important;
-  color:var(--pencil) !important;
-  border-bottom:2px dashed var(--pencil) !important;
-  font-family:var(--font-body),cursive !important;
+  background:#fff8d1 !important;
+  color:#5b4d0b !important;
+  border-bottom:1px solid rgba(91,77,11,.18) !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
 }
 
 /* --- Readability boost: bump text sizes app-wide so Patrick Hand reads cleanly --- */
@@ -441,11 +472,10 @@ select:focus{
 /* iPad sidebar section labels stay bigger now too */
 .is-label{font-size:14px !important}
 
-/* --- Modals, share & tutorial: hand-drawn design overrides ---
-   Targets #*Modal containers (Branding, Playbooks, Reports, Help, Share, Auth) and
-   replaces the default white-card look with paper + wobbly border + hard shadow + Kalam/Patrick Hand. */
+/* --- Modals, share & tutorial: clean modern panels ---
+   Branding / Playbooks / Reports / Help / Share / Auth — white card on dim backdrop. */
 #brandingModal,#playbooksModal,#reportsModal,#helpModal,#shareModal,#auth-screen{
-  font-family:var(--font-body),cursive !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
 }
 #brandingModal > div,
 #playbooksModal > div,
@@ -453,38 +483,39 @@ select:focus{
 #helpModal > div,
 #shareModal > div,
 #auth-screen .auth-card{
-  background:var(--paper) !important;
-  border:2.5px solid var(--pencil) !important;
-  border-radius:var(--wobbly-md) !important;
+  background:var(--surface) !important;
+  border:1px solid var(--border) !important;
+  border-radius:18px !important;
   box-shadow:var(--shadow-hard-lg) !important;
-  padding:28px 30px !important;
+  padding:24px 28px !important;
   color:var(--pencil) !important;
 }
-/* Modal headings (the big titles inside the modals — usually a span with font-family Bebas Neue or Space Grotesk) */
+/* Modal headings */
 #brandingModal > div > div > span,
 #playbooksModal > div > div > span,
 #reportsModal > div > div > span,
 #helpModal > div > div > span,
 #shareModal > div > div > span{
-  font-family:var(--font-display),cursive !important;
-  font-size:26px !important;
+  font-family:var(--font-display),monospace !important;
+  font-size:20px !important;
   font-weight:700 !important;
   color:var(--pencil) !important;
   letter-spacing:0 !important;
   text-transform:none !important;
 }
-/* Section sub-headings inside Help modal (the green underlined "Getting Started" etc.) */
+/* Section sub-headings inside Help modal */
 #helpModal > div div[style*="text-transform:uppercase"]{
-  font-family:var(--font-display),cursive !important;
-  font-size:18px !important;
+  font-family:var(--font-display),monospace !important;
+  font-size:11px !important;
   font-weight:700 !important;
-  color:var(--pencil) !important;
-  letter-spacing:0.04em !important;
-  border-bottom:2px solid var(--pencil) !important;
-  text-transform:none !important;
-  margin-top:22px !important;
+  color:var(--ink-muted) !important;
+  letter-spacing:0.12em !important;
+  border-bottom:1px solid var(--border) !important;
+  text-transform:uppercase !important;
+  padding-bottom:6px !important;
+  margin-top:20px !important;
 }
-/* Body paragraphs and list rows */
+/* Body paragraphs */
 #brandingModal p, #playbooksModal p, #reportsModal p, #helpModal p, #shareModal p,
 #brandingModal > div div[style*="font-size:13px"],
 #brandingModal > div div[style*="font-size:14px"],
@@ -496,39 +527,45 @@ select:focus{
 #helpModal > div div[style*="font-size:14px"],
 #shareModal > div div[style*="font-size:11px"],
 #shareModal > div div[style*="font-size:13px"]{
-  font-family:var(--font-body),cursive !important;
-  font-size:16px !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  font-size:13px !important;
   line-height:1.55 !important;
   color:var(--pencil) !important;
   letter-spacing:0 !important;
 }
-/* Buttons inside any modal — wobbly, hand-drawn */
+/* Buttons inside modals */
 #brandingModal button, #playbooksModal button, #reportsModal button, #helpModal button, #shareModal button{
-  font-family:var(--font-body),cursive !important;
-  font-size:15px !important;
-  border-radius:var(--wobbly-sm) !important;
-  border:2.5px solid var(--pencil) !important;
-  background:#fff !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  font-size:13px !important;
+  border-radius:10px !important;
+  border:1px solid var(--border) !important;
+  background:var(--surface) !important;
   color:var(--pencil) !important;
-  box-shadow:var(--shadow-hard-sm) !important;
+  box-shadow:none !important;
   text-transform:none !important;
   letter-spacing:0 !important;
-  padding:8px 16px !important;
+  padding:8px 14px !important;
   cursor:pointer;
-  transition:transform .08s, box-shadow .08s;
+  transition:background .12s,border-color .12s;
+}
+#brandingModal button:hover, #playbooksModal button:hover, #reportsModal button:hover, #helpModal button:hover, #shareModal button:hover{
+  background:#f2f2f1 !important;
+  border-color:var(--border-strong) !important;
 }
 #brandingModal button:active, #playbooksModal button:active, #reportsModal button:active, #helpModal button:active, #shareModal button:active{
-  transform:translate(2px,2px);box-shadow:none !important;
+  background:#ececea !important;
+  transform:none !important;
 }
-/* Close (×) buttons stay borderless */
+/* Close (×) buttons */
 #brandingModal button[id$="Close"], #playbooksModal button[id$="Close"], #reportsModal button[id$="Close"], #helpModal button[id$="Close"], #shareModal button[id$="Close"]{
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
-  font-size:24px !important;
+  font-size:22px !important;
   padding:0 8px !important;
+  color:var(--ink-muted) !important;
 }
-/* Primary action buttons (Save / Upload / Create Share Link / Sign Up) — red accent */
+/* Primary action buttons */
 #brandingModal button[id*="Save"], #brandingModal button[id*="Submit"],
 #playbooksModal button[id*="Upload"],
 #reportsModal button[id*="Upload"],
@@ -537,7 +574,16 @@ select:focus{
 #auth-screen button.auth-btn{
   background:var(--accent) !important;
   color:#fff !important;
-  border-color:var(--pencil) !important;
+  border-color:var(--accent) !important;
+}
+#brandingModal button[id*="Save"]:hover, #brandingModal button[id*="Submit"]:hover,
+#playbooksModal button[id*="Upload"]:hover,
+#reportsModal button[id*="Upload"]:hover,
+#shareModal button[id*="Confirm"]:hover,
+#shareModal #shareConfirmBtn:hover,
+#auth-screen button.auth-btn:hover{
+  background:#7c3aed !important;
+  border-color:#7c3aed !important;
 }
 /* Form inputs inside modals */
 #brandingModal input, #brandingModal textarea, #brandingModal select,
@@ -546,30 +592,31 @@ select:focus{
 #helpModal input, #helpModal textarea, #helpModal select,
 #shareModal input, #shareModal textarea, #shareModal select,
 #auth-screen input{
-  font-family:var(--font-body),cursive !important;
-  font-size:15px !important;
-  border:2px solid var(--pencil) !important;
-  border-radius:var(--wobbly-sm) !important;
-  background:#fff !important;
+  font-family:var(--font-body),system-ui,sans-serif !important;
+  font-size:13px !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  background:var(--surface) !important;
   color:var(--pencil) !important;
   padding:8px 12px !important;
 }
 /* Keyboard hints in tutorial */
 #helpModal kbd{
   font-family:'JetBrains Mono',monospace !important;
-  background:var(--postit) !important;
-  border:2px solid var(--pencil) !important;
-  border-radius:4px !important;
+  background:#f4f4f2 !important;
+  border:1px solid var(--border) !important;
+  border-radius:6px !important;
   padding:2px 8px !important;
-  font-size:12px !important;
+  font-size:11px !important;
+  color:var(--pencil) !important;
 }
-/* List row cards (report list, playbook list etc.) — paper rows with hand-drawn frames */
+/* List row cards in modals */
 #reportsModal > div > div[id="srList"] > div,
 #playbooksModal > div div[style*="background:#fff"][style*="border"]{
-  background:#fff !important;
-  border:2px solid var(--pencil) !important;
-  border-radius:var(--wobbly-sm) !important;
-  box-shadow:var(--shadow-hard-sm) !important;
+  background:var(--surface) !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
 }
 
 /* --- Landing page polish --- */
