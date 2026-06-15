@@ -3590,14 +3590,8 @@ function render(){
   }
   h+='</div>';
 
-  // Play Designer notes section (below field)
+  // Play Designer: close the field-col wrapper (notes section removed)
   if(appMode==='playdesign'){
-    h+='<div class="pd-notes">';
-    h+='<div class="pd-notes-col"><div class="pd-notes-title" contenteditable="true" id="pdFrontTitle">'+(card.frontTitle||'FRONTS: ADJUSTMENTS / STUNTS')+'</div>';
-    h+='<textarea id="pdFrontNotes" placeholder="Front calls, adjustments, stunts...">'+(card.frontNotes||'')+'</textarea></div>';
-    h+='<div class="pd-notes-col"><div class="pd-notes-title" contenteditable="true" id="pdCovTitle">'+(card.covTitle||'COVERAGE DETAILS')+'</div>';
-    h+='<textarea id="pdCoverageNotes" placeholder="Coverage assignments, rules...">'+(card.coverageNotes||'')+'</textarea></div>';
-    h+='</div>';
     h+='</div>'; // close field-col
   }
 
