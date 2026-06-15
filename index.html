@@ -1445,8 +1445,11 @@ select:focus{
 /* ===== iPad / Tablet off-canvas panels ===== */
 @media (pointer: coarse){
   /* ===== CHLK-style fixed sidebar layout ===== */
-  /* Hide the old top toolbars — their functionality lives in .ipad-side now */
-  .draw-bar, .quick-text-bar{display:none !important}
+  /* Hide every legacy iPad-only chrome surface — the full desktop .draw-bar dock,
+     .sidebar (off-canvas cards), and right panel cover all the functions now. The old
+     .ipad-side (Formation/Defense/Hash sections) and its floating collapse chevron are
+     obsolete and just create design noise. */
+  .quick-text-bar, .ipad-top, .ipad-side, .is-collapse{display:none !important}
   /* Compact editor header: just toggles + play title + flip/reset */
   .eh{padding:6px 8px;gap:6px;flex-wrap:nowrap;overflow-x:auto}
   .eh select#hSel, .eh select#fSel, .eh select#dfSel{display:none}
@@ -1536,7 +1539,10 @@ select:focus{
   /* Right panel slides in from the right */
   .rp{position:fixed;top:52px;right:0;bottom:0;width:340px;max-width:85vw;z-index:200;transform:translateX(100%);transition:transform .25s ease;box-shadow:-2px 0 20px rgba(0,0,0,.15)}
   .layout.show-rp .rp{transform:translateX(0)}
-  .layout.has-player-selection .rp{
+  /* Bottom-sheet treatment for the right panel — ONLY when the user explicitly opens it
+     (via the 3-dot panel toggle). A player selection by itself just shows the radial menu;
+     no full editor sheet eats the screen unless requested. */
+  .layout.has-player-selection.show-rp .rp{
     left:12px;
     right:12px;
     top:auto;
@@ -1552,9 +1558,9 @@ select:focus{
     padding:0;
     overflow-y:auto;
   }
-  .layout.has-player-selection .player-inspector{padding:12px;gap:10px}
-  .layout.has-player-selection .pi-head{padding-bottom:10px}
-  .layout.has-player-selection .pi-actions{grid-template-columns:repeat(3,1fr)}
+  .layout.has-player-selection.show-rp .player-inspector{padding:12px;gap:10px}
+  .layout.has-player-selection.show-rp .pi-head{padding-bottom:10px}
+  .layout.has-player-selection.show-rp .pi-actions{grid-template-columns:repeat(3,1fr)}
   /* Backdrop when any panel is open */
   .panel-backdrop{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
   .layout.show-sidebar .panel-backdrop, .layout.show-rp .panel-backdrop{display:block}
@@ -1595,7 +1601,8 @@ select:focus{
   .layout.show-sidebar .sidebar{transform:translateX(0)}
   .rp{position:fixed;top:68px;right:0;bottom:0;width:340px;max-width:88vw;z-index:200;transform:translateX(100%);transition:transform .25s ease;box-shadow:-2px 0 20px rgba(0,0,0,.15)}
   .layout.show-rp .rp{transform:translateX(0)}
-  .layout.has-player-selection .rp{
+  /* Bottom-sheet only when togRp is explicitly toggled */
+  .layout.has-player-selection.show-rp .rp{
     left:8px;
     right:8px;
     top:auto;
@@ -1611,7 +1618,7 @@ select:focus{
     padding:0;
     overflow-y:auto;
   }
-  .layout.has-player-selection .player-inspector{padding:12px}
+  .layout.has-player-selection.show-rp .player-inspector{padding:12px}
   .panel-backdrop{display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:150}
   .layout.show-sidebar .panel-backdrop,
   .layout.show-rp .panel-backdrop{display:block}
