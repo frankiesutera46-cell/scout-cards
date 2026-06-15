@@ -785,7 +785,8 @@ select:focus{
 .color-dot:hover{transform:scale(1.15)}
 .color-dot-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1A3C2B}
 /* Floating player context popup — two-row, categories on bottom, sub-options on top */
-.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:auto}
+.player-popup{position:absolute;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;z-index:100;font-family:'JetBrains Mono',monospace;pointer-events:auto;opacity:.7;transition:opacity .12s ease}
+.player-popup:hover,.player-popup:focus-within{opacity:1}
 .pp-sub{display:flex;gap:5px;align-items:center;padding-bottom:5px;border-bottom:1px solid rgba(58,58,56,.1);white-space:nowrap;flex-wrap:wrap;justify-content:center}
 .pp-cats{display:flex;gap:5px;align-items:center;justify-content:center}
 .pp-cat{padding:5px 10px;font-size:10px;font-weight:600;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:4px;cursor:pointer;color:#3A3A38;font-family:inherit;transition:.1s;touch-action:manipulation}
@@ -4164,8 +4165,10 @@ function bind(){
           pPop.style.left='0';pPop.style.top='0';
           var ppW=pPop.offsetWidth,ppH=pPop.offsetHeight;
           var finalX=Math.max(4,Math.min(fwR.width-ppW-4,lx-ppW/2));
-          var finalY=ly-ppH-16;
-          if(finalY<4)finalY=ly+22; // not enough room above — show below
+          // Prefer BELOW the player — routes nearly always run upward toward the defense,
+          // so a popup above the player blocks the route the coach is trying to edit.
+          var finalY=ly+22;
+          if(finalY+ppH>fwR.height-4)finalY=ly-ppH-16; // no room below — fall back to above
           pPop.style.left=finalX+'px';
           pPop.style.top=finalY+'px';
           pPop.style.visibility='visible';
