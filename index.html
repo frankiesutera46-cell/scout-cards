@@ -717,7 +717,7 @@ select:focus{
   flex:1;
   padding:6px 6px 96px;
   display:flex;
-  align-items:stretch;
+  align-items:center;
   justify-content:center;
   min-width:0;
   min-height:0;
@@ -726,7 +726,9 @@ select:focus{
   background-size:28px 28px;
   position:relative;
 }
-.field-wrap svg{width:100%;height:100%;max-height:none;display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
+/* Lock the SVG to its natural 720:520 landscape ratio. It scales DOWN to fit either width or
+   height (whichever is the binding constraint), never stretches to fill a tall narrow container. */
+.field-wrap svg{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:720/520;align-self:center;display:block;border-radius:0;border:1px solid rgba(58,58,56,.15);touch-action:none;-webkit-user-select:none;user-select:none}
 .field-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .field-col .field-wrap{flex:1;min-height:0;padding:6px 6px 96px}
 .field-col .field-wrap svg{max-height:none}
@@ -1508,7 +1510,7 @@ select:focus{
   /* Field area: push right to clear the sidebar, top-align the play card */
   .field-wrap{margin-left:172px;padding:4px 4px 96px;align-items:stretch;justify-content:center;transition:margin-left .25s ease}
   .layout.ipad-side-collapsed .field-wrap{margin-left:0}
-  .field-wrap svg{max-height:none;max-width:100%;width:100%;height:100%}
+  .field-wrap svg{max-width:100%;max-height:100%;width:100%;height:auto;aspect-ratio:720/520}
   /* Off-canvas panels — sidebar (cards) and rp (settings) still slide from edges */
 
   .panel-toggle{display:inline-flex}
@@ -1563,7 +1565,7 @@ select:focus{
   .quick-text-bar .qt-label{font-size:9px;margin-right:2px}
   /* Field area — kill the centering padding so card sits at top + uses all available height */
   .field-wrap{padding:2px 2px 96px;align-items:stretch}
-  .field-wrap svg{max-height:none;height:100%}
+  .field-wrap svg{max-width:100%;max-height:100%;height:auto;aspect-ratio:720/520}
 }
 
 @media (max-width:900px){
@@ -1603,7 +1605,7 @@ select:focus{
   .eh{gap:4px;padding:4px 6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .eh .pn{min-width:150px}
   .field-wrap{margin-left:0;padding:4px 4px 96px;align-items:stretch}
-  .field-wrap svg{width:100%;height:100%;max-height:none}
+  .field-wrap svg{width:100%;height:auto;max-width:100%;max-height:100%;aspect-ratio:720/520}
   .draw-bar{width:max-content;max-width:calc(100vw - 8px);padding:6px}
   .draw-bar .tb-group{padding:0 2px}
   .draw-bar .tb-action,
@@ -4525,7 +4527,7 @@ function render(){
 
   // Field SVG
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
-  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" preserveAspectRatio="none" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
