@@ -1185,33 +1185,46 @@ select:focus{
 }
 .pp-cats{position:absolute;left:0;top:0;width:0;height:0}
 .pp-cat{
+  /* Match the bottom dock's tool buttons: rounded square, white surface, soft shadow.
+     Each button is still positioned radially around the player via CSS vars --rx / --ry. */
   position:absolute;
   left:0;
   top:0;
-  width:48px;
-  height:48px;
-  margin:-24px 0 0 -24px;
+  width:44px;
+  height:44px;
+  margin:-22px 0 0 -22px;
   display:flex;
   align-items:center;
   justify-content:center;
   padding:0;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:.02em;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.02em;
   text-transform:uppercase;
-  background:#fff;
-  border:1px solid rgba(32,32,31,.12);
-  border-radius:50%;
-  box-shadow:0 12px 28px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.08);
+  background:#fdfcfa;
+  border:1px solid rgba(32,32,31,0.08);
+  border-radius:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.12),0 1px 3px rgba(0,0,0,0.06);
   cursor:pointer;
-  color:#222;
+  color:#1a1a1a;
   font-family:inherit;
-  transition:transform .1s ease,background .1s ease,color .1s ease,border-color .1s ease;
+  transition:transform 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
   touch-action:manipulation;
   transform:translate(var(--rx),var(--ry));
 }
-.pp-cat:hover{background:#f2f2f1;color:#111;transform:translate(var(--rx),var(--ry)) scale(1.06)}
-.pp-cat.act{background:#ede4ff;color:#8b5cf6;border-color:rgba(139,92,246,.28)}
+.pp-cat:hover{
+  background:#ffffff;
+  color:#000;
+  border-color:rgba(32,32,31,0.16);
+  transform:translate(var(--rx),var(--ry)) scale(1.06);
+  box-shadow:0 8px 20px rgba(0,0,0,0.15),0 2px 4px rgba(0,0,0,0.08);
+}
+.pp-cat.act{
+  background:#ede4ff;
+  color:#7c3aed;
+  border-color:rgba(139,92,246,0.32);
+  box-shadow:0 6px 16px rgba(139,92,246,0.22),0 1px 3px rgba(0,0,0,0.06);
+}
 .pp-input{width:48px;padding:5px 6px;font-size:11px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit;text-align:center}
 .pp-color{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.1);cursor:pointer;padding:0;transition:.1s;touch-action:manipulation}
 .pp-color.act{border-color:#8b5cf6;outline:2px solid rgba(139,92,246,.24);outline-offset:1px}
