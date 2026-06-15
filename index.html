@@ -1107,6 +1107,386 @@ select:focus{
   .field-wrap{padding:2px;align-items:flex-start}
   .field-wrap svg{max-height:calc(100vh - 220px)}
 }
+
+/* =================================================================================
+   PROFESSIONAL CHROME OVERRIDE
+   Replaces the hand-drawn aesthetic on every UI surface (tools, buttons, text, panels,
+   modals) with a clean design-tool look — system sans-serif fonts, 1px borders, subtle
+   shadows, neutral grays, red kept for primary CTAs.
+   THE PLAY CARD SVG IS UNTOUCHED — players, routes, field marks, drawn content all stay.
+   ================================================================================= */
+:root{
+  --pro-bg:#f6f7f9;
+  --pro-panel:#ffffff;
+  --pro-border:#e2e5eb;
+  --pro-border-strong:#cbd1d9;
+  --pro-ink:#1f232a;
+  --pro-ink-2:#4a5160;
+  --pro-ink-3:#8892a0;
+  --pro-accent:#2563eb;        /* design-tool blue for selection/active */
+  --pro-accent-bg:#eef2ff;
+  --pro-red:#ef4444;
+  --pro-shadow-sm:0 1px 2px rgba(15,23,42,.06);
+  --pro-shadow:0 2px 6px rgba(15,23,42,.08);
+  --pro-shadow-lg:0 8px 24px rgba(15,23,42,.12);
+  --pro-radius:6px;
+  --pro-radius-sm:4px;
+  --pro-font:-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+}
+/* Body + global type — reset Patrick Hand / Kalam to a clean system stack */
+body{
+  font-family:var(--pro-font) !important;
+  color:var(--pro-ink) !important;
+  background:var(--pro-bg) !important;
+}
+h1,h2,h3,h4,h5,h6{
+  font-family:var(--pro-font) !important;
+  font-weight:600 !important;
+  letter-spacing:-0.01em !important;
+  color:var(--pro-ink) !important;
+}
+
+/* ----- Topbar (the dark band at the top) ----- */
+.topbar{background:#1a1d23 !important;border-bottom:1px solid rgba(255,255,255,.06)}
+.topbar-row1{height:52px !important}
+.topbar-row2{background:rgba(255,255,255,.04)}
+.topbar .brand .brand-wordmark img{height:32px}
+.topbar input, .topbar select{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  background:rgba(255,255,255,.06) !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  color:#fff !important;
+  border-radius:var(--pro-radius-sm) !important;
+  padding:5px 10px !important;
+}
+.topbar .week-sel, .topbar .week-btn, .topbar .sign-out, .topbar .user-info, .topbar .count{
+  font-family:var(--pro-font) !important;
+  font-size:12px !important;
+  letter-spacing:0 !important;
+}
+.topbar-row2 .btn{
+  font-family:var(--pro-font) !important;
+  font-size:12px !important;
+  padding:5px 11px !important;
+  border-radius:var(--pro-radius-sm) !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+  font-weight:500 !important;
+}
+
+/* ----- Buttons everywhere ----- */
+.btn, .lp-btn, .flip-btn, .tf-btn, .preset-btn, .tag-btn, .shade-btn, .pp-btn, .pp-cat, .qt-btn, .is-btn, .it-btn, .is-label.is-toggle{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  font-weight:500 !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+  border-radius:var(--pro-radius-sm) !important;
+  border:1px solid var(--pro-border) !important;
+  background:var(--pro-panel) !important;
+  color:var(--pro-ink) !important;
+  box-shadow:none !important;
+  padding:6px 12px !important;
+  transition:background .12s, border-color .12s, color .12s;
+}
+.btn:hover, .lp-btn:hover, .flip-btn:hover, .is-btn:hover, .it-btn:hover, .tf-btn:hover, .pp-btn:hover, .pp-cat:hover, .qt-btn:hover{
+  background:#f3f5f8 !important;
+  border-color:var(--pro-border-strong) !important;
+}
+.btn:active, .lp-btn:active, .flip-btn:active, .is-btn:active, .it-btn:active{
+  transform:none !important;
+  background:#eaedf2 !important;
+}
+.btn.act, .lp-btn.act, .flip-btn.on, .is-btn.is-on, .it-btn.it-on, .tf-btn.tf-on, .pp-btn.act, .pp-cat.act, .tag-btn.tag-on, .shade-btn.shade-on{
+  background:var(--pro-accent) !important;
+  border-color:var(--pro-accent) !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+/* Primary CTAs (Share, Sign Up Free, Try Demo) — keep red */
+.btn-pri, .lp-btn-pri, button.share-btn{
+  background:var(--pro-red) !important;
+  color:#fff !important;
+  border-color:var(--pro-red) !important;
+  box-shadow:none !important;
+}
+.btn-pri:hover, .lp-btn-pri:hover{background:#dc2626 !important;border-color:#dc2626 !important}
+/* Danger / destructive */
+.btn-del, .tb-action.danger{
+  color:var(--pro-red) !important;
+  background:transparent !important;
+  border-color:transparent !important;
+}
+.btn-del:hover{background:#fef2f2 !important}
+
+/* Editor header (the row with #1 / dropdown / play name / D&D / Flip Play / Reset Pos) */
+.eh{
+  background:var(--pro-panel) !important;
+  border-bottom:1px solid var(--pro-border) !important;
+}
+.eh select, .eh input, .eh .pn, .eh .dd{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  border:1px solid var(--pro-border) !important;
+  border-radius:var(--pro-radius-sm) !important;
+  padding:5px 10px !important;
+  background:#fff !important;
+  color:var(--pro-ink) !important;
+  box-shadow:none !important;
+}
+.eh select:focus, .eh input:focus{outline:none !important;border-color:var(--pro-accent) !important;box-shadow:0 0 0 3px rgba(37,99,235,.12) !important}
+.eh .cnum{font-family:var(--pro-font) !important;font-size:13px !important;color:var(--pro-ink-2) !important;font-weight:600 !important}
+
+/* Sidebar — card list */
+.sidebar{
+  background:var(--pro-panel) !important;
+  border-right:1px solid var(--pro-border) !important;
+}
+.ci{
+  border-radius:var(--pro-radius-sm) !important;
+  border:1px solid transparent !important;
+  background:transparent !important;
+  font-family:var(--pro-font) !important;
+  margin-bottom:2px;
+}
+.ci:hover{background:#f3f5f8 !important;border-color:var(--pro-border) !important}
+.ci.act{
+  background:var(--pro-accent-bg) !important;
+  border-color:#c7d2fe !important;
+  color:var(--pro-ink) !important;
+  border-left:3px solid var(--pro-accent) !important;
+}
+.ci .cn{font-size:13px !important;font-weight:500 !important;color:var(--pro-ink) !important;font-family:var(--pro-font) !important}
+.ci .cm{font-size:11px !important;color:var(--pro-ink-3) !important;font-family:var(--pro-font) !important;opacity:1 !important}
+
+/* Right panel + form labels */
+.rp, .ns, .preset-section, .front-sel{
+  background:var(--pro-panel) !important;
+  border-left:1px solid var(--pro-border) !important;
+  font-family:var(--pro-font) !important;
+}
+.rp-title, .front-sel label, .preset-section label, .ns label{
+  font-family:var(--pro-font) !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+  letter-spacing:0.04em !important;
+  text-transform:uppercase !important;
+  color:var(--pro-ink-3) !important;
+}
+.rp input, .rp textarea, .rp select{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  border:1px solid var(--pro-border) !important;
+  border-radius:var(--pro-radius-sm) !important;
+  background:#fff !important;
+  color:var(--pro-ink) !important;
+  padding:6px 10px !important;
+  box-shadow:none !important;
+}
+.rp input:focus, .rp textarea:focus, .rp select:focus{outline:none !important;border-color:var(--pro-accent) !important;box-shadow:0 0 0 3px rgba(37,99,235,.12) !important}
+
+/* Drawing toolbar (.draw-bar and the iPad .ipad-top) */
+.draw-bar, .ipad-top{
+  background:var(--pro-panel) !important;
+  border-bottom:1px solid var(--pro-border) !important;
+}
+.tb, .tb-action, .it-btn{
+  width:34px !important;
+  height:34px !important;
+  border-radius:var(--pro-radius-sm) !important;
+  border:1px solid transparent !important;
+  background:transparent !important;
+  color:var(--pro-ink-2) !important;
+  padding:0 !important;
+}
+.tb:hover, .tb-action:hover, .it-btn:hover{background:#f3f5f8 !important;color:var(--pro-ink) !important}
+.tb.on, .it-btn.it-on{background:var(--pro-accent-bg) !important;border-color:#c7d2fe !important;color:var(--pro-accent) !important}
+.tb-group, .it-group{background:transparent !important;padding:2px !important;gap:2px !important}
+.tb-sep, .it-sep{background:var(--pro-border) !important}
+.color-btn{border-radius:50% !important;border:2px solid var(--pro-border) !important;box-shadow:none !important}
+.color-btn.act{box-shadow:0 0 0 2px var(--pro-accent) !important;border-color:#fff !important}
+.width-btn{border:1px solid var(--pro-border) !important;background:transparent !important;border-radius:var(--pro-radius-sm) !important}
+.width-btn.act{border-color:var(--pro-accent) !important;background:var(--pro-accent-bg) !important}
+
+/* iPad collapsible sidebar (FORMATION/DEFENSE/HASH/QUICK TEXT) */
+.ipad-side{background:#1a1d23 !important;border-right:1px solid rgba(255,255,255,.06) !important}
+.is-label{
+  font-family:var(--pro-font) !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+  letter-spacing:0.05em !important;
+  text-transform:uppercase !important;
+  color:#fff !important;
+  background:rgba(255,255,255,.05) !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  border-radius:var(--pro-radius-sm) !important;
+  box-shadow:none !important;
+  min-height:32px !important;
+  padding:6px 12px !important;
+}
+.is-label:hover, .is-label.is-toggle:hover{background:rgba(255,255,255,.1) !important}
+.is-section.is-collapsed .is-label{background:rgba(255,255,255,.03) !important;color:rgba(255,255,255,.6) !important}
+.is-btn{
+  background:rgba(255,255,255,.05) !important;
+  color:#fff !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  font-weight:500 !important;
+  min-height:32px !important;
+  padding:5px 8px !important;
+  font-size:12px !important;
+}
+.is-btn:hover{background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.2) !important;color:#fff !important}
+.is-btn.is-on{background:var(--pro-accent) !important;border-color:var(--pro-accent) !important;color:#fff !important}
+
+/* Player popup */
+.player-popup{
+  background:var(--pro-panel) !important;
+  border:1px solid var(--pro-border) !important;
+  border-radius:var(--pro-radius) !important;
+  box-shadow:var(--pro-shadow) !important;
+  font-family:var(--pro-font) !important;
+}
+.pp-cat, .pp-btn{
+  font-family:var(--pro-font) !important;
+  font-size:12px !important;
+  font-weight:500 !important;
+  border-radius:var(--pro-radius-sm) !important;
+  border:1px solid var(--pro-border) !important;
+  background:#fff !important;
+  color:var(--pro-ink) !important;
+  box-shadow:none !important;
+  padding:5px 10px !important;
+}
+.pp-cat:hover, .pp-btn:hover{background:#f3f5f8 !important;border-color:var(--pro-border-strong) !important;color:var(--pro-ink) !important}
+.pp-cat.act, .pp-btn.act{background:var(--pro-accent) !important;border-color:var(--pro-accent) !important;color:#fff !important}
+
+/* Demo banner — clean amber */
+.demo-banner{
+  background:#fef3c7 !important;
+  color:#78350f !important;
+  font-family:var(--pro-font) !important;
+  font-weight:500 !important;
+  font-size:13px !important;
+  letter-spacing:0 !important;
+  border-bottom:1px solid #fde68a !important;
+}
+.demo-banner button{
+  background:#1a1d23 !important;
+  color:#fff !important;
+  border-radius:var(--pro-radius-sm) !important;
+  padding:5px 12px !important;
+  font-size:12px !important;
+  font-family:var(--pro-font) !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+  border:none !important;
+}
+
+/* Modals (Help, Reports, Playbooks, Branding, Share, Auth) */
+#brandingModal>div, #playbooksModal>div, #reportsModal>div, #helpModal>div, #shareModal>div, #auth-screen .auth-card{
+  background:var(--pro-panel) !important;
+  border:1px solid var(--pro-border) !important;
+  border-radius:8px !important;
+  box-shadow:var(--pro-shadow-lg) !important;
+  padding:24px !important;
+  color:var(--pro-ink) !important;
+  font-family:var(--pro-font) !important;
+}
+#brandingModal>div>div>span, #playbooksModal>div>div>span, #reportsModal>div>div>span, #helpModal>div>div>span, #shareModal>div>div>span{
+  font-family:var(--pro-font) !important;
+  font-size:18px !important;
+  font-weight:600 !important;
+  color:var(--pro-ink) !important;
+}
+#helpModal>div div[style*="text-transform:uppercase"]{
+  font-family:var(--pro-font) !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+  letter-spacing:0.05em !important;
+  color:var(--pro-ink-3) !important;
+  border-bottom:1px solid var(--pro-border) !important;
+}
+#brandingModal p, #playbooksModal p, #reportsModal p, #helpModal p, #shareModal p,
+#helpModal>div div[style*="font-size:13px"]{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  line-height:1.5 !important;
+  color:var(--pro-ink-2) !important;
+  letter-spacing:0 !important;
+}
+#brandingModal button, #playbooksModal button, #reportsModal button, #helpModal button, #shareModal button{
+  font-family:var(--pro-font) !important;
+  font-size:13px !important;
+  border-radius:var(--pro-radius-sm) !important;
+  border:1px solid var(--pro-border) !important;
+  background:#fff !important;
+  color:var(--pro-ink) !important;
+  box-shadow:none !important;
+  padding:6px 12px !important;
+}
+#brandingModal button[id*="Save"], #brandingModal button[id*="Submit"],
+#playbooksModal button[id*="Upload"],
+#reportsModal button[id*="Upload"],
+#shareModal button[id*="Confirm"], #shareModal #shareConfirmBtn,
+#auth-screen button.auth-btn{
+  background:var(--pro-accent) !important;
+  color:#fff !important;
+  border-color:var(--pro-accent) !important;
+}
+
+/* Landing page — clean professional pivot too */
+#landing-page{background:var(--pro-bg) !important}
+.lp-nav{background:var(--pro-panel) !important;border-bottom:1px solid var(--pro-border) !important}
+.lp-hero h1, .lp-features h2, .lp-how h2, .lp-compare h2, .lp-cta h2, .lp-cred h2, .lp-ipad h2{
+  font-family:var(--pro-font) !important;
+  color:var(--pro-ink) !important;
+  font-weight:700 !important;
+  letter-spacing:-0.02em !important;
+}
+.lp-hero p, .lp-step h3, .lp-step p, .lp-fcard h3, .lp-fcard p, .lp-cred p, .lp-cta p, .lp-ipad-sub, .lp-ipad-point{
+  font-family:var(--pro-font) !important;
+  color:var(--pro-ink-2) !important;
+  letter-spacing:0 !important;
+}
+.lp-fcard{
+  background:var(--pro-panel) !important;
+  border:1px solid var(--pro-border) !important;
+  border-radius:8px !important;
+  box-shadow:var(--pro-shadow-sm) !important;
+  padding:24px !important;
+}
+.lp-fcard:hover{box-shadow:var(--pro-shadow) !important;border-color:var(--pro-border-strong) !important}
+.lp-fcard-icon{background:var(--pro-accent) !important;border:none !important;border-radius:6px !important;box-shadow:none !important}
+.lp-step-num{background:var(--pro-accent) !important;border:none !important;box-shadow:none !important}
+.lp-table{border:1px solid var(--pro-border) !important;border-radius:8px !important;box-shadow:none !important}
+.lp-table th{background:#f6f7f9 !important;color:var(--pro-ink) !important;font-family:var(--pro-font) !important;font-size:13px !important;font-weight:600 !important;letter-spacing:0 !important}
+.lp-table th:last-child{color:var(--pro-accent) !important}
+.lp-table td{color:var(--pro-ink-2) !important;font-family:var(--pro-font) !important;font-size:13px !important}
+.lp-cred{background:var(--pro-bg) !important;border-top:1px solid var(--pro-border) !important;border-bottom:1px solid var(--pro-border) !important}
+.lp-cta{background:var(--pro-panel) !important}
+.lp-footer{background:#1a1d23 !important;border-top:none !important}
+.lp-ipad{background:var(--pro-panel) !important;border-top:1px solid var(--pro-border) !important;border-bottom:1px solid var(--pro-border) !important}
+.lp-ipad-point{background:#fff !important;border:1px solid var(--pro-border) !important;border-radius:8px !important;box-shadow:var(--pro-shadow-sm) !important}
+.lp-ipad-point b, #helpModal b, #brandingModal b, #playbooksModal b, #reportsModal b, #shareModal b{
+  font-family:var(--pro-font) !important;
+  font-weight:600 !important;
+  color:var(--pro-ink) !important;
+  font-size:inherit !important;
+}
+.lp-ipad-check{background:var(--pro-accent) !important;border:none !important;box-shadow:none !important}
+.lp-ipad-badge{background:var(--pro-accent) !important;border:none !important;box-shadow:none !important;transform:none !important;letter-spacing:0.02em !important;font-weight:600 !important}
+
+/* Field area background — soft neutral so the play card stands out */
+.field-wrap{background:var(--pro-bg) !important}
+.field-col{background:var(--pro-bg) !important}
+
+/* The play card SVG itself is intentionally NOT styled here — players, routes, field marks,
+   yard numbers, hand-drawn lines all keep their existing look. */
+
+/* =================================================================================
+   END PROFESSIONAL CHROME OVERRIDE
+   ================================================================================= */
 </style>
 </head>
 <body>
