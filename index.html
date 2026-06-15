@@ -1185,8 +1185,10 @@ select:focus{
 }
 .pp-cats{position:absolute;left:0;top:0;width:0;height:0}
 .pp-cat{
-  /* Match the bottom dock's tool buttons: rounded square, white surface, soft shadow.
-     Each button is still positioned radially around the player via CSS vars --rx / --ry. */
+  /* Visual language matched to the bottom .draw-bar dock — same surface, border,
+     and active treatment as .tb-action, so the popup feels like a piece of the dock
+     wrapped around the player. Positioned radially via CSS vars --rx / --ry.
+     !important needed to override the hand-drawn design system's pencil border + accent. */
   position:absolute;
   left:0;
   top:0;
@@ -1197,41 +1199,59 @@ select:focus{
   align-items:center;
   justify-content:center;
   padding:0;
-  font-size:10px;
-  font-weight:700;
+  font-size:10px !important;
+  font-weight:700 !important;
   letter-spacing:0.02em;
   text-transform:uppercase;
-  background:#fdfcfa;
-  border:1px solid rgba(32,32,31,0.08);
-  border-radius:12px;
-  box-shadow:0 6px 16px rgba(0,0,0,0.12),0 1px 3px rgba(0,0,0,0.06);
+  background:rgba(255,255,255,.98) !important;
+  border:1px solid rgba(32,32,31,.12) !important;
+  border-radius:16px !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08) !important;
+  backdrop-filter:blur(14px);
   cursor:pointer;
-  color:#1a1a1a;
-  font-family:inherit;
-  transition:transform 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  color:#20201f !important;
+  font-family:'JetBrains Mono',monospace !important;
+  transition:transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
   touch-action:manipulation;
-  transform:translate(var(--rx),var(--ry));
+  transform:translate(var(--rx),var(--ry)) !important;
 }
 .pp-cat:hover{
-  background:#ffffff;
-  color:#000;
-  border-color:rgba(32,32,31,0.16);
-  transform:translate(var(--rx),var(--ry)) scale(1.06);
-  box-shadow:0 8px 20px rgba(0,0,0,0.15),0 2px 4px rgba(0,0,0,0.08);
+  background:#f2f2f1 !important;
+  color:#111 !important;
+  border-color:rgba(32,32,31,.16) !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08) !important;
+  transform:translate(var(--rx),var(--ry)) scale(1.06) !important;
 }
 .pp-cat.act{
-  background:#ede4ff;
-  color:#7c3aed;
-  border-color:rgba(139,92,246,0.32);
-  box-shadow:0 6px 16px rgba(139,92,246,0.22),0 1px 3px rgba(0,0,0,0.06);
+  background:#ede4ff !important;
+  color:#8b5cf6 !important;
+  border-color:rgba(139,92,246,.28) !important;
 }
-.pp-input{width:48px;padding:5px 6px;font-size:11px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit;text-align:center}
-.pp-color{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.1);cursor:pointer;padding:0;transition:.1s;touch-action:manipulation}
+.pp-input{width:48px;padding:6px 8px;font-size:12px;border:1px solid rgba(58,58,56,.15);border-radius:10px;font-family:inherit;text-align:center}
+.pp-color{width:24px;height:24px;border-radius:50%;border:2px solid rgba(58,58,56,.1);cursor:pointer;padding:0;transition:.1s;touch-action:manipulation}
 .pp-color.act{border-color:#8b5cf6;outline:2px solid rgba(139,92,246,.24);outline-offset:1px}
 .pp-color:active{transform:scale(.9)}
-.pp-btn{padding:5px 8px;font-size:10px;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:4px;cursor:pointer;font-weight:600;color:#3A3A38;font-family:inherit;transition:.1s;touch-action:manipulation}
-.pp-btn:hover{background:#f2f2f1;color:#111;border-color:rgba(32,32,31,.16)}
-.pp-btn.act{background:#ede4ff;color:#8b5cf6;border-color:rgba(139,92,246,.28)}
+.pp-btn{
+  /* Mirror .tb-action so sub-popup buttons share the dock's vocabulary. The .pp-sub
+     pill is the white container; pp-btn sits transparent inside it like a dock button.
+     !important needed to override the hand-drawn design system above. */
+  min-width:36px;
+  padding:8px 12px !important;
+  font-size:12px !important;
+  background:transparent !important;
+  border:1px solid transparent !important;
+  border-radius:12px !important;
+  cursor:pointer;
+  font-weight:600 !important;
+  color:#20201f !important;
+  font-family:'JetBrains Mono',monospace !important;
+  box-shadow:none !important;
+  transition:.12s;
+  touch-action:manipulation;
+  transform:none !important;
+}
+.pp-btn:hover{background:#f2f2f1 !important;color:#111 !important;border-color:rgba(32,32,31,.12) !important;box-shadow:none !important;transform:none !important}
+.pp-btn.act{background:#ede4ff !important;color:#8b5cf6 !important;border-color:rgba(139,92,246,.28) !important}
 .pp-sep{width:1px;height:20px;background:rgba(58,58,56,.15);margin:0 2px;flex-shrink:0}
 
 .shade-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(58,58,56,.2);background:#fff;color:#3A3A38;font-weight:600;transition:.12s;flex:1;text-align:center;touch-action:manipulation}
