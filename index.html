@@ -4621,7 +4621,7 @@ function render(){
           var curLstyle=rs.style||'solid';
           var curLwidth=rs.width||'med';
           var curLend=rs.end||'arrow';
-          var styleOpts=[['solid','—'],['dashed','--'],['dotted','···']];
+          var styleOpts=[['solid','—'],['dashed','--']];
           for(var sli=0;sli<styleOpts.length;sli++){
             var sv2=styleOpts[sli][0],sn2=styleOpts[sli][1];
             h+='<button class="pp-btn'+(curLstyle===sv2?' act':'')+'" data-pp-line="style:'+sv2+'" title="Style: '+sv2+'">'+sn2+'</button>';
