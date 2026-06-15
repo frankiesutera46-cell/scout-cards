@@ -4497,15 +4497,11 @@ function render(){
     h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action'});
     h+=dockButton({id:'btnExportPDF',title:'Export PDF',icon:'pdf',data:{'dock-break':'before'}});
     h+=dockButton({id:'btnExportPNG',title:'Export PNG',icon:'image'});
-    h+=dockButton({title:'Print 2-up Grid',icon:'grid2',data:{'grid-export':'2','dock-action':'grid2'}});
-    h+=dockButton({title:'Print 4-up Grid',icon:'grid4',data:{'grid-export':'4','dock-action':'grid4'}});
-    h+=dockButton({title:'Print 6-up Grid',icon:'grid6',data:{'grid-export':'6','dock-action':'grid6'}});
     h+=dockButton({id:'btnReports',title:'Scouting Reports',icon:'report',badge:getScoutReports().length?getScoutReports().length:'',data:{'dock-break':'before'}});
     h+=dockButton({id:'btnPlaybooks',title:'Playbooks',icon:'book',badge:userPlaybooks.length?userPlaybooks.length:''});
     h+=dockButton({id:'btnBranding',title:'Team Branding',icon:'team'});
     if(appMode==='playdesign')h+=dockButton({title:'Saved Plays',icon:'book',badge:savedPlays.length?savedPlays.length:'',data:{'open-saved-plays':'1','dock-action':'saved-plays'}});
-    h+=dockButton({id:'btnScript',title:scriptMode?'Exit Practice Script':'Practice Script',icon:'whistle',on:scriptMode,data:{'dock-break':'before'}});
-    h+=dockButton({id:'btnSv',title:'Save',icon:'save'});
+    h+=dockButton({id:'btnSv',title:'Save',icon:'save',data:{'dock-break':'before'}});
     h+=dockButton({id:'btnLd',title:'Load',icon:'load'});
     h+=dockButton({id:'btnHelp',title:'Help',icon:'help'});
     h+='</div>';
