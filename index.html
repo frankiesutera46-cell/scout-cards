@@ -2075,16 +2075,29 @@ function loadGamesFromData(d){
 function loadFromCloud(){
   if(!supabase||!currentUser)return;
   supabase.from('cards').select('*').eq('user_id',currentUser.id).limit(1).then(function(res){
-    if(res.data&&res.data.length>0){
+    if(res.error){
+      console.warn('Cloud load failed:',res.error);
+      ensureRenderableData();
+      render();
+    }else if(res.data&&res.data.length>0){
       loadGamesFromData(res.data[0].cards_data);
+      ensureRenderableData();
       render();
     }else{
       // No cloud data — try loading from localStorage as migration
+      var loadedLocal=false;
       try{
         var r=localStorage.getItem(lsKey('scoutCards2'));
-        if(r){loadGamesFromData(JSON.parse(r));render();saveToCloud()}
-      }catch(e){}
+        if(r){loadGamesFromData(JSON.parse(r));loadedLocal=true}
+      }catch(e){console.warn('Local data load failed:',e)}
+      ensureRenderableData();
+      render();
+      if(loadedLocal)saveToCloud();
     }
+  }).catch(function(err){
+    console.warn('Cloud load crashed:',err);
+    ensureRenderableData();
+    render();
   });
 }
 
@@ -2096,6 +2109,27 @@ function buildSavePayload(){
   else{games[activeGameIdx].cards=cards}
   games[activeGameIdx].name=gameTitle;
   return{games:games,activeGame:activeGameIdx};
+}
+
+function ensureRenderableData(){
+  if(!Array.isArray(games)||!games.length){
+    games=[mkGame('Week 1')];
+    activeGameIdx=0;
+  }
+  if(activeGameIdx<0||activeGameIdx>=games.length)activeGameIdx=0;
+  var game=games[activeGameIdx]||(games[activeGameIdx]=mkGame('Week 1'));
+  if(!game.name)game.name='Week '+(activeGameIdx+1);
+  if(!Array.isArray(game.cards)||!game.cards.length)game.cards=[mkCard()];
+  if(!Array.isArray(game.playDesigns))game.playDesigns=[];
+  if(!Array.isArray(game.scoutReports))game.scoutReports=[];
+  if(appMode==='playdesign'){
+    if(!game.playDesigns.length)game.playDesigns=[mkPlayCard()];
+    cards=game.playDesigns;
+  }else{
+    cards=game.cards;
+  }
+  gameTitle=game.name;
+  activeIdx=Math.max(0,Math.min(activeIdx||0,cards.length-1));
 }
 
 function saveToCloud(){
