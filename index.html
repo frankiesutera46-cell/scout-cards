@@ -2395,14 +2395,17 @@ function buildField(card){
     var numHashRatio=(ftForNums==='nfl')?FIELD_TYPES.nfl.hashRatio:FIELD_TYPES.hs.hashRatio;
     var numLnx=SL+(FIELD_W*numHashRatio)/2;     // midpoint between left sideline and left hash
     var numRnx=SR-(FIELD_W*numHashRatio)/2;     // midpoint between right sideline and right hash
-    var numFsz=36;                              // a touch bigger
-    var numLetterSp=4;                          // breathing room between the two digits
+    var numFsz=44;                              // bigger to match Bebas Neue's narrower glyphs
+    var numLetterSp=1;                          // tight spacing so digits read as one number
+    // Standard football-field number look: Bebas Neue (tall, condensed block sans).
+    var numFont="'Bebas Neue', Impact, 'Arial Narrow', sans-serif";
     function ynum(lbl,lnx,rnx,yy){
       // Left side: rotate +90° → top of digit points LEFT (toward left sideline)
       // Right side: rotate -90° → top of digit points RIGHT (toward right sideline)
+      // dominant-baseline:middle centers the digit ink (better than 'central' for tall fonts).
       var out='';
-      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" opacity="0.55" transform="rotate(90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
-      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central" opacity="0.55" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+lnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="'+numFont+'" font-weight="400" text-anchor="middle" dominant-baseline="middle" opacity="0.55" transform="rotate(90,'+lnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
+      out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="'+numFont+'" font-weight="400" text-anchor="middle" dominant-baseline="middle" opacity="0.55" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
       return out;
     }
     if(usePdYardNums2){
