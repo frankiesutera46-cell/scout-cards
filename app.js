@@ -1853,6 +1853,17 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // Invisible hit-area on top of the route for easier clicking — wider than the visible stroke
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       var ep=pts[pts.length-1];
+      // Reference point the line ARRIVES from at the endpoint. For a bowed last segment this is the
+      // quadratic's control point, so the arrow/cap follows the curve's tangent rather than the
+      // straight chord between the last two waypoints.
+      var endRef=pts.length>=2?pts[pts.length-2]:ep;
+      if(pts.length>=2&&rcurves){
+        var _ls=pts.length-2,_lc=rcurves[_ls];
+        if(_lc){
+          var _lm=routeSegMid(pts[_ls],pts[_ls+1],_lc);
+          endRef={x:2*_lm.x-(pts[_ls].x+pts[_ls+1].x)/2, y:2*_lm.y-(pts[_ls].y+pts[_ls+1].y)/2};
+        }
+      }
       // Custom-route endpoint cap — overrides default arrow/block. Falls back to arrow for normal routes.
       var customEnd=customStyle?customStyle.end:null;
       if(ra==='custom'&&customEnd==='none'){
@@ -1861,7 +1872,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
         routeSvg+='<circle cx="'+ep.x.toFixed(1)+'" cy="'+ep.y.toFixed(1)+'" r="5" fill="'+rt.c+'"/>';
       } else if(ra==='custom'&&customEnd==='block'){
         if(pts.length>=2){
-          var lpB=pts[pts.length-2];
+          var lpB=endRef;
           var angB=Math.atan2(ep.y-lpB.y,ep.x-lpB.x);
           var bpx1=ep.x+7*Math.cos(angB+1.57),bpy1=ep.y+7*Math.sin(angB+1.57);
           var bpx2=ep.x+7*Math.cos(angB-1.57),bpy2=ep.y+7*Math.sin(angB-1.57);
@@ -1870,7 +1881,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       } else if(!isBlk){
         // Default: arrow tip — match the freehand pen's arrow (max(10, sw*4), spread 0.45)
         if(pts.length>=2){
-          var lp=pts[pts.length-2];
+          var lp=endRef;
           var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
           var arrSz=Math.max(10,sw*4);
           var arrSpread=0.45;
@@ -1880,7 +1891,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
         }
       } else {
         if(pts.length>=2){
-          var lp2=pts[pts.length-2];
+          var lp2=endRef;
           var ang2=Math.atan2(ep.y-lp2.y,ep.x-lp2.x);
           if(isPassPro){
             var barW=10;
