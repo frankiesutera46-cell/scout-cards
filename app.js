@@ -522,7 +522,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs'}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs'}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -645,13 +645,13 @@ function deleteSelected(){
     pushUndo();
     for(var msi=0;msi<multiSel.length;msi++){
       var mk=multiSel[msi];var pre=mk.substring(0,2);var pk=mk.substring(2);
-      if(pre==='o_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];}
-      else if(pre==='d_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];}
+      if(pre==='o_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];if(card.routeCurves)delete card.routeCurves[pk];}
+      else if(pre==='d_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];if(card.routeCurves)delete card.routeCurves[pk];}
     }
     multiSel=[];render();return true;
   }
   if(selPlayer&&card.asgn[selPlayer]){
-    pushUndo();delete card.asgn[selPlayer];if(card.routePts)delete card.routePts[selPlayer];render();return true;
+    pushUndo();delete card.asgn[selPlayer];if(card.routePts)delete card.routePts[selPlayer];if(card.routeCurves)delete card.routeCurves[selPlayer];render();return true;
   }
   return false;
 }
@@ -1822,9 +1822,13 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // so the user sees exactly where each waypoint is — smoothing while editing makes it look
       // like one continuous curve, hiding the segment structure.
       var isThisSelTmp=(sel===rk2&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
-      var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom'||isThisSelTmp);
+      // Per-segment curve bows for this player, if any (dragged via the midpoint handle).
+      var _curCard=cards[activeIdx];
+      var rcurves=(_curCard&&_curCard.routeCurves)?_curCard.routeCurves[rk2]:null;
+      var hasCurve=!!(rcurves&&Object.keys(rcurves).length>0);
+      var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom'||isThisSelTmp||hasCurve);
       if(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3){d=smoothPath(drawPts)}
-      else{d='M '+drawPts[0].x+' '+drawPts[0].y;for(var j=1;j<drawPts.length;j++)d+=' L '+drawPts[j].x+' '+drawPts[j].y}
+      else{d=routeSegD(drawPts,hasCurve?rcurves:null)}
       var isPassPro=(ra==='bpass');
       // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
       // width (thin/med/thick), and end-cap (arrow/block/dot/none). Other route types keep their built-in look.
@@ -1985,29 +1989,44 @@ function buildWaypointHandles(card,players){
   var s='';
   // Existing waypoint drag handles (skip index 0 = player position) — only when a route exists
   if(hasRoute){
+    var rcv=card.routeCurves&&card.routeCurves[selPlayer];
+    // Solid waypoint handles — drag to move that point. The LAST one (route end) is drawn a touch
+    // larger as the primary "move the top of the route" anchor, now exposed because the green
+    // draw-anchor is offset past it (below).
     for(var i=1;i<pts.length;i++){
-      s+='<circle cx="'+pts[i].x.toFixed(1)+'" cy="'+pts[i].y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-wp="'+selPlayer+'_'+i+'" style="cursor:grab" opacity="0.9"/>';
+      var isEnd=(i===pts.length-1);
+      s+='<circle cx="'+pts[i].x.toFixed(1)+'" cy="'+pts[i].y.toFixed(1)+'" r="'+(isEnd?6:5)+'" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-wp="'+selPlayer+'_'+i+'" style="cursor:grab" opacity="0.95"/>';
     }
-    // Curve / insert midpoint dots between consecutive waypoints — clicking & dragging splits the
-    // segment into two by inserting a new waypoint at the drag position (phase 2 of CHLK-style draw).
+    // Translucent midpoint handles — DRAG to bow that segment into a curve (stored per-segment in
+    // routeCurves). The handle sits on the curve's bulge so it tracks where the line actually bends.
     for(var j=0;j<pts.length-1;j++){
-      var mx=(pts[j].x+pts[j+1].x)/2;
-      var my=(pts[j].y+pts[j+1].y)/2;
-      s+='<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4" fill="rgba(120,120,120,0.55)" stroke="#fff" stroke-width="1" data-wpadd="'+selPlayer+'_'+j+'" style="cursor:grab" opacity="0.9"/>';
+      var cseg=rcv&&rcv[j];
+      var m=routeSegMid(pts[j],pts[j+1],cseg);
+      s+='<circle cx="'+m.x.toFixed(1)+'" cy="'+m.y.toFixed(1)+'" r="4" fill="rgba(120,120,120,0.55)" stroke="#fff" stroke-width="1" data-wpcurve="'+selPlayer+'_'+j+'" style="cursor:grab" opacity="0.9"/>';
     }
   }
   // === CHLK-style "draw anchor" — bright green dot at the route's end (or at the player if no route).
   // Drag from this dot to add a new segment to the route. Each release moves the anchor to the new endpoint
   // so segments chain naturally. The visible-anchor target gets a transparent wider hit area for easy iPad touch.
-  var anchorX = hasRoute ? pts[pts.length-1].x : pp.x;
-  var anchorY = hasRoute ? pts[pts.length-1].y : pp.y;
-  // If anchor coincides with the player (no route yet), offset it slightly so it doesn't overlap the player tap target
+  var endX = hasRoute ? pts[pts.length-1].x : pp.x;
+  var endY = hasRoute ? pts[pts.length-1].y : pp.y;
+  var anchorX, anchorY;
   if(!hasRoute){
-    anchorY -= 14; // 14px above the player
+    // No route yet — float the anchor just above the player so it doesn't overlap the tap target.
+    anchorX=endX; anchorY=endY-14;
+  } else {
+    // Push the green draw-anchor ~20px PAST the route end (beyond the arrow tip) along the final
+    // segment's direction. This frees up the endpoint so its solid handle can be grabbed to move
+    // the top of the route; a faint dashed stub links the end to the draw-anchor.
+    var pPrev=pts.length>=2?pts[pts.length-2]:{x:endX,y:endY-1};
+    var eang=Math.atan2(endY-pPrev.y,endX-pPrev.x);
+    anchorX=endX+20*Math.cos(eang);
+    anchorY=endY+20*Math.sin(eang);
+    s+='<line x1="'+endX.toFixed(1)+'" y1="'+endY.toFixed(1)+'" x2="'+anchorX.toFixed(1)+'" y2="'+anchorY.toFixed(1)+'" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.7" pointer-events="none"/>';
   }
   var prefix=(selSide==='def')?'d_':'o_';
-  // Wide invisible hit area
-  s+='<circle cx="'+anchorX.toFixed(1)+'" cy="'+anchorY.toFixed(1)+'" r="18" fill="transparent" data-routebuild="'+prefix+selPlayer+'" style="cursor:crosshair"/>';
+  // Invisible hit area — narrowed to 13 so it no longer reaches back over the endpoint move-handle.
+  s+='<circle cx="'+anchorX.toFixed(1)+'" cy="'+anchorY.toFixed(1)+'" r="13" fill="transparent" data-routebuild="'+prefix+selPlayer+'" style="cursor:crosshair"/>';
   // Visible anchor — bright green with a white ring
   s+='<circle cx="'+anchorX.toFixed(1)+'" cy="'+anchorY.toFixed(1)+'" r="7" fill="#22c55e" stroke="#fff" stroke-width="2" data-routebuild="'+prefix+selPlayer+'" style="cursor:crosshair;pointer-events:none"/>';
   return s;
@@ -3222,22 +3241,20 @@ function bind(){
           e.preventDefault();bindDrag();return;
         }
       }
-      // Check for add-waypoint midpoint click
-      var wpAddAttr=tgt2.getAttribute&&tgt2.getAttribute('data-wpadd');
-      if(wpAddAttr){
-        var parts2=wpAddAttr.split('_');
+      // Check for curve-midpoint click — drag bows this segment into a quadratic curve.
+      var wpCurveAttr=tgt2.getAttribute&&tgt2.getAttribute('data-wpcurve');
+      if(wpCurveAttr){
+        var parts2=wpCurveAttr.split('_');
         var segIdx=parseInt(parts2[parts2.length-1]);
         var wpPlayer2=parts2.slice(0,-1).join('_');
         var wpPts2=card.routePts[wpPlayer2];
         if(wpPts2&&wpPts2[segIdx]!==undefined&&wpPts2[segIdx+1]!==undefined){
-          // Insert a new waypoint at the midpoint AND immediately enter drag-mode for it,
-          // so a single drag from the midpoint bends the segment into a curve (CHLK-style).
-          var mx=(wpPts2[segIdx].x+wpPts2[segIdx+1].x)/2;
-          var my=(wpPts2[segIdx].y+wpPts2[segIdx+1].y)/2;
-          var newIdx=segIdx+1;
-          wpPts2.splice(newIdx,0,{x:mx,y:my});
-          var ptMid=svgPoint(svg,e);
-          dragInfo={isWaypoint:true,player:wpPlayer2,wpIdx:newIdx,offX:ptMid.x-mx,offY:ptMid.y-my,moved:false};
+          pushUndo();
+          if(!card.routeCurves)card.routeCurves={};
+          if(!card.routeCurves[wpPlayer2])card.routeCurves[wpPlayer2]={};
+          dragInfo={isCurve:true,player:wpPlayer2,segIdx:segIdx,moved:false};
+          // Capture the pointer so the drag keeps tracking even past overlays / off the handle.
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
           // Don't render() in pointerdown — iPad pointer capture survives only if the SVG target stays alive
         }
         e.preventDefault();return;
@@ -3759,7 +3776,7 @@ function bind(){
     } else {
       // Built-in formation
       card._offPreset=null;
-      card.fk=v;card.asgn={};card.routePts={};
+      card.fk=v;card.asgn={};card.routePts={};card.routeCurves={};
       if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
       selPlayer=null;render();
     }
@@ -3965,7 +3982,7 @@ function bind(){
     btn.addEventListener('click',function(){
       card._offPreset=null;
       card.fk=this.getAttribute('data-isfk');
-      card.asgn={};card.routePts={};
+      card.asgn={};card.routePts={};card.routeCurves={};
       if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
       selPlayer=null;render();
     });
@@ -4038,6 +4055,7 @@ function bind(){
     if(src.lpos)d.lpos=JSON.parse(JSON.stringify(src.lpos));
     if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
     if(src.routePts&&Object.keys(src.routePts).length)d.routePts=JSON.parse(JSON.stringify(src.routePts));
+    if(src.routeCurves&&Object.keys(src.routeCurves).length)d.routeCurves=JSON.parse(JSON.stringify(src.routeCurves));
     var srcTBKey=getCurTBKey();
     if(src[srcTBKey]&&src[srcTBKey].length)d[srcTBKey]=JSON.parse(JSON.stringify(src[srcTBKey]));
     if(src.tags&&src.tags.length)d.tags=src.tags.slice();
@@ -4066,6 +4084,8 @@ function bind(){
     if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
     // Mirror route waypoints
     if(src.routePts&&Object.keys(src.routePts).length){d.routePts=JSON.parse(JSON.stringify(src.routePts));var rks=Object.keys(d.routePts);for(var ri=0;ri<rks.length;ri++){var rp=d.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x=CX+(CX-rp[rpi].x)}}}}
+    // Mirror route curves — x-reflection keeps the tangential offset (a) but flips perpendicular (b)
+    if(src.routeCurves&&Object.keys(src.routeCurves).length){d.routeCurves=JSON.parse(JSON.stringify(src.routeCurves));var cks=Object.keys(d.routeCurves);for(var ci=0;ci<cks.length;ci++){var segs=d.routeCurves[cks[ci]];for(var sk in segs){if(segs.hasOwnProperty(sk))segs[sk].b=-segs[sk].b}}}
     // Mirror text boxes
     var dfTBKey=getCurTBKey();
     if(src[dfTBKey]&&src[dfTBKey].length){d[dfTBKey]=JSON.parse(JSON.stringify(src[dfTBKey]));for(var ti=0;ti<d[dfTBKey].length;ti++){d[dfTBKey][ti].x=CX+(CX-d[dfTBKey][ti].x)}}
@@ -5079,15 +5099,34 @@ function bindDrag(){
         // Update handle position directly
         var wpEl=svg.querySelector('[data-wp="'+dragInfo.player+'_'+dragInfo.wpIdx+'"]');
         if(wpEl){wpEl.setAttribute('cx',nx);wpEl.setAttribute('cy',ny)}
-        // Update route path (visible) AND the wider invisible hit-area path so they stay in sync
+        // Update route path (visible) AND the wider invisible hit-area path so they stay in sync.
+        // Use routeSegD so any curved segments keep their bow while a waypoint is dragged.
         var routeEl=svg.querySelector('[data-route="'+dragInfo.player+'"]');
         if(routeEl&&wpPts.length>=2){
-          var d='M '+wpPts[0].x.toFixed(1)+' '+wpPts[0].y.toFixed(1);
-          for(var wi=1;wi<wpPts.length;wi++){d+=' L '+wpPts[wi].x.toFixed(1)+' '+wpPts[wi].y.toFixed(1)}
+          var d=routeSegD(wpPts,card.routeCurves&&card.routeCurves[dragInfo.player]);
           routeEl.setAttribute('d',d);
           var hitEl=svg.querySelector('[data-routehit="'+(selSide==='def'?'d_':'o_')+dragInfo.player+'"]');
           if(hitEl)hitEl.setAttribute('d',d);
         }
+      }
+      return;
+    }
+
+    // Curve drag — bow a segment by moving its midpoint handle (the drag pos is the through-point).
+    if(dragInfo.isCurve){
+      dragInfo.moved=true;
+      var cvPts=card.routePts[dragInfo.player];
+      if(cvPts&&cvPts[dragInfo.segIdx]&&cvPts[dragInfo.segIdx+1]){
+        if(!card.routeCurves)card.routeCurves={};
+        if(!card.routeCurves[dragInfo.player])card.routeCurves[dragInfo.player]={};
+        card.routeCurves[dragInfo.player][dragInfo.segIdx]=routeSegDecompose(cvPts[dragInfo.segIdx],cvPts[dragInfo.segIdx+1],nx,ny);
+        var dcv=routeSegD(cvPts,card.routeCurves[dragInfo.player]);
+        var routeElC=svg.querySelector('[data-route="'+dragInfo.player+'"]');
+        if(routeElC)routeElC.setAttribute('d',dcv);
+        var hitElC=svg.querySelector('[data-routehit="'+(selSide==='def'?'d_':'o_')+dragInfo.player+'"]');
+        if(hitElC)hitElC.setAttribute('d',dcv);
+        var cvEl=svg.querySelector('[data-wpcurve="'+dragInfo.player+'_'+dragInfo.segIdx+'"]');
+        if(cvEl){cvEl.setAttribute('cx',nx.toFixed(1));cvEl.setAttribute('cy',ny.toFixed(1));}
       }
       return;
     }
@@ -5395,6 +5434,48 @@ function smoothPath(pts){
     var cp2x=p2.x-(p3.x-p1.x)/6;
     var cp2y=p2.y-(p3.y-p1.y)/6;
     d+=' C '+cp1x.toFixed(1)+' '+cp1y.toFixed(1)+', '+cp2x.toFixed(1)+' '+cp2y.toFixed(1)+', '+p2.x.toFixed(1)+' '+p2.y.toFixed(1);
+  }
+  return d;
+}
+
+// ===== PER-SEGMENT ROUTE CURVES =====
+// A route segment (pts[j] -> pts[j+1]) can be bowed into a quadratic curve by dragging its
+// midpoint handle. The bow is stored in card.routeCurves[player][j] as {a,b} — the drag
+// offset from the segment midpoint, expressed in the segment's own frame as fractions of its
+// length (a = tangential, b = perpendicular). Storing it relative to the segment means the
+// curve rotates/scales naturally when either endpoint moves.
+
+// The curve passes through this point at t=0.5 (the "through-point" where the handle sits).
+function routeSegMid(p0,p1,c){
+  var mx=(p0.x+p1.x)/2,my=(p0.y+p1.y)/2;
+  if(!c)return{x:mx,y:my};
+  var vx=p1.x-p0.x,vy=p1.y-p0.y;var L=Math.sqrt(vx*vx+vy*vy)||1;
+  var ux=vx/L,uy=vy/L,nx=-uy,ny=ux;
+  return{x:mx+ux*c.a*L+nx*c.b*L, y:my+uy*c.a*L+ny*c.b*L};
+}
+// Decompose a desired through-point M (drag position) into {a,b} for the given segment.
+function routeSegDecompose(p0,p1,Mx,My){
+  var mx=(p0.x+p1.x)/2,my=(p0.y+p1.y)/2;
+  var vx=p1.x-p0.x,vy=p1.y-p0.y;var L=Math.sqrt(vx*vx+vy*vy)||1;
+  var ux=vx/L,uy=vy/L,nx=-uy,ny=ux;
+  var ox=Mx-mx,oy=My-my;
+  return{a:(ox*ux+oy*uy)/L, b:(ox*nx+oy*ny)/L};
+}
+// Build an SVG path for a polyline, drawing curved segments as quadratics where a curve exists.
+// curves is an optional map {segIdx:{a,b}}. With no curves it returns the original straight path.
+function routeSegD(pts,curves){
+  if(!pts||pts.length<2)return '';
+  var d='M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+  for(var i=1;i<pts.length;i++){
+    var c=curves&&curves[i-1];
+    if(c){
+      var p0=pts[i-1],p1=pts[i];
+      var M=routeSegMid(p0,p1,c);
+      var Cx=2*M.x-(p0.x+p1.x)/2, Cy=2*M.y-(p0.y+p1.y)/2;
+      d+=' Q '+Cx.toFixed(1)+' '+Cy.toFixed(1)+' '+p1.x.toFixed(1)+' '+p1.y.toFixed(1);
+    } else {
+      d+=' L '+pts[i].x.toFixed(1)+' '+pts[i].y.toFixed(1);
+    }
   }
   return d;
 }
