@@ -534,9 +534,9 @@ var cards=games[0].cards;
 var activeIdx=0;
 var selPlayer=null;
 var popupCat=null; // active category in floating player popup (label/color/shade/route/block)
-// Player-popup presentation A/B: 'classic' (radial bubbles, default), 'popover' (tethered card),
-// 'dock' (fixed bottom bar). Set via ?ui=popover / ?ui=dock (persisted per-device in localStorage).
-var popupUI='classic';
+// Player-popup presentation: 'dock' (fixed bottom bar, default/chosen), 'popover' (tethered card),
+// 'classic' (original radial bubbles). Override via ?ui=classic / ?ui=popover (persisted per-device).
+var popupUI='dock';
 (function(){try{
   var u=new URLSearchParams(location.search).get('ui');
   if(u==='popover'||u==='dock'||u==='classic'){popupUI=u;localStorage.setItem('popupUI',u);}
