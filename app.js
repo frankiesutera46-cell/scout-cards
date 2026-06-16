@@ -1860,6 +1860,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var baseSw=isBlk?2.5:2;
       if(customStyle){
         baseSw=customStyle.width==='thin'?1.5:customStyle.width==='thick'?4:2.5;
+      } else if(ra==='custom'){
+        baseSw=2.5; // hand-drawn (green-anchor) routes default to medium thickness, matching the Line popup default
       }
       var sw=baseSw+(isThisSel?1.5:0);
       // (route + hit paths are rendered below, after the end-trim is computed so the visible stroke
