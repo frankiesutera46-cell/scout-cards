@@ -1827,7 +1827,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var rcurves=(_curCard&&_curCard.routeCurves)?_curCard.routeCurves[rk2]:null;
       var hasCurve=!!(rcurves&&Object.keys(rcurves).length>0);
       var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom'||isThisSelTmp||hasCurve);
-      if(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3){d=smoothPath(drawPts)}
+      var usedSmooth=(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3);
+      if(usedSmooth){d=smoothPath(drawPts)}
       else{d=routeSegD(drawPts,hasCurve?rcurves:null)}
       var isPassPro=(ra==='bpass');
       // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
@@ -1849,9 +1850,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
         baseSw=customStyle.width==='thin'?1.5:customStyle.width==='thick'?4:2.5;
       }
       var sw=baseSw+(isThisSel?1.5:0);
-      routeSvg+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
-      // Invisible hit-area on top of the route for easier clicking — wider than the visible stroke
-      routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
+      // (route + hit paths are rendered below, after the end-trim is computed so the visible stroke
+      //  can be pulled back under the arrow/bar cap)
       var ep=pts[pts.length-1];
       // Reference point the line ARRIVES from at the endpoint. For a bowed last segment this is the
       // quadratic's control point, so the arrow/cap follows the curve's tangent rather than the
@@ -1866,6 +1866,24 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       }
       // Custom-route endpoint cap — overrides default arrow/block. Falls back to arrow for normal routes.
       var customEnd=customStyle?customStyle.end:null;
+      // End-trim: pull the VISIBLE stroke back from the true endpoint so its round cap tucks under the
+      // arrow head / end bar instead of poking past it. The cap art still anchors at the real ep, and
+      // the (full-length) hit path is unaffected so the tip stays clickable.
+      var endTrim=0;
+      if(isBlk||(ra==='custom'&&customEnd==='block')){endTrim=Math.max(1.5,sw*0.7);}      // end bar
+      else if(ra==='custom'&&(customEnd==='none'||customEnd==='dot')){endTrim=0;}          // no cap / dot
+      else{endTrim=Math.max(8,sw*4)*0.8;}                                                   // arrow head
+      var dDraw=d;
+      if(endTrim>0&&!usedSmooth&&pts.length>=2){
+        var _tdx=ep.x-endRef.x,_tdy=ep.y-endRef.y,_tdl=Math.sqrt(_tdx*_tdx+_tdy*_tdy)||1;
+        if(_tdl>endTrim+0.5){
+          var epDraw={x:ep.x-endTrim*_tdx/_tdl, y:ep.y-endTrim*_tdy/_tdl};
+          dDraw=routeSegD(drawPts,hasCurve?rcurves:null,epDraw);
+        }
+      }
+      routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
+      // Invisible hit-area uses the full-length path so clicking near the tip still selects the route.
+      routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       if(ra==='custom'&&customEnd==='none'){
         // no endpoint marker
       } else if(ra==='custom'&&customEnd==='dot'){
@@ -5474,18 +5492,22 @@ function routeSegDecompose(p0,p1,Mx,My){
 }
 // Build an SVG path for a polyline, drawing curved segments as quadratics where a curve exists.
 // curves is an optional map {segIdx:{a,b}}. With no curves it returns the original straight path.
-function routeSegD(pts,curves){
+// endOverride (optional): draw the LAST segment to this point instead of pts[last] — used to pull
+// the stroke back under an arrow/bar cap. The curve control is still derived from the real points,
+// so the bow shape is preserved; only the very end is trimmed.
+function routeSegD(pts,curves,endOverride){
   if(!pts||pts.length<2)return '';
   var d='M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
   for(var i=1;i<pts.length;i++){
     var c=curves&&curves[i-1];
+    var ept=(endOverride&&i===pts.length-1)?endOverride:pts[i];
     if(c){
       var p0=pts[i-1],p1=pts[i];
       var M=routeSegMid(p0,p1,c);
       var Cx=2*M.x-(p0.x+p1.x)/2, Cy=2*M.y-(p0.y+p1.y)/2;
-      d+=' Q '+Cx.toFixed(1)+' '+Cy.toFixed(1)+' '+p1.x.toFixed(1)+' '+p1.y.toFixed(1);
+      d+=' Q '+Cx.toFixed(1)+' '+Cy.toFixed(1)+' '+ept.x.toFixed(1)+' '+ept.y.toFixed(1);
     } else {
-      d+=' L '+pts[i].x.toFixed(1)+' '+pts[i].y.toFixed(1);
+      d+=' L '+ept.x.toFixed(1)+' '+ept.y.toFixed(1);
     }
   }
   return d;
