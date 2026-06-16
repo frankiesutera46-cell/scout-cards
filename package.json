@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html dist/index.html && (cp -r public/* dist/ 2>/dev/null || true) && (cp *.png *.svg dist/ 2>/dev/null || true)"
+    "build": "rm -rf dist && mkdir -p dist && cp index.html styles.css app.js dist/ && (cp -r public/* dist/ 2>/dev/null || true) && (cp *.png *.svg dist/ 2>/dev/null || true)"
   }
 }
