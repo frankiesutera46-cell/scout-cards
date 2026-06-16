@@ -534,6 +534,14 @@ var cards=games[0].cards;
 var activeIdx=0;
 var selPlayer=null;
 var popupCat=null; // active category in floating player popup (label/color/shade/route/block)
+// Player-popup presentation A/B: 'classic' (radial bubbles, default), 'popover' (tethered card),
+// 'dock' (fixed bottom bar). Set via ?ui=popover / ?ui=dock (persisted per-device in localStorage).
+var popupUI='classic';
+(function(){try{
+  var u=new URLSearchParams(location.search).get('ui');
+  if(u==='popover'||u==='dock'||u==='classic'){popupUI=u;localStorage.setItem('popupUI',u);}
+  else{var s=localStorage.getItem('popupUI');if(s==='popover'||s==='dock'||s==='classic')popupUI=s;}
+}catch(_){}})();
 var selLabel=null;
 var selSide='off';
 var gameTitle='Week 1';
@@ -2856,10 +2864,13 @@ function render(){
       // style/width/end the same way the freehand draw tool does.
       var ppHasCustom=card.asgn[selPlayer]==='custom';
       if(ppHasCustom)cats.push(['line','Line']);
-      h+='<div class="player-popup" id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'">';
-      // Sub-options row (only when a category is active)
+      // Player context popup — three presentation modes (popupUI): 'classic' (radial bubbles +
+      // detached tray, original), 'popover' (one tethered card), 'dock' (fixed bottom bar). All three
+      // reuse the same data-pp-* buttons, so the event handlers below are shared across modes.
+      // Capture the active category's option buttons into a string so each shell can place them.
+      var subInner='';
       if(popupCat){
-        h+='<div class="pp-sub">';
+        var _ppHSave=h; h='';
         if(popupCat==='label'){
           h+='<input class="pp-input" id="ppLabel" type="text" placeholder="Number / label" maxlength="4" value="'+esc(ppCl)+'" style="width:140px"/>';
         } else if(popupCat==='color'){
@@ -2919,19 +2930,30 @@ function render(){
             h+='<button class="pp-btn'+(curLend===ev?' act':'')+'" data-pp-line="end:'+ev+'" title="End: '+ev+'">'+en+'</button>';
           }
         }
-        h+='</div>';
+        subInner=h; h=_ppHSave;
       }
-      // Category row
-      h+='<div class="pp-cats">';
+      // Category buttons — shared data-pp-cat. Rendered radially (classic) or as a horizontal tab
+      // strip (popover/dock). Build both; the shell below picks one.
+      var catsRadial='',tabsRow='';
       for(var ci=0;ci<cats.length;ci++){
         var cat=cats[ci][0],cn=cats[ci][1];
+        var catGlyph={label:'Lbl',color:'Clr',shade:'Shd',route:'Rte',block:'Blk',line:'Line'}[cat]||cn.substring(0,3);
         var catAngle=(35+((cats.length===1?55:(110*ci/(cats.length-1)))))*Math.PI/180;
         var catRadius=58;
-        var catGlyph={label:'Lbl',color:'Clr',shade:'Shd',route:'Rte',block:'Blk',line:'Line'}[cat]||cn.substring(0,3);
-        h+='<button class="pp-cat'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'" style="--rx:'+(Math.cos(catAngle)*catRadius).toFixed(1)+'px;--ry:'+(Math.sin(catAngle)*catRadius).toFixed(1)+'px">'+catGlyph+'</button>';
+        catsRadial+='<button class="pp-cat'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'" style="--rx:'+(Math.cos(catAngle)*catRadius).toFixed(1)+'px;--ry:'+(Math.sin(catAngle)*catRadius).toFixed(1)+'px">'+catGlyph+'</button>';
+        tabsRow+='<button class="pp-tab'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'">'+catGlyph+'</button>';
       }
-      h+='</div>';
-      h+='</div>';
+      var ppData='id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'"';
+      if(popupUI==='popover'){
+        // #2 — one tethered card: tab strip on top, options below, with a tail pointing at the player.
+        h+='<div class="player-popup pp-mode-pop" '+ppData+'><div class="pp-card" id="ppCard"><span class="pp-tail" id="ppTail"></span><div class="pp-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="pp-opts">'+subInner+'</div>':'')+'</div></div>';
+      } else if(popupUI==='dock'){
+        // #4 — fixed bottom bar (dock-style): same tabs + options, always in the same spot.
+        h+='<div class="pp-dock" '+ppData+'><div class="pp-dock-inner"><div class="pp-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="pp-opts">'+subInner+'</div>':'')+'</div></div>';
+      } else {
+        // classic — original radial bubbles + detached tray.
+        h+='<div class="player-popup" '+ppData+'>'+(popupCat?'<div class="pp-sub">'+subInner+'</div>':'')+'<div class="pp-cats">'+catsRadial+'</div></div>';
+      }
     }
   }
   h+='</div>';
@@ -3464,7 +3486,8 @@ function bind(){
   if(pPop){
     var svgEl=document.getElementById('fSvg');
     var fwEl=document.querySelector('.field-wrap');
-    if(svgEl&&fwEl){
+    // The dock mode is position:fixed at the bottom — it must NOT be coordinate-positioned.
+    if(svgEl&&fwEl&&popupUI!=='dock'){
       try{
         var ctm=svgEl.getScreenCTM();
         var fwR=fwEl.getBoundingClientRect();
@@ -3476,13 +3499,34 @@ function bind(){
           // Position relative to field-wrap (which has position:relative)
           var lx=sx-fwR.left;
           var ly=sy-fwR.top;
-          // Anchor the radial selector on the selected field object, with enough room
-          // for the orbiting action buttons and the upward detail tray.
           pPop.style.visibility='hidden';
-          var finalX=Math.max(82,Math.min(fwR.width-82,lx));
-          var finalY=Math.max(132,Math.min(fwR.height-92,ly));
-          pPop.style.left=finalX+'px';
-          pPop.style.top=finalY+'px';
+          if(popupUI==='popover'){
+            // Anchor on the player (light clamp), then place the tethered card around it: below by
+            // default, flipped above when there's no room, and shifted horizontally to stay on-field
+            // while the tail slides to keep pointing at the player.
+            var finalX=Math.max(10,Math.min(fwR.width-10,lx));
+            var finalY=Math.max(10,Math.min(fwR.height-10,ly));
+            pPop.style.left=finalX+'px';
+            pPop.style.top=finalY+'px';
+            var card=document.getElementById('ppCard'),tail=document.getElementById('ppTail');
+            if(card){
+              var cr=card.getBoundingClientRect();
+              var cardW=cr.width||260,cardH=cr.height||90,gap=16;
+              var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
+              card.style.top=(flipUp?-(gap+cardH):gap)+'px';
+              var centeredLeft=finalX-cardW/2;
+              var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
+              card.style.left=(clampedLeft-finalX)+'px';
+              card.classList.toggle('pp-card--up',flipUp);
+              if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
+            }
+          } else {
+            // classic radial — keep the original clamp that reserves room for the orbiting buttons.
+            var finalX=Math.max(82,Math.min(fwR.width-82,lx));
+            var finalY=Math.max(132,Math.min(fwR.height-92,ly));
+            pPop.style.left=finalX+'px';
+            pPop.style.top=finalY+'px';
+          }
           pPop.style.visibility='visible';
         }
       }catch(_){}

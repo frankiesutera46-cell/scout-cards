@@ -1273,6 +1273,36 @@ select:focus{
 .pp-btn.act{background:#ede4ff !important;color:#8b5cf6 !important;border-color:rgba(139,92,246,.28) !important}
 .pp-sep{width:1px;height:20px;background:rgba(58,58,56,.15);margin:0 2px;flex-shrink:0}
 
+/* ===== Player-popup A/B shells (popupUI = popover / dock) ===== */
+/* Shared tab strip (category buttons rendered inline instead of radially). */
+.pp-tabs{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap}
+.pp-tab{min-width:42px;height:30px;padding:0 11px;display:inline-flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;
+  background:#fff;color:#20201f;border:1px solid rgba(32,32,31,.12);border-radius:10px;cursor:pointer;
+  transition:background .12s,color .12s,border-color .12s;touch-action:manipulation}
+.pp-tab:hover{background:#f2f2f1}
+.pp-tab.act{background:#ede4ff;color:#8b5cf6;border-color:rgba(139,92,246,.28)}
+/* Shared options row (reuses .pp-btn / .pp-color / .pp-input children). */
+.pp-opts{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap;
+  margin-top:8px;padding-top:8px;border-top:1px solid rgba(32,32,31,.10)}
+
+/* #2 Tethered popover — one card; JS sets card left/top + tail position and the --up flip class. */
+.pp-card{position:absolute;left:0;top:16px;display:flex;flex-direction:column;align-items:stretch;
+  padding:8px;background:rgba(255,255,255,.98);border:1px solid rgba(32,32,31,.12);border-radius:16px;
+  box-shadow:0 14px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);backdrop-filter:blur(14px);
+  width:max-content;max-width:300px;font-family:'JetBrains Mono',monospace}
+.pp-tail{position:absolute;left:50%;margin-left:-6px;width:12px;height:12px;background:rgba(255,255,255,.98);
+  transform:rotate(45deg);top:-7px;border-left:1px solid rgba(32,32,31,.12);border-top:1px solid rgba(32,32,31,.12)}
+.pp-card--up .pp-tail{top:auto;bottom:-7px;border-left:none;border-top:none;
+  border-right:1px solid rgba(32,32,31,.12);border-bottom:1px solid rgba(32,32,31,.12)}
+
+/* #4 Dock — fixed bar centered just above the bottom draw dock (which sits at bottom:22px). */
+.pp-dock{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:7601;
+  pointer-events:auto;font-family:'JetBrains Mono',monospace}
+.pp-dock-inner{display:flex;flex-direction:column;align-items:center;padding:8px 12px;
+  background:rgba(255,255,255,.98);border:1px solid rgba(32,32,31,.12);border-radius:18px;
+  box-shadow:0 14px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);backdrop-filter:blur(14px);max-width:94vw}
+
 .shade-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(58,58,56,.2);background:#fff;color:#3A3A38;font-weight:600;transition:.12s;flex:1;text-align:center;touch-action:manipulation}
 .shade-btn:hover{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
 .shade-btn.shade-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
