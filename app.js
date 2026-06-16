@@ -5674,6 +5674,30 @@ function svgToCanvas(svgStr, w, h){
   });
 }
 
+// ===== NATIVE SHARE SHEET (iPad/iOS: AirDrop / Messages / Mail) — graceful fallback everywhere =====
+// Share a URL via the OS share sheet. Resolves false if unsupported or the user/OS declines, so the
+// caller can fall back to copy-link. Never throws.
+function shareLinkNative(url,title,text){
+  if(!navigator.share)return Promise.resolve(false);
+  return navigator.share({title:title||'Juice Box Football',text:text||'',url:url})
+    .then(function(){return true}).catch(function(){return false});
+}
+// Share a canvas as a PNG file via the OS share sheet (so a coach can AirDrop/Message/Mail the actual
+// card image). Resolves false when file-sharing isn't supported (e.g. desktop) so the caller downloads.
+function sharePngFileNative(canvas,name,title){
+  return new Promise(function(resolve){
+    if(!navigator.share||!navigator.canShare||!canvas.toBlob){resolve(false);return}
+    try{
+      canvas.toBlob(function(blob){
+        if(!blob){resolve(false);return}
+        var file=new File([blob],name,{type:'image/png'});
+        if(!navigator.canShare({files:[file]})){resolve(false);return}
+        navigator.share({files:[file],title:title||name}).then(function(){resolve(true)}).catch(function(){resolve(false)});
+      },'image/png');
+    }catch(_){resolve(false)}
+  });
+}
+
 async function exportPNG(){
   // Export current card as PNG
   var card = cards[activeIdx];
@@ -5681,8 +5705,12 @@ async function exportPNG(){
   var svgStr = buildFullSVG(card,isPD);
   var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
   if(!canvas){alert('Export failed');return}
+  var name = (card.play||'card_'+(activeIdx+1)).replace(/[^a-zA-Z0-9]/g,'_')+'.png';
+  // On iPad/iOS, hand the image straight to the native share sheet (AirDrop / Messages / Mail /
+  // Save to Files all live there). Everywhere else this returns false and we download as before.
+  if(await sharePngFileNative(canvas,name,card.play||'Scout card'))return;
   var link = document.createElement('a');
-  link.download = (card.play||'card_'+(activeIdx+1)).replace(/[^a-zA-Z0-9]/g,'_')+'.png';
+  link.download = name;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
@@ -6091,9 +6119,14 @@ function shareToPlayers(){
 
       var shareUrl='https://juiceboxfootball.cc?share='+res.data.id;
       var isUpdate=!!existingShareId;
-      try{navigator.clipboard.writeText(shareUrl)}catch(e){}
       m.remove();
-      prompt(isUpdate?'Share link updated! Same link still works:':'Share link copied! Send this to your players:',shareUrl);
+      // Native share sheet (text / AirDrop / Mail) when available; else copy the link + show it.
+      var shareTitle=(teamBranding&&teamBranding.teamName?teamBranding.teamName+' — ':'')+gameTitle;
+      var shared=await shareLinkNative(shareUrl,shareTitle,'Scout cards: '+gameTitle);
+      if(!shared){
+        try{navigator.clipboard.writeText(shareUrl)}catch(e){}
+        prompt(isUpdate?'Share link updated! Same link still works:':'Share link copied! Send this to your players:',shareUrl);
+      }
     }catch(err){
       alert('Share error: '+err.message);
       btn.disabled=false;btn.textContent='CREATE SHARE LINK';
