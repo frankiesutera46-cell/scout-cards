@@ -1799,6 +1799,10 @@ function playerColor(side){
   return '#666';
 }
 
+// Default route end-cap by player role: linemen (OL/Center) block, so their hand-drawn lines default
+// to the block bar; everyone else defaults to an arrow. The per-route end picker can still override.
+function defaultRouteEnd(side){return (side==='ol'||side==='c')?'block':'arrow';}
+
 function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,renderRoutes,dirDown,playerNotes){
   var s='';var routeSvg='';var keys=Object.keys(players);
   var cl=customLabels||{};
@@ -1874,13 +1878,17 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       }
       // Custom-route endpoint cap — overrides default arrow/block. Falls back to arrow for normal routes.
       var customEnd=customStyle?customStyle.end:null;
+      // Effective end-cap for a hand-drawn route: an explicit style wins; otherwise default by role —
+      // linemen (OL/C) get the block bar, everyone else gets an arrow.
+      var effEnd=customEnd;
+      if(ra==='custom'&&!effEnd)effEnd=defaultRouteEnd(rp.side);
       // End-trim: pull the VISIBLE stroke back from the true endpoint so its round cap tucks under the
       // arrow head / end bar instead of poking past it. The cap art still anchors at the real ep, and
       // the (full-length) hit path is unaffected so the tip stays clickable.
       var endTrim=0;
-      if(isBlk||(ra==='custom'&&customEnd==='block')){endTrim=Math.max(1.5,sw*0.7);}      // end bar
-      else if(ra==='custom'&&(customEnd==='none'||customEnd==='dot')){endTrim=0;}          // no cap / dot
-      else{endTrim=Math.max(8,sw*4)*0.8;}                                                   // arrow head
+      if(isBlk||(ra==='custom'&&effEnd==='block')){endTrim=Math.max(1.5,sw*0.7);}      // end bar
+      else if(ra==='custom'&&(effEnd==='none'||effEnd==='dot')){endTrim=0;}            // no cap / dot
+      else{endTrim=Math.max(8,sw*4)*0.8;}                                              // arrow head
       var dDraw=d;
       if(endTrim>0&&!usedSmooth&&pts.length>=2){
         var _tdx=ep.x-endRef.x,_tdy=ep.y-endRef.y,_tdl=Math.sqrt(_tdx*_tdx+_tdy*_tdy)||1;
@@ -1892,11 +1900,11 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
       // Invisible hit-area uses the full-length path so clicking near the tip still selects the route.
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
-      if(ra==='custom'&&customEnd==='none'){
+      if(ra==='custom'&&effEnd==='none'){
         // no endpoint marker
-      } else if(ra==='custom'&&customEnd==='dot'){
+      } else if(ra==='custom'&&effEnd==='dot'){
         routeSvg+='<circle cx="'+ep.x.toFixed(1)+'" cy="'+ep.y.toFixed(1)+'" r="5" fill="'+rt.c+'"/>';
-      } else if(ra==='custom'&&customEnd==='block'){
+      } else if(ra==='custom'&&effEnd==='block'){
         if(pts.length>=2){
           var lpB=endRef;
           var angB=Math.atan2(ep.y-lpB.y,ep.x-lpB.x);
@@ -2911,7 +2919,7 @@ function render(){
           var rs=(card.routeStyle&&card.routeStyle[selPlayer])||{};
           var curLstyle=rs.style||'solid';
           var curLwidth=rs.width||'med';
-          var curLend=rs.end||'arrow';
+          var curLend=rs.end||(ppIsOl?'block':'arrow');
           var styleOpts=[['solid','—'],['dashed','--']];
           for(var sli=0;sli<styleOpts.length;sli++){
             var sv2=styleOpts[sli][0],sn2=styleOpts[sli][1];
@@ -3580,7 +3588,12 @@ function bind(){
         var kv=this.getAttribute('data-pp-line').split(':');
         var key=kv[0],val=kv[1];
         if(!card.routeStyle)card.routeStyle={};
-        if(!card.routeStyle[selPlayer])card.routeStyle[selPlayer]={style:'solid',width:'med',end:'arrow'};
+        if(!card.routeStyle[selPlayer]){
+          // Seed with the role-aware default end so changing another option (e.g. width) on a lineman
+          // doesn't silently flip its block bar to an arrow.
+          var _lpl=(selSide==='def'?getCurDefPlayers(card):getCurOffPlayers(card))[selPlayer];
+          card.routeStyle[selPlayer]={style:'solid',width:'med',end:defaultRouteEnd(_lpl&&_lpl.side)};
+        }
         card.routeStyle[selPlayer][key]=val;
         render();
       });
