@@ -1327,6 +1327,18 @@ function getCurTBKey(){
   return viewPerspective==='off'?'textBoxesOff':'textBoxes';
 }
 function getCurTB(card){var k=getCurTBKey();if(!card[k])card[k]=[];return card[k]}
+// Clone a text box (offset slightly) and select the copy. Used by the on-canvas duplicate handle
+// and the inspector's Duplicate button — gives iPad a touch way to duplicate text.
+function duplicateTextBox(idx){
+  var tbs=getCurTB(cards[activeIdx]);
+  if(!tbs||idx==null||!tbs[idx])return;
+  pushUndo();
+  var clone=JSON.parse(JSON.stringify(tbs[idx]));
+  clone.x=(clone.x||0)+16;clone.y=(clone.y||0)+16;
+  tbs.push(clone);
+  selTextBox=tbs.length-1;selPlayer=null;selLine=null;selLabel=null;
+  render();
+}
 
 // ===== SVG FIELD =====
 // Hash positions (stored globally for use in formation offsets)
@@ -1819,10 +1831,11 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var pts=(rpm[rk2]&&rpm[rk2].length>=2)?rpm[rk2]:routePath(ra,rp.x,rp.y,isRight,dirDown);
       if(pts.length<2)continue;
       var isMot=rt.t==='motion',isBlk=rt.t==='block';
-      // Offset start point to edge of player circle (radius=11 for offense, skip for defense text)
+      // Offset the start point off the player so the line doesn't begin inside the marker —
+      // r=11 clears the offensive circle; r=13 clears the defender's letter (defense is text-only).
       var drawPts=pts;
-      if(!isDef&&pts.length>=2){
-        var r0=11;
+      if(pts.length>=2){
+        var r0=isDef?13:11;
         var ang0=Math.atan2(pts[1].y-pts[0].y,pts[1].x-pts[0].x);
         drawPts=[{x:pts[0].x+r0*Math.cos(ang0),y:pts[0].y+r0*Math.sin(ang0)}];
         for(var dp0=1;dp0<pts.length;dp0++)drawPts.push(pts[dp0]);
@@ -2106,9 +2119,15 @@ function buildTextBoxes(card){
     s+='</text>';
     if(isSel){
       var hx=bx+bw+6,hy=by+bh+6;
-      // Larger handle + invisible hit area for easier iPad touch
+      // Resize handle (bottom-right) — larger invisible hit area for easier iPad touch
       s+='<rect x="'+(hx-12)+'" y="'+(hy-12)+'" width="24" height="24" fill="transparent" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize"/>';
       s+='<rect x="'+(hx-6)+'" y="'+(hy-6)+'" width="12" height="12" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" rx="2" data-dp="rsz_tb_'+i+'" style="cursor:nwse-resize;pointer-events:none"/>';
+      // Duplicate handle (top-right) — tap to clone this text box. Big hit area for finger/Pencil.
+      var dux=bx+bw+6,duy=by-6;
+      s+='<rect x="'+(dux-15)+'" y="'+(duy-15)+'" width="30" height="30" fill="transparent" data-tbdup="'+i+'" style="cursor:copy"/>';
+      s+='<circle cx="'+dux+'" cy="'+duy+'" r="9.5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-tbdup="'+i+'" style="cursor:copy;pointer-events:none"/>';
+      s+='<rect x="'+(dux-1)+'" y="'+(duy-5)+'" width="6" height="7" rx="1.2" fill="none" stroke="#fff" stroke-width="1.2" pointer-events="none"/>';
+      s+='<rect x="'+(dux-5)+'" y="'+(duy-1)+'" width="6" height="7" rx="1.2" fill="#1A3C2B" stroke="#fff" stroke-width="1.2" pointer-events="none"/>';
     }
   }
   return s;
@@ -2979,6 +2998,7 @@ function render(){
   if(selTextBox!==null&&curTBs&&curTBs[selTextBox]){
     var stb=curTBs[selTextBox];
     h+='<div class="sel-hdr"><span style="color:#3b82f6">Text Box</span>';
+    h+='<button class="clr-btn" id="btnDupTB" style="margin-right:6px">Duplicate</button>';
     h+='<button class="clr-btn" id="btnDelTB">Delete</button></div>';
     h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Color</label>';
     h+='<select id="tbColorSel" style="width:100%">';
@@ -3318,6 +3338,12 @@ function bind(){
           try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
           // Don't render() in pointerdown — iPad pointer capture survives only if the SVG target stays alive
         }
+        e.preventDefault();return;
+      }
+      // Duplicate-text-box handle (tap to clone) — check before the plain text-box select below.
+      var tbDup=tgt2.getAttribute&&tgt2.getAttribute('data-tbdup');
+      if(tbDup!==null&&tbDup!==undefined){
+        duplicateTextBox(parseInt(tbDup));
         e.preventDefault();return;
       }
       // Check for text box click
@@ -4922,7 +4948,9 @@ function bind(){
     this.value='';
   });
 
-  // === TEXT BOX: delete from right panel ===
+  // === TEXT BOX: duplicate / delete from right panel ===
+  var btnDupTB=document.getElementById('btnDupTB');
+  if(btnDupTB)btnDupTB.addEventListener('click',function(){if(selTextBox!==null)duplicateTextBox(selTextBox)});
   var btnDelTB=document.getElementById('btnDelTB');
   if(btnDelTB)btnDelTB.addEventListener('click',function(){
     var delTBs=getCurTB(card);
@@ -5478,6 +5506,31 @@ function bindDrag(){
     }
     if(dragInfo){dragInfo=null;render()}
   };
+
+  svg.onpointercancel=function(e){
+    // iPad fires pointercancel on system interruptions — palm rejection, edge / Control-Center swipes,
+    // Pencil double-tap, or the screen dimming/sleeping mid-touch. Without handling it, currentLine /
+    // dragInfo stay stuck and the canvas stops reading touches. Release any capture, discard the
+    // in-progress interaction, and re-render to rebind clean handlers.
+    try{if(e&&e.pointerId!==undefined&&svg.releasePointerCapture)svg.releasePointerCapture(e.pointerId)}catch(_){}
+    var dirty=!!(currentLine||dragInfo||marquee);
+    currentLine=null;dragInfo=null;marquee=null;
+    var mp=document.getElementById('marqueePreview');if(mp)mp.remove();
+    var rbp=document.getElementById('routeBuildPreview');if(rbp)rbp.remove();
+    if(dirty)render();
+  };
+
+  // One-time: when the iPad wakes / the app returns to the foreground, clear any stuck pointer state
+  // and re-render so the canvas reads touches again (covers "screen timed out and won't read touch").
+  if(!window.__jbfVisBound){
+    window.__jbfVisBound=true;
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='visible'){
+        currentLine=null;dragInfo=null;marquee=null;
+        try{render()}catch(_){}
+      }
+    });
+  }
 
   // Legacy touch handlers removed — pointer events handle iPad/Pencil drawing now and respect pointerType
   // (finger touches are filtered out of draw mode by the pointerdown handler above)
