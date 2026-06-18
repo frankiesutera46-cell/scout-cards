@@ -3138,6 +3138,18 @@ function bind(){
       // Release iPad's implicit pointer capture on the touch target — otherwise after render()
       // destroys the target element, subsequent pointermove events go nowhere and drag is broken
       try{if(e.target&&e.target.releasePointerCapture&&e.pointerId!==undefined)e.target.releasePointerCapture(e.pointerId)}catch(_){}
+      try{if(svg.hasPointerCapture&&e.pointerId!==undefined&&svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId)}catch(_){}
+      // RECOVERY (iPad "touch stops working after a few edits"): a fresh primary press means any
+      // leftover drag / marquee / draw state is stale — a previous gesture ended without cleaning up
+      // (an interrupted render mid-drag, a lost pointerup, palm rejection, etc.). Left set, a stuck
+      // `marquee` makes every later move a no-op selection and a stuck `dragInfo` swallows the next
+      // gesture — which reads as "the canvas froze." Clear it here so this press starts clean and the
+      // canvas self-heals; the branches below re-establish whatever this gesture actually needs.
+      if(e.isPrimary!==false&&(dragInfo||marquee||currentLine)){
+        dragInfo=null;marquee=null;currentLine=null;
+        var _mpp=document.getElementById('marqueePreview');if(_mpp)_mpp.remove();
+        var _rbp=document.getElementById('routeBuildPreview');if(_rbp)_rbp.remove();
+      }
       // If an inline editor is open, close it on any click on the field
       var activeEditor=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
       if(activeEditor){activeEditor.blur();e.preventDefault();return}
@@ -5579,6 +5591,26 @@ function bindDrag(){
         try{render()}catch(_){}
       }
     });
+  }
+
+  // One-time safety net: a window-level pointerup that runs AFTER the canvas's own pointerup. On a
+  // normal gesture the canvas handler has already committed and cleared, so this is a no-op. But if a
+  // gesture's pointerup never reached the canvas (the SVG was re-rendered mid-drag, or the finger/
+  // Pencil lifted off-canvas), this clears the leftover drag/marquee/draw state so the canvas isn't
+  // wedged for the next press. The deferral lets the real handler win first.
+  if(!window.__jbfPtrSafety){
+    window.__jbfPtrSafety=true;
+    var ptrSafetyClear=function(){
+      setTimeout(function(){
+        if(dragInfo||marquee||currentLine){
+          dragInfo=null;marquee=null;currentLine=null;
+          var mpS=document.getElementById('marqueePreview');if(mpS)mpS.remove();
+          var rbS=document.getElementById('routeBuildPreview');if(rbS)rbS.remove();
+        }
+      },0);
+    };
+    window.addEventListener('pointerup',ptrSafetyClear,true);
+    window.addEventListener('pointercancel',ptrSafetyClear,true);
   }
 
   // Legacy touch handlers removed — pointer events handle iPad/Pencil drawing now and respect pointerType
