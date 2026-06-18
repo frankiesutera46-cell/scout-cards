@@ -651,12 +651,17 @@ function deleteSelected(){
   }
   if(typeof multiSel!=='undefined'&&multiSel.length){
     pushUndo();
+    var delLineIdx=[],delTbIdx=[];
     for(var msi=0;msi<multiSel.length;msi++){
-      var mk=multiSel[msi];var pre=mk.substring(0,2);var pk=mk.substring(2);
-      if(pre==='o_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];if(card.routeCurves)delete card.routeCurves[pk];}
-      else if(pre==='d_'){delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];if(card.routeCurves)delete card.routeCurves[pk];}
+      var mk=multiSel[msi];var pre=mk.substring(0,2);
+      if(pre==='o_'||pre==='d_'){var pk=mk.substring(2);delete card.asgn[pk];if(card.routePts)delete card.routePts[pk];if(card.routeCurves)delete card.routeCurves[pk];}
+      else if(mk.charAt(0)==='L')delLineIdx.push(parseInt(mk.substring(2)));
+      else if(mk.charAt(0)==='B')delTbIdx.push(parseInt(mk.substring(2)));
     }
-    multiSel=[];render();return true;
+    // Splice highest index first so earlier removals don't shift the ones still to delete.
+    if(delLineIdx.length){var lnsD=getCurLines(card);delLineIdx.sort(function(a,b){return b-a}).forEach(function(ix){if(lnsD[ix]!==undefined)lnsD.splice(ix,1)});}
+    if(delTbIdx.length){var tbsD=getCurTB(card);delTbIdx.sort(function(a,b){return b-a}).forEach(function(ix){if(tbsD[ix]!==undefined)tbsD.splice(ix,1)});}
+    multiSel=[];selLine=null;selTextBox=null;render();return true;
   }
   if(selPlayer&&card.asgn[selPlayer]){
     pushUndo();delete card.asgn[selPlayer];if(card.routePts)delete card.routePts[selPlayer];if(card.routeCurves)delete card.routeCurves[selPlayer];render();return true;
@@ -1710,7 +1715,7 @@ function buildDrawnLines(lines){
     var ln=lines[li];
     // Shape entries (circle/rect)
     if(ln.shape){
-      var isSel=(selLine===li);
+      var isSel=(selLine===li)||(typeof multiSel!=='undefined'&&multiSel.indexOf('L_'+li)>=0);
       var sw=ln.width||2;
       if(ln.shape==='circle'){
         var cx3=(ln.x1+ln.x2)/2,cy3=(ln.y1+ln.y2)/2;
@@ -1748,7 +1753,7 @@ function buildDrawnLines(lines){
     var dLineShort='M '+drawPts[0].x.toFixed(1)+' '+drawPts[0].y.toFixed(1);
     for(var pi2=1;pi2<drawPts.length;pi2++){dLineShort+=' L '+drawPts[pi2].x.toFixed(1)+' '+drawPts[pi2].y.toFixed(1)}
     var d=isArrow?(isCurved?smoothPath(drawPts):dLineShort):(isCurved?smoothPath(ln.pts):dLine);
-    var isSel=(selLine===li);
+    var isSel=(selLine===li)||(typeof multiSel!=='undefined'&&multiSel.indexOf('L_'+li)>=0);
     var dash=(ln.dashed||ln.style==='dashed')?' stroke-dasharray="8,5"':'';
     // Wider invisible hit area for clicking to select (always straight for hit testing)
     s+='<path d="'+dLine+'" fill="none" stroke="transparent" stroke-width="'+(Math.max(10,ln.width+8))+'" data-linesel="'+li+'" style="cursor:pointer"/>';
@@ -2100,7 +2105,7 @@ function buildTextBoxes(card){
   for(var i=0;i<tbs.length;i++){
     var tb=tbs[i];
     if(!tb.text)continue;
-    var isSel=(selTextBox===i);
+    var isSel=(selTextBox===i)||(typeof multiSel!=='undefined'&&multiSel.indexOf('B_'+i)>=0);
     var col=tb.color||'#222';
     var sz=tb.size||12;
     var lines=tb.text.split('\n');
@@ -3241,7 +3246,7 @@ function bind(){
       }
       // Click line/shape to select or drag-move it
       var lineSelAttr=e.target.getAttribute&&e.target.getAttribute('data-linesel');
-      if(lineSelAttr!==null&&lineSelAttr!==undefined&&!drawMode&&!eraserMode&&!shapeMode){
+      if(lineSelAttr!==null&&lineSelAttr!==undefined&&!drawMode&&!eraserMode&&!shapeMode&&!selectMode){
         var clickedIdx=parseInt(lineSelAttr);
         var pt=svgPoint(svg,e);
         if(selLine===clickedIdx){
@@ -3253,27 +3258,33 @@ function bind(){
         selLine=clickedIdx;selPlayer=null;selTextBox=null;
         render();e.preventDefault();return;
       }
-      // Box-select mode — start marquee on empty area, or set up group drag / toggle on player tap
+      // Box-select mode — start marquee on empty area, or toggle / group-drag on tapping any item
+      // (player, drawn line/shape, or text box).
       if(selectMode){
+        var msKey=null;
         var msTarget=findPlayerEl(e.target);
-        if(msTarget){
-          var msDp=msTarget.getAttribute('data-dp');
-          if(msDp&&msDp.indexOf('rsz_')!==0&&msDp.indexOf('t_')!==0){
-            var inMs=multiSel.indexOf(msDp)>=0;
-            // If player is already in the multi-selection, set up a potential group drag.
-            // pointerup with no movement will toggle them out instead.
-            if(inMs&&multiSel.length>1){
-              var pt=svgPoint(svg,e);
-              pushUndo();
-              dragInfo={isGroup:true,lastX:pt.x,lastY:pt.y,moved:false,tapToggleDp:msDp};
-              e.preventDefault();
-              return;
-            }
-            // Not in multi-sel yet — toggle immediately so user sees the selection grow
+        if(msTarget){var msDp=msTarget.getAttribute('data-dp');if(msDp&&msDp.indexOf('rsz_')!==0&&msDp.indexOf('t_')!==0)msKey=msDp;}
+        if(msKey===null&&e.target&&e.target.getAttribute){
+          var lAttr=e.target.getAttribute('data-linesel');if(lAttr===null)lAttr=e.target.getAttribute('data-line');
+          if(lAttr!==null&&lAttr!==undefined)msKey='L_'+lAttr;
+        }
+        if(msKey===null&&e.target&&e.target.getAttribute){
+          var bAttr=e.target.getAttribute('data-tb');if(bAttr!==null&&bAttr!==undefined)msKey='B_'+bAttr;
+        }
+        if(msKey!==null){
+          var inMs=multiSel.indexOf(msKey)>=0;
+          // Already selected → set up a group drag (a tap with no move toggles it out on pointerup).
+          if(inMs&&multiSel.length>1){
+            var pt=svgPoint(svg,e);
             pushUndo();
-            if(inMs)multiSel.splice(multiSel.indexOf(msDp),1);else multiSel.push(msDp);
-            render();e.preventDefault();return;
+            dragInfo={isGroup:true,lastX:pt.x,lastY:pt.y,moved:false,tapToggleDp:msKey};
+            e.preventDefault();
+            return;
           }
+          // Not selected yet — toggle immediately so the selection visibly grows.
+          pushUndo();
+          if(inMs)multiSel.splice(multiSel.indexOf(msKey),1);else multiSel.push(msKey);
+          render();e.preventDefault();return;
         }
         // Empty area — start marquee
         var mPt=svgPoint(svg,e);
@@ -5085,11 +5096,39 @@ function bindDrag(){
     var pt=svgPoint(svg,e);
     var card=cards[activeIdx];
 
-    // Group drag — move every multiSel player by the same delta
+    // Group drag — move every multiSel item by the same delta
     if(dragInfo.isGroup){
       var gdx=pt.x-dragInfo.lastX,gdy=pt.y-dragInfo.lastY;
       if(gdx===0&&gdy===0)return;
-      dragInfo.lastX=pt.x;dragInfo.lastY=pt.y;
+      dragInfo.lastX=pt.x;dragInfo.lastY=pt.y;dragInfo.moved=true;
+      // Mixed selections (containing drawn lines/shapes or text boxes) shift every item's data and
+      // re-render per move — the same proven pattern as the single line/shape drag. Player-only groups
+      // keep the lighter live-element path below for max smoothness.
+      var gHasNP=false;
+      for(var gnp=0;gnp<multiSel.length;gnp++){var c0=multiSel[gnp].charAt(0);if(c0==='L'||c0==='B'){gHasNP=true;break}}
+      if(gHasNP){
+        for(var gj=0;gj<multiSel.length;gj++){
+          var gk=multiSel[gj],gpfx=gk.charAt(0);
+          if(gpfx==='L'){
+            var lnG=getCurLines(card)[parseInt(gk.substring(2))];
+            if(lnG){if(lnG.shape){lnG.x1+=gdx;lnG.y1+=gdy;lnG.x2+=gdx;lnG.y2+=gdy;}else if(lnG.pts){for(var lq=0;lq<lnG.pts.length;lq++){lnG.pts[lq].x+=gdx;lnG.pts[lq].y+=gdy;}}}
+          }else if(gpfx==='B'){
+            var tbG=getCurTB(card)[parseInt(gk.substring(2))];
+            if(tbG){tbG.x+=gdx;tbG.y+=gdy;}
+          }else{
+            var pIsDef=gk.indexOf('d_')===0,pKey=gk.replace(/^[od]_/,'');
+            var pStore=getCurPosStore(pIsDef),pPool=pIsDef?getCurDefPlayers(card):getCurOffPlayers(card);
+            var pCur=(card[pStore]&&card[pStore][pKey])||pPool[pKey];
+            if(pCur){
+              if(!card[pStore])card[pStore]={};
+              card[pStore][pKey]={x:Math.max(20,Math.min(FW-20,pCur.x+gdx)),y:Math.max(5,Math.min(FH-5,pCur.y+gdy))};
+              if(card.routePts&&card.routePts[pKey]){for(var pr=0;pr<card.routePts[pKey].length;pr++){card.routePts[pKey][pr].x+=gdx;card.routePts[pKey][pr].y+=gdy;}}
+            }
+          }
+        }
+        render();bindDrag();
+        return;
+      }
       for(var gi=0;gi<multiSel.length;gi++){
         var gDp=multiSel[gi];
         var gIsDef=gDp.indexOf('d_')===0;
@@ -5401,6 +5440,16 @@ function bindDrag(){
         function within(pp){return pp.x>=x1&&pp.x<=x2&&pp.y>=y1&&pp.y<=y2}
         Object.keys(oP).forEach(function(k){if(within(oP[k]))newSel.push('o_'+k)});
         Object.keys(dP).forEach(function(k){if(within(dP[k]))newSel.push('d_'+k)});
+        // Also lasso drawn lines/shapes and text boxes so the box grabs everything, not just players.
+        var lnsM=getCurLines(curCard);
+        for(var lmi=0;lmi<lnsM.length;lmi++){
+          var lm=lnsM[lmi],hitM=false;
+          if(lm.shape){if(within({x:(lm.x1+lm.x2)/2,y:(lm.y1+lm.y2)/2})||within({x:lm.x1,y:lm.y1})||within({x:lm.x2,y:lm.y2}))hitM=true;}
+          else if(lm.pts){for(var lpm=0;lpm<lm.pts.length;lpm++){if(within(lm.pts[lpm])){hitM=true;break}}}
+          if(hitM)newSel.push('L_'+lmi);
+        }
+        var tbsM=getCurTB(curCard);
+        for(var tmi=0;tmi<tbsM.length;tmi++){if(tbsM[tmi].text&&within({x:tbsM[tmi].x,y:tbsM[tmi].y}))newSel.push('B_'+tmi);}
         // Replace selection (drag without modifier replaces; tap-on-player adds via pointerdown branch)
         multiSel=newSel;
         render();
