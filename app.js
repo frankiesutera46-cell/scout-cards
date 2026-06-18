@@ -2325,6 +2325,20 @@ function cardSetupHtml(card){
 }
 
 function render(){
+  // Commit any open inline editor BEFORE #app is replaced. Otherwise innerHTML replacement destroys
+  // the focused <input>/<textarea> without firing blur, so finish() never runs and `textMode` stays
+  // stuck true — after which every tap on the field tries to create text instead of selecting or
+  // dragging a player. That is the iPad "frozen, needs reload" lockup. blur() runs finish()
+  // synchronously (which removes the editor, resets textMode, and re-renders with the committed
+  // value), so we abort this pass; if blur didn't commit, tear the editor down so the flag can't stick.
+  try{
+    var _oe=document.querySelector('.inline-edit-multi')||document.querySelector('.inline-edit');
+    if(_oe){
+      _oe.blur();
+      if(!document.body.contains(_oe))return;
+      _oe.remove();_inlineEditActive=false;textMode=false;
+    }
+  }catch(_){}
   try{
   var card=cards[activeIdx];
   var oPlayers=getOffPlayers(card);
