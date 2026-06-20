@@ -678,6 +678,10 @@ var lineMode=false; // straight line click-to-place mode
 var selectMode=false; // box-select tool active
 var multiSel=[]; // array of player keys (prefixed: 'o_X', 'd_T') currently multi-selected
 var marquee=null; // {x1,y1,x2,y2} during drag
+// Pointer id currently captured to the field SVG (marquee/draw/route-build/curve). Tracked so we can
+// release it BEFORE a render() detaches the SVG — otherwise the capture strands on the detached node
+// and iOS routes future touches there, freezing the field while the dock (click-based) still works.
+var _svgCapPid=null;
 var drawColor='#000000';
 var drawWidth=2;
 var drawStyle='curved'; // curved, curvedarrow, curvedblock, dot
@@ -2339,6 +2343,14 @@ function render(){
       _oe.remove();_inlineEditActive=false;textMode=false;
     }
   }catch(_){}
+  // Release any pointer capture the field SVG holds BEFORE we replace #app (which detaches the SVG).
+  // Otherwise the capture strands on the detached node and iOS keeps routing touches there, freezing
+  // the field while the dock still works. This is the "field froze, rest of screen still registered"
+  // lockup, typically after a marquee/route-delete gesture whose pointerup re-rendered.
+  if(_svgCapPid!=null){
+    try{var _csv=document.getElementById('fSvg');if(_csv&&_csv.releasePointerCapture&&(!_csv.hasPointerCapture||_csv.hasPointerCapture(_svgCapPid)))_csv.releasePointerCapture(_svgCapPid);}catch(_){}
+    _svgCapPid=null;
+  }
   try{
   var card=cards[activeIdx];
   var oPlayers=getOffPlayers(card);
@@ -3153,6 +3165,7 @@ function bind(){
       // destroys the target element, subsequent pointermove events go nowhere and drag is broken
       try{if(e.target&&e.target.releasePointerCapture&&e.pointerId!==undefined)e.target.releasePointerCapture(e.pointerId)}catch(_){}
       try{if(svg.hasPointerCapture&&e.pointerId!==undefined&&svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId)}catch(_){}
+      _svgCapPid=null;
       // RECOVERY (iPad "touch stops working after a few edits"): a fresh primary press means any
       // leftover drag / marquee / draw state is stale — a previous gesture ended without cleaning up
       // (an interrupted render mid-drag, a lost pointerup, palm rejection, etc.). Left set, a stuck
@@ -3315,7 +3328,7 @@ function bind(){
         // Empty area — start marquee
         var mPt=svgPoint(svg,e);
         marquee={x1:mPt.x,y1:mPt.y,x2:mPt.x,y2:mPt.y};
-        try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
+        try{if(e.pointerId!==undefined&&svg.setPointerCapture){svg.setPointerCapture(e.pointerId);_svgCapPid=e.pointerId;}}catch(_){}
         e.preventDefault();return;
       }
       // Drawing/eraser mode
@@ -3324,7 +3337,7 @@ function bind(){
           selLine=null;
           var pt=svgPoint(svg,e);
           currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle,dashed:drawDashed};
-          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture){svg.setPointerCapture(e.pointerId);_svgCapPid=e.pointerId;}}catch(_){}
           e.preventDefault();
           return;
         } else if(eraserMode){
@@ -3372,7 +3385,7 @@ function bind(){
           if(!card.routeCurves[wpPlayer2])card.routeCurves[wpPlayer2]={};
           dragInfo={isCurve:true,player:wpPlayer2,segIdx:segIdx,moved:false};
           // Capture the pointer so the drag keeps tracking even past overlays / off the handle.
-          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture){svg.setPointerCapture(e.pointerId);_svgCapPid=e.pointerId;}}catch(_){}
           // Don't render() in pointerdown — iPad pointer capture survives only if the SVG target stays alive
         }
         e.preventDefault();return;
@@ -3420,7 +3433,7 @@ function bind(){
           dragInfo={isRouteBuild:true,player:rbKey,side:rbSide,startX:rbStart.x,startY:rbStart.y,moved:false};
           // Capture the pointer on the SVG so pointermove keeps firing even when the cursor
           // crosses over the player popup or other overlays during the drag.
-          try{if(e.pointerId!==undefined&&svg.setPointerCapture)svg.setPointerCapture(e.pointerId)}catch(_){}
+          try{if(e.pointerId!==undefined&&svg.setPointerCapture){svg.setPointerCapture(e.pointerId);_svgCapPid=e.pointerId;}}catch(_){}
           e.preventDefault();return;
         }
       }
@@ -5588,6 +5601,7 @@ function bindDrag(){
     // dragInfo stay stuck and the canvas stops reading touches. Release any capture, discard the
     // in-progress interaction, and re-render to rebind clean handlers.
     try{if(e&&e.pointerId!==undefined&&svg.releasePointerCapture)svg.releasePointerCapture(e.pointerId)}catch(_){}
+    _svgCapPid=null;
     var dirty=!!(currentLine||dragInfo||marquee);
     currentLine=null;dragInfo=null;marquee=null;
     var mp=document.getElementById('marqueePreview');if(mp)mp.remove();
