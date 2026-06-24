@@ -2870,10 +2870,11 @@ function render(){
 
   // Field SVG
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
-  // width/height attributes give the SVG a definite intrinsic size. Without them, Safari collapses an
-  // SVG that has only a viewBox + CSS width:auto/height:auto/aspect-ratio to zero height (blank field);
-  // the CSS max-width/max-height still scales it responsively.
-  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" width="'+FW+'" height="'+FH+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  // Give the SVG a definite (large, same-ratio) intrinsic size via width/height attributes. Safari
+  // collapses a viewBox-only SVG with CSS width:auto/height:auto/aspect-ratio to zero height (blank
+  // field); the attributes prevent that. They're 4x the viewBox so CSS max-width:100% always scales
+  // them DOWN to fill the container — the field still grows to fill the space, never capped at 720.
+  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" width="'+(FW*4)+'" height="'+(FH*4)+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
