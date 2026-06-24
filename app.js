@@ -2870,7 +2870,10 @@ function render(){
 
   // Field SVG
   var svgClass=drawMode?'drawing':(textMode?'text-mode':((shapeMode||lineMode)?'drawing':''));
-  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  // width/height attributes give the SVG a definite intrinsic size. Without them, Safari collapses an
+  // SVG that has only a viewBox + CSS width:auto/height:auto/aspect-ratio to zero height (blank field);
+  // the CSS max-width/max-height still scales it responsively.
+  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" width="'+FW+'" height="'+FH+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
