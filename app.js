@@ -2147,6 +2147,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
 function dockIcon(name){
   var paths={
+    wand:'<path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/>',
     present:'<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M12 16v4"/><path d="M8 20h8"/><path d="M8.5 12.5l2.5-2.5 2 2 3-4"/>',
     cursor:'<path d="M5 4l14 7-6 2-2 6L5 4z"/>',
     draw:'<path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
@@ -2678,6 +2679,7 @@ function render(){
   h+='<div class="ipad-top">';
   // Tools
   h+='<div class="it-group">';
+  h+='<button class="it-btn" id="itPlayCall" title="Type a Play Call"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/></svg></button>';
   h+='<button class="it-btn'+(selectMode?' it-on':'')+'" data-istool="select" title="Select (box-select)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
   h+='<button class="it-btn'+(drawMode&&!eraserMode?' it-on':'')+'" data-istool="pen" title="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
   h+='<button class="it-btn'+(eraserMode?' it-on':'')+'" data-istool="erase" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
@@ -2792,6 +2794,7 @@ function render(){
     h+='</div>';
     // Group 2: Navigation and drawing tools — kept inline (no radial popup)
     h+='<div class="tb-group" data-dock-key="nav" data-no-radial="1">';
+    h+=dockButton({id:'btnPlayCall',title:'Type a Play Call (/)',icon:'wand'});
     h+='<button class="tb-action'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)" aria-label="Select"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
     h+='<button class="tb-action'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen" aria-label="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
     h+='</div>';
@@ -3747,6 +3750,10 @@ function bind(){
   });
 
   // Draw toolbar buttons
+  var btnPlayCall=document.getElementById('btnPlayCall');
+  if(btnPlayCall)btnPlayCall.addEventListener('click',openPlayCallPalette);
+  var itPlayCall=document.getElementById('itPlayCall');
+  if(itPlayCall)itPlayCall.addEventListener('click',openPlayCallPalette);
   var tbSelect=document.getElementById('tbSelect');
   if(tbSelect)tbSelect.addEventListener('click',function(){
     if(selectMode){selectMode=false}else{selectMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
@@ -6694,6 +6701,333 @@ async function exportScript(){
   win.document.write(html);win.document.close();
 }
 
+// ===== NATURAL-LANGUAGE PLAY CALL (command palette) =====
+// Deterministic parser — no LLM, works offline. Type/dictate "Trips Rt, X go, H flat, Y cross,
+// RB swing, 3rd and 7, left hash" and the card builds itself. Open with '/' or Cmd/Ctrl+K, the
+// wand button in the dock, or the wand in the iPad top bar.
+
+// --- Vocabulary ---
+// Formation base word -> key prefix; combined with an adjacent direction word (R default).
+var PC_FORM_BASE={'trips':'3x1','3x1':'3x1','doubles':'doub','double':'doub','2x2':'doub','deuces':'deuce','trey':'trey','deuce':'deuce','empty':'empty','3x2':'empty'};
+var PC_DIR_L={'left':1,'lt':1,'l':1,'weak':1};
+var PC_DIR_R={'right':1,'rt':1,'r':1,'strong':1};
+// Route aliases [phrase, routeKey] — matched longest-phrase-first, case-insensitive.
+var PC_ROUTE_ALIASES=[
+  ['go','go'],['fade','go'],['streak','go'],['vert','go'],['vertical','go'],['nine','go'],['9','go'],
+  ['post','post'],['skinny post','post'],['skinny','post'],
+  ['corner','corner'],['flag','corner'],
+  ['seam','seam'],['bender','seam'],
+  ['wheel','wheel'],
+  ['dig','dig'],['square in','dig'],['in','dig'],
+  ['out','out'],['speed out','out'],['quick out','out'],
+  ['comeback','comeback'],['come back','comeback'],
+  ['slant','slant'],
+  ['over','over'],['cross','over'],['crosser','over'],['deep cross','over'],
+  ['hitch','hitch'],['curl','hitch'],['stop','hitch'],['hook','hitch'],
+  ['flat','flat'],
+  ['screen','screen'],['bubble','screen'],['bubble screen','screen'],['tunnel','screen'],['tunnel screen','screen'],
+  ['drag','drag'],['shallow','drag'],['shallow cross','drag'],
+  ['arrow','arrow'],['angle','arrow'],
+  ['swing','swing'],['check','swing'],['checkdown','swing'],['check release','swing'],['flare','swing'],
+  ['inside zone','riz'],['iz','riz'],['zone','riz'],
+  ['outside zone','roz'],['oz','roz'],['wide zone','roz'],['stretch','roz'],
+  ['power','rpwr'],['counter','rctr'],['draw','rdraw'],
+  ['sweep','rswp'],['jet sweep','rswp'],['end around','rswp'],
+  ['pass pro','bpass'],['pass protection','bpass'],['block','bpass'],['protect','bpass'],['stay in','bpass'],
+  ['drive','bdrive'],['drive block','bdrive'],['pull','bpull'],['reach','breach'],
+  ['motion left','motl'],['mot left','motl'],['motion right','motr'],['mot right','motr'],
+  ['jet left','jetl'],['jet right','jetr']
+];
+// Built per-parse so user custom routes (cr_*) join by their display name.
+function pcRouteTable(){
+  var t=PC_ROUTE_ALIASES.slice();
+  var ks=Object.keys(ROUTES);
+  for(var i=0;i<ks.length;i++){
+    if(ks[i].indexOf('cr_')===0&&ROUTES[ks[i]].n)t.push([String(ROUTES[ks[i]].n).toLowerCase(),ks[i]]);
+  }
+  t.sort(function(a,b){return b[0].length-a[0].length});
+  return t;
+}
+var PC_HASH=[['left hash','L'],['l hash','L'],['on the left','L'],['lh','L'],
+  ['right hash','R'],['r hash','R'],['on the right','R'],['rh','R'],
+  ['left middle','LM'],['lm','LM'],['right middle','RM'],['rm','RM'],
+  ['middle of field','M'],['middle','M'],['mof','M'],['mid','M']];
+var PC_FRONTS=[['4-3 over','43over'],['43 over','43over'],['over front','43over'],
+  ['4-3 under','43under'],['43 under','43under'],['under front','43under'],
+  ['3-4','odd'],['34','odd'],['odd front','odd'],['odd','odd'],
+  ['tite front','tite'],['tite','tite'],['bear','bear'],['nickel','nickel'],['dime','dime'],
+  ['no defense','none'],['no d','none'],
+  ['over','43over'],['under','43under']];
+var PC_PLAYERS={'x':'X','z':'Z','h':'H','y':'Y','w':'W','f':'F','rb':'RB','back':'RB','tailback':'RB','qb':'QB','q':'QB'};
+var PC_HASH_LABEL={'M':'Middle','L':'Left Hash','R':'Right Hash','LM':'Left Mid','RM':'Right Mid'};
+
+function pcNormalize(s){
+  s=String(s||'').toLowerCase();
+  s=s.replace(/[‘’]/g,"'").replace(/[“”]/g,'"');
+  // iPad dictation speaks punctuation as words
+  s=s.replace(/\bcomma\b/g,',').replace(/\bsemicolon\b/g,';').replace(/\bperiod\b/g,' ').replace(/\bfull stop\b/g,' ').replace(/\bdash\b/g,' ').replace(/\bhyphen\b/g,' ');
+  // ordinals + number words (D&D)
+  s=s.replace(/\bfirst\b/g,'1st').replace(/\bsecond\b/g,'2nd').replace(/\bthird\b/g,'3rd').replace(/\bfourth\b/g,'4th');
+  var numWords=[['fifteen','15'],['fourteen','14'],['thirteen','13'],['twelve','12'],['eleven','11'],['ten','10'],['nine','9'],['eight','8'],['seven','7'],['six','6'],['five','5'],['four','4'],['three','3'],['two','2'],['one','1']];
+  for(var i=0;i<numWords.length;i++)s=s.replace(new RegExp('\\b'+numWords[i][0]+'\\b(?!\\s*(route|yard))','g'),numWords[i][1]);
+  return s.replace(/\s+/g,' ').trim();
+}
+
+function pcStripFiller(s){
+  return s.replace(/\b(on|the|at|ball|of|field|defense|front|d|formation|set)\b/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function parsePlayCall(text){
+  var res={fk:null,mir:false,hash:null,dfk:null,asgn:{},dd:null,play:null,tags:[],unmatched:[]};
+  if(!text||!String(text).trim())return res;
+  // explicit quoted play name — captured from the RAW text so its casing is preserved
+  var rawQ=String(text).replace(/[“”]/g,'"').match(/"([^"]+)"/);
+  if(rawQ)res.play=rawQ[1].trim();
+  var s=pcNormalize(text);
+  var qm=s.match(/"([^"]+)"/);
+  if(qm)s=s.replace(qm[0],' ');
+  // D&D before clause split (so "3rd and 7" isn't split on "and")
+  var ddm=s.match(/\b([1-4])(?:st|nd|rd|th)?\s*(?:and|&|\+)\s*(\d{1,2}|goal|inches)\b/);
+  if(ddm){
+    var ordMap={'1':'1st','2':'2nd','3':'3rd','4':'4th'};
+    var dist=ddm[2]==='goal'?'Goal':(ddm[2]==='inches'?'Inches':ddm[2]);
+    res.dd=ordMap[ddm[1]]+' & '+dist;
+    s=s.replace(ddm[0],' ');
+  }
+  // tag keywords anywhere
+  var tagKw=[[/\bplay action\b/g,'Play Action'],[/\bpa\b/g,'Play Action'],[/\brpo\b/g,'RPO'],[/\bboot\b/g,'Boot'],[/\bgadget\b/g,'Gadget']];
+  for(var ti=0;ti<tagKw.length;ti++){
+    if(tagKw[ti][0].test(s)){
+      if(res.tags.indexOf(tagKw[ti][1])<0)res.tags.push(tagKw[ti][1]);
+      s=s.replace(tagKw[ti][0],' ');
+    }
+  }
+  var routeTable=pcRouteTable();
+  function matchRoute(r){
+    if(!r)return null;
+    for(var i=0;i<routeTable.length;i++){if(routeTable[i][0]===r)return routeTable[i][1];}
+    // fall back: whole-word containment in short remainders, longest-first
+    if(r.split(' ').length<=3){
+      for(var j=0;j<routeTable.length;j++){
+        if(new RegExp('\\b'+routeTable[j][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(r))return routeTable[j][1];
+      }
+    }
+    return null;
+  }
+  var clauses=s.split(/[,;\n]+|\bwith\b/);
+  for(var ci=0;ci<clauses.length;ci++){
+    var c=clauses[ci].replace(/\s+/g,' ').trim();
+    if(!c)continue;
+    var handled=false;
+    // 1) formation (extract base + adjacent direction; rest of clause continues on)
+    var toks=c.split(' ');
+    for(var wi=0;wi<toks.length;wi++){
+      var base=PC_FORM_BASE[toks[wi]];
+      if(base){
+        var dir='R';var consumed=[wi];
+        if(wi+1<toks.length&&PC_DIR_L[toks[wi+1]]){dir='L';consumed.push(wi+1);}
+        else if(wi+1<toks.length&&PC_DIR_R[toks[wi+1]]){dir='R';consumed.push(wi+1);}
+        else if(wi>0&&PC_DIR_L[toks[wi-1]]){dir='L';consumed.push(wi-1);}
+        else if(wi>0&&PC_DIR_R[toks[wi-1]]){dir='R';consumed.push(wi-1);}
+        res.fk=(base==='empty')?'empty':(base+dir);
+        var kept=[];
+        for(var ki=0;ki<toks.length;ki++){if(consumed.indexOf(ki)<0)kept.push(toks[ki]);}
+        c=kept.join(' ').trim();
+        break;
+      }
+    }
+    if(!c)continue;
+    // 2) hash (phrase containment, longest-first — PC_HASH is ordered specific-first)
+    for(var hi=0;hi<PC_HASH.length;hi++){
+      var hRe=new RegExp('\\b'+PC_HASH[hi][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:\\s+hash)?\\b');
+      if(hRe.test(c)){res.hash=PC_HASH[hi][1];c=c.replace(hRe,' ').replace(/\s+/g,' ').trim();break;}
+    }
+    if(!c)continue;
+    // 3) front — matches only when the filler-stripped remainder IS the front phrase, so a bare
+    //    "over"/"under" inside a player clause ("Y over") stays a route.
+    var cf=pcStripFiller(c);
+    var frontHit=null;
+    for(var fi=0;fi<PC_FRONTS.length;fi++){if(cf===PC_FRONTS[fi][0]){frontHit=PC_FRONTS[fi][1];break;}}
+    if(frontHit){res.dfk=frontHit;continue;}
+    // 4) player + route
+    var pm=c.match(/^(x|y|z|h|w|f|rb|back|tailback|qb|q)\b[\s:.\-]*(.*)$/);
+    if(pm){
+      var pk=PC_PLAYERS[pm[1]];
+      var rest=pm[2].replace(/^(?:on an? |runs? an? |run an? |to the |does an? |on the |gets an? )/,'').replace(/\broute\b/g,' ').replace(/\s+/g,' ').trim();
+      var rk=matchRoute(rest);
+      if(rk){res.asgn[pk]=rk;handled=true;}
+      if(handled)continue;
+    }
+    res.unmatched.push(c);
+  }
+  // play-name fallback: exactly one digit-free leftover clause becomes the name
+  if(!res.play){
+    var cand=[];
+    for(var ui=0;ui<res.unmatched.length;ui++){if(!/\d/.test(res.unmatched[ui]))cand.push(ui);}
+    if(cand.length===1){
+      res.play=res.unmatched[cand[0]].replace(/\b\w/g,function(m){return m.toUpperCase()});
+      res.unmatched.splice(cand[0],1);
+    }
+  }
+  // tag inference from assignments
+  var aks=Object.keys(res.asgn);
+  if(aks.length){
+    var hasRun=false,hasScreen=false,allPass=true;
+    for(var ai=0;ai<aks.length;ai++){
+      var rt=ROUTES[res.asgn[aks[ai]]];
+      if(!rt)continue;
+      if(rt.t==='run')hasRun=true;
+      if(res.asgn[aks[ai]]==='screen')hasScreen=true;
+      if(rt.t!=='pass'&&rt.t!=='motion'&&rt.t!=='block')allPass=false;
+    }
+    if(hasRun&&res.tags.indexOf('Run')<0)res.tags.push('Run');
+    if(hasScreen&&res.tags.indexOf('Screen')<0)res.tags.push('Screen');
+    if(!hasRun&&allPass&&res.tags.indexOf('Pass')<0)res.tags.push('Pass');
+  }
+  return res;
+}
+
+// Apply a parse result to a card. Mirrors the route-picker + fSel/hSel handler idioms.
+// Returns player keys that don't exist in the (final) formation, e.g. RB in Empty.
+function applyPlayCall(card,res){
+  pushUndo();
+  if(res.fk){
+    // full reset, same as choosing a formation from #fSel
+    card._offPreset=null;
+    card.fk=res.fk;card.mir=false;
+    card.asgn={};card.routePts={};card.routeCurves={};
+    if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
+    if(res.hash)card.hash=res.hash;
+  } else if(res.hash&&res.hash!==card.hash){
+    // no formation spoken: shift existing custom positions/waypoints by the hash delta (hSel idiom)
+    var oldHo=getHashOffset(card);
+    card.hash=res.hash;
+    var delta=getHashOffset(card)-oldHo;
+    if(delta!==0){
+      var stores=[card.opos,card.dpos];
+      for(var si=0;si<stores.length;si++){
+        var st=stores[si];if(!st)continue;
+        var sk=Object.keys(st);
+        for(var ki2=0;ki2<sk.length;ki2++){
+          st[sk[ki2]].x+=delta;
+          if(st[sk[ki2]].x<SL+15)st[sk[ki2]].x=SL+15;
+          if(st[sk[ki2]].x>SR-15)st[sk[ki2]].x=SR-15;
+        }
+      }
+      if(card.routePts){var rks2=Object.keys(card.routePts);for(var ri2=0;ri2<rks2.length;ri2++){var rp2=card.routePts[rks2[ri2]];if(rp2){for(var rpi2=0;rpi2<rp2.length;rpi2++){rp2[rpi2].x+=delta}}}}
+    }
+  }
+  if(res.dfk){card._defPreset=null;card.dfk=res.dfk;}
+  // seed waypoints ONLY after fk/mir/hash are final (getOffPlayers applies all three)
+  var players=getCurOffPlayers(card);
+  var missing=[];
+  var ks3=Object.keys(res.asgn);
+  for(var i3=0;i3<ks3.length;i3++){
+    var pk3=ks3[i3];var pp3=players[pk3];
+    if(!pp3){missing.push(pk3);continue;}
+    card.asgn[pk3]=res.asgn[pk3];
+    if(!card.routePts)card.routePts={};
+    card.routePts[pk3]=routePath(res.asgn[pk3],pp3.x,pp3.y,pp3.x>CX,false);
+    if(card.routeCurves)delete card.routeCurves[pk3];
+  }
+  if(res.play)card.play=res.play;
+  if(res.dd)card.dd=res.dd;
+  if(res.tags&&res.tags.length){
+    if(!card.tags)card.tags=[];
+    for(var t3=0;t3<res.tags.length;t3++){if(card.tags.indexOf(res.tags[t3])<0)card.tags.push(res.tags[t3]);}
+  }
+  render();
+  return missing;
+}
+
+// --- Toast (survives render(): lives on document.body) ---
+var _pcToastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('pcToast');
+  if(!t){t=document.createElement('div');t.id='pcToast';t.className='app-toast';document.body.appendChild(t);}
+  t.textContent=msg;
+  t.classList.add('show');
+  if(_pcToastTimer)clearTimeout(_pcToastTimer);
+  _pcToastTimer=setTimeout(function(){t.classList.remove('show');},3200);
+}
+
+// --- Palette UI (on document.body so render() can't destroy it) ---
+var pcPaletteEl=null;var pcNewCardMode=false;
+function pcRenderPreview(res,el){
+  var h='';
+  function chip(txt,err){h+='<span class="pc-chip'+(err?' err':'')+'">'+esc(txt)+'</span>';}
+  if(res.fk&&FORMATIONS[res.fk])chip(FORMATIONS[res.fk].name);
+  if(res.hash)chip(PC_HASH_LABEL[res.hash]||res.hash);
+  if(res.dfk&&DEF_FRONTS[res.dfk])chip(DEF_FRONTS[res.dfk].name);
+  var aks=Object.keys(res.asgn);
+  for(var i=0;i<aks.length;i++){var rt=ROUTES[res.asgn[aks[i]]];chip(aks[i]+' → '+(rt?rt.n:res.asgn[aks[i]]));}
+  if(res.dd)chip(res.dd);
+  if(res.play)chip('“'+res.play+'”');
+  for(var tg=0;tg<res.tags.length;tg++)chip('#'+res.tags[tg]);
+  for(var u=0;u<res.unmatched.length;u++)chip('? '+res.unmatched[u],true);
+  el.innerHTML=h||'<span class="pc-hint-inline">Formation, assignments, D&amp;D, hash — in any order</span>';
+}
+function closePlayCallPalette(){
+  if(pcPaletteEl){pcPaletteEl.remove();pcPaletteEl=null;}
+}
+function pcApply(makeNew){
+  if(!pcPaletteEl)return;
+  var inp=pcPaletteEl.querySelector('.pc-input');
+  var res=parsePlayCall(inp?inp.value:'');
+  var any=res.fk||res.hash||res.dfk||res.dd||res.play||res.tags.length||Object.keys(res.asgn).length;
+  if(!any){showToast('Didn’t catch anything — try “Trips Rt, X go, H flat”');return;}
+  if(makeNew){
+    var nc=(appMode==='playdesign')?mkPlayCard():mkCard();
+    cards.splice(activeIdx+1,0,nc);
+    activeIdx=activeIdx+1;selPlayer=null;
+  }
+  var missing=applyPlayCall(cards[activeIdx],res);
+  closePlayCallPalette();
+  var warn=[];
+  if(missing.length)warn.push('no '+missing.join('/')+' in this formation');
+  if(res.unmatched.length)warn.push('didn’t get: '+res.unmatched.join(' / '));
+  if(warn.length){showToast(warn.join(' · '));}
+  else{
+    var bits=[];
+    if(res.fk&&FORMATIONS[res.fk])bits.push(FORMATIONS[res.fk].name);
+    var na=Object.keys(res.asgn).length;
+    if(na)bits.push(na+' assignment'+(na>1?'s':''));
+    showToast('✓ '+(bits.length?bits.join(' · '):'Applied'));
+  }
+}
+function openPlayCallPalette(){
+  if(pcPaletteEl){var pi=pcPaletteEl.querySelector('.pc-input');if(pi)pi.focus();return;}
+  pcNewCardMode=false;
+  var ov=document.createElement('div');ov.className='pc-overlay';
+  var panel=document.createElement('div');panel.className='pc-panel';
+  panel.innerHTML='<div class="pc-title">Call It</div>'+
+    '<input class="pc-input" type="text" placeholder="Trips Rt, X go, H flat, 3rd &amp; 7, left hash" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>'+
+    '<div class="pc-preview"></div>'+
+    '<div class="pc-row"><button type="button" class="pc-new">+ New card</button>'+
+    '<div class="pc-hint">Enter apply · Shift+Enter new card · Esc close</div></div>';
+  ov.appendChild(panel);
+  ov.addEventListener('pointerdown',function(e){if(e.target===ov)closePlayCallPalette();});
+  var inp=panel.querySelector('.pc-input');
+  var prev=panel.querySelector('.pc-preview');
+  var newBtn=panel.querySelector('.pc-new');
+  pcRenderPreview(parsePlayCall(''),prev);
+  inp.addEventListener('input',function(){pcRenderPreview(parsePlayCall(this.value),prev);});
+  inp.addEventListener('keydown',function(e){
+    e.stopPropagation();
+    if(e.key==='Enter'){e.preventDefault();pcApply(e.shiftKey||pcNewCardMode);}
+    else if(e.key==='Escape'){e.preventDefault();closePlayCallPalette();}
+  });
+  newBtn.addEventListener('click',function(){
+    pcNewCardMode=!pcNewCardMode;
+    this.classList.toggle('on',pcNewCardMode);
+  });
+  document.body.appendChild(ov);
+  pcPaletteEl=ov;
+  inp.focus();
+}
+// Debug/test hook — the IIFE otherwise seals the parser away from automated verification.
+try{window.__pc={parse:parsePlayCall,open:openPlayCallPalette};}catch(_){}
+
 // Keyboard shortcuts
 var clipboardCard=null;
 var clipboardLine=null;
@@ -6715,6 +7049,12 @@ document.addEventListener('keydown',function(e){
     if(popRedo()){render()}
     e.preventDefault();return;
   }
+
+  // '/' or Cmd/Ctrl+K: open the natural-language play-call palette. The INPUT/TEXTAREA/SELECT
+  // guard above keeps '/' typing normally inside form fields; the palette's own input stops
+  // propagation of its keys, so it never re-triggers this.
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){openPlayCallPalette();e.preventDefault();return;}
+  if(e.key==='/'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){openPlayCallPalette();e.preventDefault();return;}
 
   // Escape: exit draw/eraser mode or deselect
   if(e.key==='Escape'){
