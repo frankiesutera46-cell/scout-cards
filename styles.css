@@ -1710,3 +1710,13 @@ select:focus{
   font-size:11px;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;
   transition:opacity .18s ease,transform .18s ease;max-width:86vw;text-align:center}
 .app-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Play-call palette: tappable concept catalog */
+.pc-concepts{margin-top:10px}
+.pc-ctoggle{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;background:none;border:none;padding:2px 0;color:rgba(58,58,56,.5);cursor:pointer;touch-action:manipulation}
+.pc-cbody{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px;max-height:170px;overflow-y:auto}
+.pc-cgroup{flex-basis:100%;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(58,58,56,.35);margin-top:4px}
+button.pc-chip{cursor:pointer;font-family:inherit;touch-action:manipulation}
+button.pc-chip:active{background:#e0d0ff}
+.pc-chip-preset{background:#e7f0ea;color:#1A3C2B;border-color:rgba(26,60,43,.25)}

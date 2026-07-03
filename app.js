@@ -6761,6 +6761,84 @@ var PC_FRONTS=[['4-3 over','43over'],['43 over','43over'],['over front','43over'
 var PC_PLAYERS={'x':'X','z':'Z','h':'H','y':'Y','w':'W','f':'F','rb':'RB','back':'RB','tailback':'RB','qb':'QB','q':'QB'};
 var PC_HASH_LABEL={'M':'Middle','L':'Left Hash','R':'Right Hash','LM':'Left Mid','RM':'Right Mid'};
 
+// --- Offensive concept catalog ---
+// Concepts are defined against receiver ROLES so they adapt to any formation: s1/s2/s3 = strong-side
+// receivers outside-in, w1/w2 = weak side, sin/win = innermost strong/weak, rb = the back.
+// `r` is an ORDERED list of [role, routeKey]: pairs fill in listed order, each only if the role exists
+// in the formation and that player isn't already assigned — so each concept controls how it degrades
+// (Mesh lists its crossers first, so Trips keeps both crossers and drops the backside go instead).
+// Aliases NEVER include a phrase that parses as player+route ('y cross', 'rb screen') — player calls
+// win by design; those concepts carry safe aliases (ycross, slip screen). `ins` = palette-chip insert
+// text where the display name wouldn't round-trip through the parser.
+var PC_CONCEPTS={
+ smash:    {n:'Smash',        al:['smash'],                                   r:[['s1','hitch'],['s2','corner'],['w1','hitch'],['w2','corner'],['rb','swing']],       tags:['Pass'],grp:'Quick'},
+ stick:    {n:'Stick',        al:['stick'],                                   r:[['s1','go'],['sin','hitch'],['s2','flat'],['w1','slant'],['rb','flat']],             tags:['Pass'],grp:'Quick'},
+ snag:     {n:'Snag',         al:['snag','spot'],                             r:[['s1','hitch'],['s2','corner'],['s3','flat'],['w1','slant'],['rb','flat']],          tags:['Pass'],grp:'Quick'},
+ curlflat: {n:'Curl Flat',    al:['curl flat','curl-flat'],                   r:[['s1','hitch'],['s2','flat'],['w1','hitch'],['w2','flat'],['rb','swing']],           tags:['Pass'],grp:'Quick'},
+ slantflat:{n:'Slant Flat',   al:['slant flat','slant-flat'],                 r:[['s1','slant'],['s2','flat'],['w1','slant'],['w2','flat'],['rb','bpass']],           tags:['Pass'],grp:'Quick'},
+ dblslants:{n:'Double Slants',al:['double slants'],                           r:[['s1','slant'],['s2','slant'],['w1','slant'],['w2','slant'],['rb','bpass']],         tags:['Pass'],grp:'Quick'},
+ hitches:  {n:'Hitches',      al:['hitches','all hitches'],                   r:[['s1','hitch'],['s2','hitch'],['w1','hitch'],['w2','hitch'],['rb','swing']],         tags:['Pass'],grp:'Quick'},
+ spacing:  {n:'Spacing',      al:['spacing'],                                 r:[['s1','hitch'],['s2','flat'],['s3','hitch'],['w1','hitch'],['w2','flat'],['rb','flat']],tags:['Pass'],grp:'Quick'},
+ mesh:     {n:'Mesh',         al:['mesh'],                                    r:[['sin','drag'],['win','drag'],['s1','corner'],['w1','go'],['rb','swing']],           tags:['Pass'],grp:'Dropback'},
+ flood:    {n:'Flood',        al:['flood','sail'],                            r:[['s1','go'],['s2','out'],['s3','flat'],['w1','post'],['rb','bpass']],                tags:['Pass'],grp:'Dropback'},
+ verts:    {n:'Four Verts',   al:['four verts','4 verts','verts','999','all go'],ins:'verts',r:[['s1','go'],['s2','seam'],['s3','seam'],['w1','go'],['w2','seam'],['rb','swing']],tags:['Pass'],grp:'Dropback'},
+ dagger:   {n:'Dagger',       al:['dagger'],                                  r:[['s2','go'],['s1','dig'],['w1','drag'],['rb','bpass']],                              tags:['Pass'],grp:'Dropback'},
+ levels:   {n:'Levels',       al:['levels'],                                  r:[['s1','dig'],['s2','drag'],['w1','post'],['rb','swing']],                            tags:['Pass'],grp:'Dropback'},
+ shallow:  {n:'Shallow',      al:['shallow','drive'],                         r:[['s2','drag'],['s1','dig'],['w1','post'],['rb','swing']],                            tags:['Pass'],grp:'Dropback'},
+ ycross:   {n:'Y-Cross',      al:['ycross','cross concept'],ins:'ycross',     r:[['sin','over'],['s1','go'],['w1','dig'],['rb','swing']],                             tags:['Pass'],grp:'Dropback'},
+ mills:    {n:'Mills',        al:['mills'],                                   r:[['s1','post'],['s2','dig'],['w1','drag'],['rb','bpass']],                            tags:['Pass'],grp:'Dropback'},
+ yankee:   {n:'Yankee',       al:['yankee'],                                  r:[['s1','over'],['w1','post'],['rb','bpass']],                                         tags:['Pass','Play Action'],grp:'Dropback'},
+ postwheel:{n:'Post Wheel',   al:['post wheel','post-wheel'],                 r:[['s1','post'],['s2','wheel'],['w1','dig'],['rb','bpass']],                           tags:['Pass'],grp:'Dropback'},
+ scissors: {n:'Scissors',     al:['scissors'],                                r:[['s1','corner'],['s2','post'],['w1','dig'],['rb','bpass']],                          tags:['Pass'],grp:'Dropback'},
+ bubble:   {n:'Bubble',       al:['bubble','bubble screen'],                  r:[['sin','screen'],['s1','bdrive'],['w1','go'],['rb','bpass']],                        tags:['Screen'],grp:'Screens'},
+ tunnel:   {n:'Tunnel',       al:['tunnel','tunnel screen'],                  r:[['s1','screen'],['s2','bdrive'],['sin','bdrive'],['w1','go']],                       tags:['Screen'],grp:'Screens'},
+ rbscreen: {n:'RB Screen',    al:['slip screen','running back screen'],ins:'slip screen',r:[['rb','screen'],['s1','go'],['w1','go']],                                 tags:['Screen'],grp:'Screens'},
+ iz:       {n:'Inside Zone',  al:['inside zone','iz'],                        r:[['rb','riz']],                                                                       tags:['Run'],grp:'Runs'},
+ oz:       {n:'Outside Zone', al:['outside zone','oz','wide zone','stretch'], r:[['rb','roz']],                                                                       tags:['Run'],grp:'Runs'},
+ power:    {n:'Power',        al:['power'],                                   r:[['rb','rpwr']],                                                                      tags:['Run'],grp:'Runs'},
+ counter:  {n:'Counter',      al:['counter'],                                 r:[['rb','rctr']],                                                                      tags:['Run'],grp:'Runs'},
+ draw:     {n:'Draw',         al:['draw'],                                    r:[['rb','rdraw']],                                                                     tags:['Run'],grp:'Runs'},
+ sweep:    {n:'Sweep',        al:['sweep','jet sweep','toss'],                r:[['rb','rswp']],                                                                      tags:['Run'],grp:'Runs'}
+};
+// Receiver roles for a formation: split WR/TE at CX, sort each side outside-in. Strong = the side
+// with more receivers; ties break by the fk suffix — FLIPPED when mirrored (mirrored doubR is
+// positionally doubL).
+function pcRoles(fk,mir){
+  var fm=FORMATIONS[fk];if(!fm)return{};
+  var p=fm.p();if(mir)p=mirrorPlayers(p);
+  var Lg=[],Rg=[],ks=Object.keys(p);
+  for(var i=0;i<ks.length;i++){
+    var pl=p[ks[i]];
+    if(pl.side!=='wr'&&pl.side!=='te')continue;
+    if(pl.x>=CX)Rg.push({k:ks[i],x:pl.x});else Lg.push({k:ks[i],x:pl.x});
+  }
+  Rg.sort(function(a,b){return b.x-a.x});
+  Lg.sort(function(a,b){return a.x-b.x});
+  var sufR=!/L$/.test(fk);if(mir)sufR=!sufR;
+  var strongRight=Rg.length>Lg.length||(Rg.length===Lg.length&&sufR);
+  var S=strongRight?Rg:Lg,W=strongRight?Lg:Rg,roles={};
+  if(S[0])roles.s1=S[0].k;if(S[1])roles.s2=S[1].k;if(S[2])roles.s3=S[2].k;
+  if(W[0])roles.w1=W[0].k;if(W[1])roles.w2=W[1].k;
+  if(S.length)roles.sin=S[S.length-1].k;
+  if(W.length)roles.win=W[W.length-1].k;
+  if(p.RB)roles.rb='RB';
+  return roles;
+}
+// Whole-clause match against the coach's saved route presets (their own catalog — wins over
+// built-ins on a name collision), then the built-in concept aliases.
+function pcMatchCall(cf){
+  if(!cf)return null;
+  for(var pi=0;pi<routePresets.length;pi++){
+    if(cf===pcStripFiller(pcNormalize(routePresets[pi].name)))return{preset:pi};
+  }
+  var ck=Object.keys(PC_CONCEPTS);
+  for(var i=0;i<ck.length;i++){
+    var al=PC_CONCEPTS[ck[i]].al;
+    for(var j=0;j<al.length;j++){if(cf===al[j])return{concept:ck[i]};}
+  }
+  return null;
+}
+
 function pcNormalize(s){
   s=String(s||'').toLowerCase();
   s=s.replace(/[‘’]/g,"'").replace(/[“”]/g,'"');
@@ -6777,8 +6855,8 @@ function pcStripFiller(s){
   return s.replace(/\b(on|the|at|ball|of|field|defense|front|d|formation|set)\b/g,' ').replace(/\s+/g,' ').trim();
 }
 
-function parsePlayCall(text){
-  var res={fk:null,mir:false,hash:null,dfk:null,asgn:{},dd:null,play:null,tags:[],unmatched:[]};
+function parsePlayCall(text,ctx){
+  var res={fk:null,mir:false,hash:null,dfk:null,asgn:{},dd:null,play:null,tags:[],unmatched:[],concept:null,presetIdx:null};
   if(!text||!String(text).trim())return res;
   // explicit quoted play name — captured from the RAW text so its casing is preserved
   var rawQ=String(text).replace(/[“”]/g,'"').match(/"([^"]+)"/);
@@ -6819,6 +6897,10 @@ function parsePlayCall(text){
     var c=clauses[ci].replace(/\s+/g,' ').trim();
     if(!c)continue;
     var handled=false;
+    // 0) whole-clause saved-combo/concept — BEFORE the formation scan so 'double slants' isn't
+    //    eaten as formation 'double' and saved-preset names survive intact
+    var call0=pcMatchCall(pcStripFiller(c));
+    if(call0){if(call0.preset!=null)res.presetIdx=call0.preset;else res.concept=call0.concept;continue;}
     // 1) formation (extract base + adjacent direction; rest of clause continues on)
     var toks=c.split(' ');
     for(var wi=0;wi<toks.length;wi++){
@@ -6849,6 +6931,9 @@ function parsePlayCall(text){
     var frontHit=null;
     for(var fi=0;fi<PC_FRONTS.length;fi++){if(cf===PC_FRONTS[fi][0]){frontHit=PC_FRONTS[fi][1];break;}}
     if(frontHit){res.dfk=frontHit;continue;}
+    // 3.5) concept/combo as a post-extraction remainder ("trips rt mesh" spoken without a comma)
+    var call1=pcMatchCall(cf);
+    if(call1){if(call1.preset!=null)res.presetIdx=call1.preset;else res.concept=call1.concept;continue;}
     // 4) player + route
     var pm=c.match(/^(x|y|z|h|w|f|rb|back|tailback|qb|q)\b[\s:.\-]*(.*)$/);
     if(pm){
@@ -6859,6 +6944,24 @@ function parsePlayCall(text){
       if(handled)continue;
     }
     res.unmatched.push(c);
+  }
+  // Concept expansion — into res.asgn, before the play-name fallback so the concept's canonical
+  // name pre-empts stray leftovers and the live preview shows the expanded assignments. Ordered
+  // role list fills only unassigned players; explicit per-player calls always win.
+  if(res.concept){
+    var cdef=PC_CONCEPTS[res.concept];
+    var rfk=res.fk||(ctx&&ctx.fk)||(cards[activeIdx]&&cards[activeIdx].fk)||'doubR';
+    var rmir=res.fk?false:((ctx&&ctx.mir!=null)?!!ctx.mir:!!(cards[activeIdx]&&cards[activeIdx].mir));
+    var croles=pcRoles(rfk,rmir);
+    for(var cri=0;cri<cdef.r.length;cri++){
+      var crole=cdef.r[cri][0],crt=cdef.r[cri][1];
+      var cpk=croles[crole];
+      if(!cpk)continue;
+      if(res.asgn[cpk]!==undefined)continue;
+      res.asgn[cpk]=crt;
+    }
+    if(!res.play)res.play=cdef.n;
+    for(var cti=0;cti<cdef.tags.length;cti++){if(res.tags.indexOf(cdef.tags[cti])<0)res.tags.push(cdef.tags[cti]);}
   }
   // play-name fallback: exactly one digit-free leftover clause becomes the name
   if(!res.play){
@@ -6918,6 +7021,15 @@ function applyPlayCall(card,res){
     }
   }
   if(res.dfk){card._defPreset=null;card.dfk=res.dfk;}
+  // Coach's saved combo — EXACT loadroute semantics (see the data-loadroute handler): wholesale
+  // deep copy of asgn + routePts (routePts are absolute coords as saved — do not re-derive).
+  // res.asgn (explicit + concept) re-seeds on top below; players that came only from the preset
+  // keep their saved shapes because they're not in res.asgn.
+  if(res.presetIdx!=null&&routePresets[res.presetIdx]){
+    var prd=routePresets[res.presetIdx].data;
+    card.asgn=JSON.parse(JSON.stringify(prd.asgn));
+    if(prd.routePts)card.routePts=JSON.parse(JSON.stringify(prd.routePts));
+  }
   // seed waypoints ONLY after fk/mir/hash are final (getOffPlayers applies all three)
   var players=getCurOffPlayers(card);
   var missing=[];
@@ -6959,6 +7071,17 @@ function pcRenderPreview(res,el){
   if(res.fk&&FORMATIONS[res.fk])chip(FORMATIONS[res.fk].name);
   if(res.hash)chip(PC_HASH_LABEL[res.hash]||res.hash);
   if(res.dfk&&DEF_FRONTS[res.dfk])chip(DEF_FRONTS[res.dfk].name);
+  if(res.concept&&PC_CONCEPTS[res.concept])chip(PC_CONCEPTS[res.concept].n);
+  if(res.presetIdx!=null&&routePresets[res.presetIdx]){
+    var rpz=routePresets[res.presetIdx];
+    chip('★ '+rpz.name);
+    // show the preset's own assignments (skipping any the user explicitly overrode)
+    var pa=rpz.data.asgn,pks=Object.keys(pa);
+    for(var p2=0;p2<pks.length;p2++){
+      if(res.asgn[pks[p2]]!==undefined)continue;
+      var rt2=ROUTES[pa[pks[p2]]];chip(pks[p2]+' → '+(rt2?rt2.n:pa[pks[p2]]));
+    }
+  }
   var aks=Object.keys(res.asgn);
   for(var i=0;i<aks.length;i++){var rt=ROUTES[res.asgn[aks[i]]];chip(aks[i]+' → '+(rt?rt.n:res.asgn[aks[i]]));}
   if(res.dd)chip(res.dd);
@@ -6974,12 +7097,14 @@ function pcApply(makeNew){
   if(!pcPaletteEl)return;
   var inp=pcPaletteEl.querySelector('.pc-input');
   var res=parsePlayCall(inp?inp.value:'');
-  var any=res.fk||res.hash||res.dfk||res.dd||res.play||res.tags.length||Object.keys(res.asgn).length;
+  var any=res.fk||res.hash||res.dfk||res.dd||res.play||res.tags.length||Object.keys(res.asgn).length||res.concept||res.presetIdx!=null;
   if(!any){showToast('Didn’t catch anything — try “Trips Rt, X go, H flat”');return;}
   if(makeNew){
     var nc=(appMode==='playdesign')?mkPlayCard():mkCard();
     cards.splice(activeIdx+1,0,nc);
     activeIdx=activeIdx+1;selPlayer=null;
+    // re-parse so a formation-less concept expands against the NEW card's formation
+    res=parsePlayCall(inp?inp.value:'');
   }
   var missing=applyPlayCall(cards[activeIdx],res);
   closePlayCallPalette();
@@ -7003,6 +7128,8 @@ function openPlayCallPalette(){
   panel.innerHTML='<div class="pc-title">Call It</div>'+
     '<input class="pc-input" type="text" placeholder="Trips Rt, X go, H flat, 3rd &amp; 7, left hash" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>'+
     '<div class="pc-preview"></div>'+
+    '<div class="pc-concepts"><button type="button" class="pc-ctoggle">Concepts ▾</button>'+
+    '<div class="pc-cbody" style="display:none"></div></div>'+
     '<div class="pc-row"><button type="button" class="pc-new">+ New card</button>'+
     '<div class="pc-hint">Enter apply · Shift+Enter new card · Esc close</div></div>';
   ov.appendChild(panel);
@@ -7021,12 +7148,46 @@ function openPlayCallPalette(){
     pcNewCardMode=!pcNewCardMode;
     this.classList.toggle('on',pcNewCardMode);
   });
+  // Tappable concept catalog — grouped built-ins + the coach's saved route presets. Tap appends
+  // the concept text to the input and reruns the live preview.
+  var cbody=panel.querySelector('.pc-cbody'),ctog=panel.querySelector('.pc-ctoggle');
+  var grps=['Quick','Dropback','Screens','Runs'],ch='';
+  for(var gi=0;gi<grps.length;gi++){
+    ch+='<span class="pc-cgroup">'+grps[gi]+'</span>';
+    var cks=Object.keys(PC_CONCEPTS);
+    for(var ci2=0;ci2<cks.length;ci2++){
+      var cd=PC_CONCEPTS[cks[ci2]];
+      if(cd.grp!==grps[gi])continue;
+      ch+='<button type="button" class="pc-chip pc-chip-btn" data-ins="'+esc(cd.ins||cd.n)+'">'+esc(cd.n)+'</button>';
+    }
+  }
+  if(routePresets.length){
+    ch+='<span class="pc-cgroup">Saved</span>';
+    for(var pi2=0;pi2<routePresets.length;pi2++){
+      ch+='<button type="button" class="pc-chip pc-chip-btn pc-chip-preset" data-ins="'+esc(routePresets[pi2].name)+'">'+esc(routePresets[pi2].name)+'</button>';
+    }
+  }
+  cbody.innerHTML=ch;
+  ctog.addEventListener('click',function(){
+    var open=cbody.style.display!=='none';
+    cbody.style.display=open?'none':'flex';
+    ctog.textContent=open?'Concepts ▾':'Concepts ▴';
+  });
+  cbody.addEventListener('click',function(e){
+    var b=e.target;
+    while(b&&b!==cbody&&(!b.classList||!b.classList.contains('pc-chip-btn')))b=b.parentNode;
+    if(!b||b===cbody)return;
+    var t=b.getAttribute('data-ins');
+    inp.value=inp.value.trim()?inp.value.replace(/[\s,;]+$/,'')+', '+t:t;
+    inp.dispatchEvent(new Event('input'));
+    inp.focus();
+  });
   document.body.appendChild(ov);
   pcPaletteEl=ov;
   inp.focus();
 }
 // Debug/test hook — the IIFE otherwise seals the parser away from automated verification.
-try{window.__pc={parse:parsePlayCall,open:openPlayCallPalette};}catch(_){}
+try{window.__pc={parse:parsePlayCall,open:openPlayCallPalette,roles:pcRoles,concepts:PC_CONCEPTS};}catch(_){}
 
 // Keyboard shortcuts
 var clipboardCard=null;
