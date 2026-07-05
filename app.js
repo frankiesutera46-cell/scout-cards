@@ -1811,6 +1811,27 @@ function polyD(pts){
   for(var i=1;i<pts.length;i++)d+=' L '+pts[i].x.toFixed(1)+' '+pts[i].y.toFixed(1);
   return d;
 }
+// Sample one route segment (straight, or its quadratic bow) into a short polyline —
+// used so squiggle/dash treatments can ride a curved segment.
+function routeSegSample(p0,p1,c){
+  if(!c)return [p0,p1];
+  var m=routeSegMid(p0,p1,c);
+  var ctrl={x:2*m.x-(p0.x+p1.x)/2, y:2*m.y-(p0.y+p1.y)/2};
+  var out=[];
+  for(var i=0;i<=10;i++){
+    var t=i/10,it=1-t;
+    out.push({x:it*it*p0.x+2*it*t*ctrl.x+t*t*p1.x, y:it*it*p0.y+2*it*t*ctrl.y+t*t*p1.y});
+  }
+  return out;
+}
+// Trim a distance off the END of a polyline (pulls the stroke back under an arrow/cap).
+function trimPolyEnd(pts,trim){
+  var total=polylineLength(pts);
+  if(trim<=0||total<=trim+0.5)return pts;
+  var at=polylinePointAt(pts,total-trim);
+  var out=pts.slice(0,at.idx);out.push(at.pt);
+  return out;
+}
 // Classic jet-motion squiggle: resample the polyline at a fixed step and offset alternate
 // samples perpendicular to travel, so waypoint density never changes the wave shape.
 function zigzagD(pts){
@@ -2054,7 +2075,25 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
           dDraw=routeSegD(drawPts,hasCurve?rcurves:null,epDraw);
         }
       }
-      routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
+      // Per-segment styling (or a whole-route squiggle): each leg renders its own stroke.
+      // Squiggle legs resample any curve bow first so the wave rides the curve. The normal
+      // single-path rendering below is untouched when neither applies.
+      var segStyles=(_bpCard&&_bpCard.routeSegStyle)?_bpCard.routeSegStyle[rk2]:null;
+      if(segStyles&&Object.keys(segStyles).length===0)segStyles=null;
+      var wholeZigRt=(customStyle&&customStyle.style==='zig');
+      if((segStyles||wholeZigRt)&&drawPts.length>=2){
+        var rtBaseStyle=wholeZigRt?'zig':(customStyle&&customStyle.style==='dashed'?'dashed':'solid');
+        for(var sgi2=0;sgi2<drawPts.length-1;sgi2++){
+          var sgSt=(segStyles&&segStyles[sgi2])||rtBaseStyle;
+          var sgSample=routeSegSample(drawPts[sgi2],drawPts[sgi2+1],(hasCurve&&rcurves)?rcurves[sgi2]:null);
+          if(sgi2===drawPts.length-2&&endTrim>0)sgSample=trimPolyEnd(sgSample,endTrim);
+          var sgD=(sgSt==='zig')?zigzagD(sgSample):polyD(sgSample);
+          var sgDash=(sgSt==='dashed')?' stroke-dasharray="8,5"':'';
+          routeSvg+='<path d="'+sgD+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+sgDash+' data-route="'+rk2+'"/>';
+        }
+      } else {
+        routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
+      }
       // Invisible hit-area uses the full-length path so clicking near the tip still selects the route.
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       if(ra==='custom'&&effEnd==='none'){
@@ -3090,7 +3129,7 @@ function render(){
           var curLstyle=rs.style||'solid';
           var curLwidth=rs.width||'med';
           var curLend=rs.end||(ppIsOl?'block':'arrow');
-          var styleOpts=[['solid','—'],['dashed','--']];
+          var styleOpts=[['solid','—'],['dashed','--'],['zig','&#8767;']];
           for(var sli=0;sli<styleOpts.length;sli++){
             var sv2=styleOpts[sli][0],sn2=styleOpts[sli][1];
             h+='<button class="pp-btn'+(curLstyle===sv2?' act':'')+'" data-pp-line="style:'+sv2+'" title="Style: '+sv2+'">'+sn2+'</button>';
@@ -3106,6 +3145,17 @@ function render(){
           for(var eli=0;eli<endOpts.length;eli++){
             var ev=endOpts[eli][0],en=endOpts[eli][1];
             h+='<button class="pp-btn'+(curLend===ev?' act':'')+'" data-pp-line="end:'+ev+'" title="End: '+ev+'">'+en+'</button>';
+          }
+          // Per-segment style: one button per route segment, tap to cycle
+          // solid → squiggle → dashed → back. Overrides the whole-route style for that leg.
+          var rppSeg=card.routePts&&card.routePts[selPlayer];
+          if(rppSeg&&rppSeg.length>=3){
+            h+='<div style="flex-basis:100%;height:0"></div>';
+            var segSt=(card.routeSegStyle&&card.routeSegStyle[selPlayer])||{};
+            for(var sgi=0;sgi<rppSeg.length-1;sgi++){
+              var sglyph=segSt[sgi]==='zig'?'&#8767;':segSt[sgi]==='dashed'?'--':'&#8212;';
+              h+='<button class="pp-btn'+(segSt[sgi]?' act':'')+'" data-pp-seg="'+sgi+'" title="Leg '+(sgi+1)+' — tap to cycle solid / squiggle / dashed">'+(sgi+1)+' '+sglyph+'</button>';
+            }
           }
         }
         subInner=h; h=_ppHSave;
@@ -3953,6 +4003,21 @@ function bind(){
           card.routeStyle[selPlayer]={style:'solid',width:'med',end:defaultRouteEnd(_lpl&&_lpl.side)};
         }
         card.routeStyle[selPlayer][key]=val;
+        render();
+      });
+    });
+    // Per-segment style buttons — cycle solid → squiggle → dashed for one leg of the route
+    pPop.querySelectorAll('[data-pp-seg]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!selPlayer)return;
+        var idx=parseInt(this.getAttribute('data-pp-seg'),10);
+        pushUndo();
+        if(!card.routeSegStyle)card.routeSegStyle={};
+        if(!card.routeSegStyle[selPlayer])card.routeSegStyle[selPlayer]={};
+        var cur=card.routeSegStyle[selPlayer][idx];
+        if(!cur)card.routeSegStyle[selPlayer][idx]='zig';
+        else if(cur==='zig')card.routeSegStyle[selPlayer][idx]='dashed';
+        else delete card.routeSegStyle[selPlayer][idx];
         render();
       });
     });
