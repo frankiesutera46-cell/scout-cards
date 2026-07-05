@@ -426,11 +426,20 @@ swing:{n:'Swing',t:'pass',c:COL_ROUTE},
 // Run
 riz:{n:'IZ',t:'run',c:COL_RUN},roz:{n:'OZ',t:'run',c:COL_RUN},rpwr:{n:'Power',t:'run',c:COL_RUN},
 rctr:{n:'Counter',t:'run',c:COL_RUN},rdraw:{n:'Draw',t:'run',c:COL_RUN},rswp:{n:'Sweep',t:'run',c:COL_RUN},
-// Block
-bpass:{n:'Pass Pro',t:'block',c:COL_BLOCK},
-bdrive:{n:'Drive',t:'block',c:COL_BLOCK},
-bpull:{n:'Pull',t:'block',c:COL_BLOCK},
-breach:{n:'Reach',t:'block',c:COL_BLOCK},
+// Block — `cap` picks the endpoint symbol: bar (base block), arrow (movement block),
+// bar2 (combo/double-team), cup (pass set), x (cut). Missing cap falls back to bar.
+bpass:{n:'Pass Pro',t:'block',c:COL_BLOCK,cap:'cup'},
+bdrive:{n:'Drive',t:'block',c:COL_BLOCK,cap:'bar'},
+bdown:{n:'Down',t:'block',c:COL_BLOCK,cap:'bar'},
+breach:{n:'Reach',t:'block',c:COL_BLOCK,cap:'bar'},
+bzone:{n:'Zone',t:'block',c:COL_BLOCK,cap:'bar'},
+bcombo:{n:'Combo',t:'block',c:COL_BLOCK,cap:'bar2'},
+blead:{n:'Lead',t:'block',c:COL_BLOCK,cap:'bar'},
+bpull:{n:'Pull',t:'block',c:COL_BLOCK,cap:'arrow'},
+btrap:{n:'Trap',t:'block',c:COL_BLOCK,cap:'arrow'},
+bkick:{n:'Kickout',t:'block',c:COL_BLOCK,cap:'arrow'},
+bfold:{n:'Fold',t:'block',c:COL_BLOCK,cap:'arrow'},
+bcut:{n:'Cut',t:'block',c:COL_BLOCK,cap:'x'},
 // Motion
 motl:{n:'Mot L',t:'motion',c:COL_MOTION},motr:{n:'Mot R',t:'motion',c:COL_MOTION},
 jetl:{n:'Jet L',t:'motion',c:COL_MOTION},jetr:{n:'Jet R',t:'motion',c:COL_MOTION},
@@ -443,7 +452,7 @@ var RGROUPS={
   'Intermediate':['dig','out','comeback','slant','over','hitch'],
   'Quick/Short' :['flat','screen','drag','arrow','swing'],
   'Run'         :['riz','roz','rpwr','rctr','rdraw','rswp'],
-  'Block'       :['bpass','bdrive','bpull','breach'],
+  'Block'       :['bdrive','bdown','breach','bzone','bcombo','blead','bpull','btrap','bkick','bfold','bcut','bpass'],
   'Motion'      :['motl','motr','jetl','jetr']
 };
 
@@ -483,11 +492,19 @@ function routePath(rk,px,py,playerIsOnRight,dirDown){
     rdraw:[[0,0.5*Y],[0.5*X*m,-2*Y],[1*X*m,-6*Y],[2*X*m,-10*Y]],
     rswp: [[-5*X*m,0],[-8*X*m,-1*Y],[-6*X*m,-4*Y],[-4*X*m,-7*Y]],
 
-    // BLOCK
+    // BLOCK — sign convention: -X*m angles OUTSIDE (away from center), +X*m angles INSIDE
     bpass:  [[0,1.2*Y]],                                             // Pass Pro — set back
     bdrive: [[0,-1.5*Y]],                                           // Drive — straight ahead
-    bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
+    bdown:  [[2*X*m,-0.4*Y],[3.5*X*m,-1*Y]],                        // Down — flat angle inside to next gap
     breach: [[-2*X*m,-0.5*Y],[-3*X*m,-1.5*Y]],                     // Reach — angle outside
+    bzone:  [[-1.5*X*m,-0.4*Y],[-2*X*m,-2.2*Y]],                   // Zone — lateral step, climb playside
+    bcombo: [[1*X*m,-1.2*Y],[1.5*X*m,-2.6*Y]],                     // Combo — double-team inside, climb
+    blead:  [[0.3*X*m,-1.5*Y],[0.8*X*m,-3.2*Y]],                   // Lead — iso up to LB level
+    bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
+    btrap:  [[2*X*m,1.2*Y],[5*X*m,0.8*Y],[7.5*X*m,-0.8*Y]],        // Trap — short pull across, kick first man
+    bkick:  [[-2.5*X*m,1.2*Y],[-6*X*m,0.6*Y],[-8*X*m,-0.8*Y]],     // Kickout — pull to the edge, turn out
+    bfold:  [[1.8*X*m,0.8*Y],[3.5*X*m,0],[4*X*m,-1.8*Y]],          // Fold — loop around neighbor, up to LB
+    bcut:   [[0.3*X*m,-1*Y]],                                       // Cut — short fire out low
 
     // MOTION
     motl:[[-45,0]],motr:[[45,0]],
@@ -524,7 +541,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs'}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs',fieldZone:'mid',redLine:false}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -545,6 +562,10 @@ var gameTitle='Week 1';
 var dragInfo=null;
 var viewPerspective='def'; // 'def' or 'off'
 var coachView=false;
+// Canvas pinch zoom — a viewBox override on the LIVE svg only. Exports build their own
+// SVG string (buildFullSVG) with a fixed viewBox, so zoom never leaks into output.
+// null = fit-to-card; {x,y,w,h} when zoomed in. Aspect is always FW:FH.
+var fieldVB=null;
 var coachFit=false;
 
 function getPlayDesigns(){return games[activeGameIdx].playDesigns||(games[activeGameIdx].playDesigns=[])}
@@ -1470,12 +1491,17 @@ function buildField(card){
       out+='<text x="'+rnx+'" y="'+(yy).toFixed(1)+'" fill="#b0b0b0" font-size="'+numFsz+'" letter-spacing="'+numLetterSp+'" font-family="'+numFont+'" font-weight="400" text-anchor="middle" dominant-baseline="middle" opacity="0.55" transform="rotate(-90,'+rnx+','+yy.toFixed(1)+')">'+lbl+'</text>';
       return out;
     }
+    // Zone-aware: numbers at or beyond the goal line make no sense — suppress them there.
+    var znGoalRef=usePdYardNums2?PD_LOS_Y:LOS_Y;
+    var zn=card.fieldZone||'mid';
+    var znGoalY=(zn==='rz')?znGoalRef-20*YPX:(zn==='gl')?znGoalRef-5*YPX:null;
     if(usePdYardNums2){
       // 40, 50, 40, 30 from top to bottom (every 10 yards)
       var pdNums=[{yd:5,lbl:'40'},{yd:15,lbl:'50'},{yd:25,lbl:'40'},{yd:35,lbl:'30'}];
       for(var ni=0;ni<pdNums.length;ni++){
         var yy=MARGIN_TOP+pdNums[ni].yd*YPX;
         if(yy<hh||yy>FH-MARGIN_BOT) continue;
+        if(znGoalY!==null&&yy<=znGoalY+2) continue;
         s+=ynum(pdNums[ni].lbl, numLnx, numRnx, yy);
       }
     } else {
@@ -1483,6 +1509,7 @@ function buildField(card){
       for(var i=0;i<=TOTAL_YARDS/5;i++){
         var yy = MARGIN_TOP + i * Y5;
         if(yy < hh || yy > FH - MARGIN_BOT) continue;
+        if(znGoalY!==null&&yy<=znGoalY+2) continue;
         var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
         if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
         s+=ynum(yardsFromLOS.toString(), numLnx, numRnx, yy);
@@ -1497,6 +1524,37 @@ function buildField(card){
     var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
     var losLineY=usePdLayout?PD_LOS_Y:LOS_Y;
     s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
+
+    // Field-area context. Offense always attacks UP on the card, so the goal line the offense
+    // is driving toward sits ABOVE the LOS (red zone = 20 out, goal line = 5 out), and the
+    // offense's OWN goal line sits BELOW it when they're backed up (LOS on their 5).
+    var zone=card.fieldZone||'mid';
+    var EZ_D=10*YPX; // end zones are 10 yards deep
+    if(zone==='rz'||zone==='gl'){
+      var goalY=losLineY-(zone==='rz'?20:5)*YPX;
+      if(goalY>hh+2){
+        var ezTop=Math.max(hh,goalY-EZ_D);
+        s+='<rect x="'+SL+'" y="'+ezTop.toFixed(1)+'" width="'+(SR-SL)+'" height="'+(goalY-ezTop).toFixed(1)+'" fill="#1A3C2B" opacity="0.12"/>';
+        s+='<line x1="'+SL+'" y1="'+goalY.toFixed(1)+'" x2="'+SR+'" y2="'+goalY.toFixed(1)+'" stroke="#333" stroke-width="2.5"/>';
+      }
+    } else if(zone==='bu'){
+      var ownGoalY=losLineY+5*YPX;
+      if(ownGoalY<FH-2){
+        var ezBot=Math.min(FH,ownGoalY+EZ_D);
+        s+='<rect x="'+SL+'" y="'+ownGoalY.toFixed(1)+'" width="'+(SR-SL)+'" height="'+(ezBot-ownGoalY).toFixed(1)+'" fill="#1A3C2B" opacity="0.12"/>';
+        s+='<line x1="'+SL+'" y1="'+ownGoalY.toFixed(1)+'" x2="'+SR+'" y2="'+ownGoalY.toFixed(1)+'" stroke="#333" stroke-width="2.5"/>';
+      }
+    }
+    // Line to gain — red marker N yards past the LOS. Distance comes from the card's
+    // down & distance ("3rd & 7" → 7), defaults to 10, and caps at the goal line.
+    if(card.redLine){
+      var ltg=10;
+      var ddm=(card.dd||'').match(/&\s*(\d+)/); if(ddm)ltg=parseInt(ddm[1],10)||10;
+      var ltgY=losLineY-ltg*YPX;
+      var goalCap=(zone==='rz')?losLineY-20*YPX:(zone==='gl')?losLineY-5*YPX:hh+2;
+      if(ltgY<goalCap)ltgY=goalCap;
+      if(ltgY>hh+2)s+='<line x1="'+SL+'" y1="'+ltgY.toFixed(1)+'" x2="'+SR+'" y2="'+ltgY.toFixed(1)+'" stroke="#d43a3a" stroke-width="1.8" opacity="0.85"/>';
+    }
   }
 
   s+='</g>'; // end fieldClip
@@ -1866,7 +1924,6 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var usedSmooth=(!isBlk&&!isMot&&!noSmooth&&drawPts.length>=3);
       if(usedSmooth){d=smoothPath(drawPts)}
       else{d=routeSegD(drawPts,hasCurve?rcurves:null)}
-      var isPassPro=(ra==='bpass');
       // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
       // width (thin/med/thick), and end-cap (arrow/block/dot/none). Other route types keep their built-in look.
       // buildPlayers has no `card` parameter — reach for the active card via the global `cards` array.
@@ -1912,7 +1969,10 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // arrow head / end bar instead of poking past it. The cap art still anchors at the real ep, and
       // the (full-length) hit path is unaffected so the tip stays clickable.
       var endTrim=0;
-      if(isBlk||(ra==='custom'&&effEnd==='block')){endTrim=Math.max(1.5,sw*0.7);}      // end bar
+      var blkCap=isBlk?(rt.cap||'bar'):null; // typed block assignments carry their own endpoint symbol
+      if(blkCap==='arrow'){endTrim=Math.max(8,sw*4)*0.8;}                              // movement block: arrow head
+      else if(blkCap==='x'){endTrim=4;}                                                // cut: X sits on the tip
+      else if(blkCap||(ra==='custom'&&effEnd==='block')){endTrim=Math.max(1.5,sw*0.7);} // end bar / cup / twin bar
       else if(ra==='custom'&&(effEnd==='none'||effEnd==='dot')){endTrim=0;}            // no cap / dot
       else{endTrim=Math.max(8,sw*4)*0.8;}                                              // arrow head
       var dDraw=d;
@@ -1950,14 +2010,35 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
           routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
         }
       } else {
+        // Typed block assignment — endpoint symbol chosen by the route's cap type.
         if(pts.length>=2){
           var lp2=endRef;
           var ang2=Math.atan2(ep.y-lp2.y,ep.x-lp2.x);
-          if(isPassPro){
-            var barW=10;
-            var px1=ep.x+barW*Math.cos(ang2+1.57),py1=ep.y+barW*Math.sin(ang2+1.57);
-            var px2=ep.x+barW*Math.cos(ang2-1.57),py2=ep.y+barW*Math.sin(ang2-1.57);
-            routeSvg+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
+          if(blkCap==='cup'){
+            // Pass set: cup bulges along the direction of travel, opening back toward the LOS.
+            var cupR=9;
+            var cu1x=ep.x+cupR*Math.cos(ang2+1.57),cu1y=ep.y+cupR*Math.sin(ang2+1.57);
+            var cu2x=ep.x+cupR*Math.cos(ang2-1.57),cu2y=ep.y+cupR*Math.sin(ang2-1.57);
+            var cufx=ep.x+cupR*1.4*Math.cos(ang2),cufy=ep.y+cupR*1.4*Math.sin(ang2);
+            routeSvg+='<path d="M '+cu1x.toFixed(1)+' '+cu1y.toFixed(1)+' Q '+cufx.toFixed(1)+' '+cufy.toFixed(1)+' '+cu2x.toFixed(1)+' '+cu2y.toFixed(1)+'" fill="none" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
+          } else if(blkCap==='arrow'){
+            var arrSzB=Math.max(10,sw*4);
+            var abx1=ep.x-arrSzB*Math.cos(ang2-0.45),aby1=ep.y-arrSzB*Math.sin(ang2-0.45);
+            var abx2=ep.x-arrSzB*Math.cos(ang2+0.45),aby2=ep.y-arrSzB*Math.sin(ang2+0.45);
+            routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+abx1+','+aby1+' '+abx2+','+aby2+'" fill="'+rt.c+'"/>';
+          } else if(blkCap==='x'){
+            var xr=5.5;
+            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y-xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y+xr)+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y+xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y-xr)+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+          } else if(blkCap==='bar2'){
+            // Combo/double-team: twin parallel bars stacked along the line.
+            for(var b2i=0;b2i<2;b2i++){
+              var b2off=b2i*4.5;
+              var b2x=ep.x-b2off*Math.cos(ang2),b2y=ep.y-b2off*Math.sin(ang2);
+              var q1x=b2x+7*Math.cos(ang2+1.57),q1y=b2y+7*Math.sin(ang2+1.57);
+              var q2x=b2x+7*Math.cos(ang2-1.57),q2y=b2y+7*Math.sin(ang2-1.57);
+              routeSvg+='<line x1="'+q1x+'" y1="'+q1y+'" x2="'+q2x+'" y2="'+q2y+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+            }
           } else {
             var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
             var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
@@ -2343,6 +2424,7 @@ var libCollapsed=(function(){try{return localStorage.getItem('v2libCollapsed')!=
 var SP_FORMS=[['doubR','Doub R'],['doubL','Doub L'],['3x1R','Trips R'],['3x1L','Trips L'],['treyR','Trey R'],['treyL','Trey L'],['deuceR','Deuce R'],['deuceL','Deuce L'],['empty','Empty']];
 var SP_DEFS=[['43over','4-3 Ov'],['43under','4-3 Un'],['odd','Odd'],['tite','Tite'],['bear','Bear'],['nickel','Nickel'],['dime','Dime'],['none','None']];
 var SP_FIELDS=[['hs','HS'],['ncaa','College'],['nfl','NFL'],['blank','Blank']];
+var SP_ZONES=[['mid','Open'],['rz','Red Zone'],['gl','Goal Line'],['bu','Backed Up']];
 var SP_HASHES=[['L','L'],['LM','LM'],['M','M'],['RM','RM'],['R','R']];
 
 function buildSetupPanelHtml(card){
@@ -2350,6 +2432,11 @@ function buildSetupPanelHtml(card){
   var curFt=card.fieldType||'hs';
   h+='<div class="sp-sec"><div class="sp-label">Field</div><div class="sp-pills">';
   for(var fi=0;fi<SP_FIELDS.length;fi++){h+='<button class="sp-pill'+(curFt===SP_FIELDS[fi][0]?' on':'')+'" data-spft="'+SP_FIELDS[fi][0]+'">'+SP_FIELDS[fi][1]+'</button>';}
+  h+='</div>';
+  var curZone=card.fieldZone||'mid';
+  h+='<div class="sp-pills" style="margin-top:6px">';
+  for(var zi=0;zi<SP_ZONES.length;zi++){h+='<button class="sp-pill'+(curZone===SP_ZONES[zi][0]?' on':'')+'" data-spzone="'+SP_ZONES[zi][0]+'">'+SP_ZONES[zi][1]+'</button>';}
+  h+='<button class="sp-pill'+(card.redLine?' on':'')+'" id="spRedLine">Line to Gain</button>';
   h+='</div></div>';
   h+='<div class="sp-sec"><div class="sp-label">Hash</div><div class="sp-pills">';
   for(var hi=0;hi<SP_HASHES.length;hi++){h+='<button class="sp-pill'+(card.hash===SP_HASHES[hi][0]?' on':'')+'" data-sphash="'+SP_HASHES[hi][0]+'">'+SP_HASHES[hi][1]+'</button>';}
@@ -2757,7 +2844,6 @@ function render(){
     h+='<button class="fc-btn" id="tbRedo" title="Redo"'+(redoStack.length===0?' disabled':'')+'><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg></button>';
     h+='</div>';
     h+='<div class="fc fc-tc">';
-    h+='<button class="fc-btn" id="btnPlayCall" title="Type a Play Call (/)" style="color:#cdb8ff"><svg viewBox="0 0 24 24"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/></svg></button>';
     h+='<span class="fc-sep"></span>';
     h+='<button class="fc-btn'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
     h+='<button class="fc-btn'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
@@ -2831,7 +2917,8 @@ function render(){
   // collapses a viewBox-only SVG with CSS width:auto/height:auto/aspect-ratio to zero height (blank
   // field); the attributes prevent that. They're 4x the viewBox so CSS max-width:100% always scales
   // them DOWN to fill the container — the field still grows to fill the space, never capped at 720.
-  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" width="'+(FW*4)+'" height="'+(FH*4)+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  var vbStr=fieldVB?(fieldVB.x.toFixed(1)+' '+fieldVB.y.toFixed(1)+' '+fieldVB.w.toFixed(1)+' '+fieldVB.h.toFixed(1)):('0 0 '+FW+' '+FH);
+  h+='<div class="field-wrap"><svg viewBox="'+vbStr+'" width="'+(FW*4)+'" height="'+(FH*4)+'" preserveAspectRatio="xMidYMid meet" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
   h+=buildField(card);
   var rOff=getCurOffPlayers(card);
   var rDef=getCurDefPlayers(card);
@@ -2919,7 +3006,7 @@ function render(){
           }
           if(curR){h+='<button class="pp-btn" data-pp-route="">&#x2715;</button>';}
         } else if(popupCat==='block'){
-          var blockOpts=[['bpass','Pass Pro'],['bdrive','Drive'],['bpull','Pull'],['breach','Reach']];
+          var blockOpts=[['bdrive','Drive'],['bdown','Down'],['breach','Reach'],['bzone','Zone'],['bcombo','Combo'],['blead','Lead'],['bpull','Pull'],['btrap','Trap'],['bkick','Kickout'],['bfold','Fold'],['bcut','Cut'],['bpass','Pass Pro']];
           var curB=card.asgn[selPlayer];
           for(var bki=0;bki<blockOpts.length;bki++){
             var bk=blockOpts[bki][0],bn=blockOpts[bki][1];
@@ -3091,6 +3178,17 @@ function bind(){
     selPlayer=null;selTextBox=null;render();
   });
   // Setup panel pills — replicate the old select handlers exactly
+  document.querySelectorAll('[data-spzone]').forEach(function(b){
+    b.addEventListener('click',function(){
+      card.fieldZone=this.getAttribute('data-spzone');
+      render();
+    });
+  });
+  var spRedLine=document.getElementById('spRedLine');
+  if(spRedLine)spRedLine.addEventListener('click',function(){
+    card.redLine=!card.redLine;
+    render();
+  });
   document.querySelectorAll('[data-spft]').forEach(function(b){
     b.addEventListener('click',function(){
       var oldHo=getHashOffset(card);
@@ -3631,6 +3729,7 @@ function bind(){
 
   bindDrag();
   bindDraw();
+  bindPinchZoom();
 
   // Floating player context popup — position near the selected player and wire up actions
   var pPop=document.getElementById('playerPopup');
@@ -3830,10 +3929,6 @@ function bind(){
   });
 
   // Draw toolbar buttons
-  var btnPlayCall=document.getElementById('btnPlayCall');
-  if(btnPlayCall)btnPlayCall.addEventListener('click',openPlayCallPalette);
-  var itPlayCall=document.getElementById('itPlayCall');
-  if(itPlayCall)itPlayCall.addEventListener('click',openPlayCallPalette);
   var tbSelect=document.getElementById('tbSelect');
   if(tbSelect)tbSelect.addEventListener('click',function(){
     if(selectMode){selectMode=false}else{selectMode=true;drawMode=false;eraserMode=false;textMode=false;shapeMode=false;lineMode=false;commitStraightLine()}
@@ -5877,6 +5972,101 @@ function svgPoint(svg,e){
   return pt.matrixTransform(ctm);
 }
 
+// ===== PINCH ZOOM / PAN =====
+// Two-finger touch pinch (iPad) + trackpad ctrl-wheel zoom + wheel pan when zoomed.
+// Zoom is a live viewBox change only. All engine pointer math flows through
+// svgPoint()/getScreenCTM(), which reflect the viewBox — so drawing, drags, waypoint
+// editing, and the context-card placement all keep working at any zoom level.
+// Capture-phase listeners sit on .field-wrap (the svg's parent): single-finger events
+// pass through untouched; the moment a second touch lands we cancel the engine's
+// in-flight interaction and swallow everything until a finger lifts.
+function bindPinchZoom(){
+  var fw=document.querySelector('.field-wrap');
+  var svg=document.getElementById('fSvg');
+  if(!fw||!svg||fw._pinchBound)return;
+  fw._pinchBound=true;
+  function curVB(){return fieldVB||{x:0,y:0,w:FW,h:FH};}
+  function setVB(vb){
+    var minW=FW/5; // 5x max zoom
+    if(vb.w>=FW){fieldVB=null;} // pinched out past fit — snap back to full card
+    else{
+      if(vb.w<minW){vb.h=vb.h*(minW/vb.w);vb.w=minW;}
+      if(vb.x<0)vb.x=0; if(vb.y<0)vb.y=0;
+      if(vb.x+vb.w>FW)vb.x=FW-vb.w; if(vb.y+vb.h>FH)vb.y=FH-vb.h;
+      fieldVB=vb;
+    }
+    var v=curVB();
+    svg.setAttribute('viewBox',v.x.toFixed(1)+' '+v.y.toFixed(1)+' '+v.w.toFixed(1)+' '+v.h.toFixed(1));
+  }
+  var tp={}; // active touch points by pointerId
+  var pinchPrev=null; // {d,cx,cy} from the previous move
+  function twoDown(){return Object.keys(tp).length===2;}
+  fw.addEventListener('pointerdown',function(e){
+    if(e.pointerType!=='touch')return;
+    tp[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(twoDown()){
+      // Second finger: the gesture takes over. Cancel the engine's first-finger
+      // interaction (it already handles pointercancel from the iPad lockup fixes).
+      var ids=Object.keys(tp);
+      var firstId=parseInt(ids[0]===String(e.pointerId)?ids[1]:ids[0],10);
+      try{
+        var synthPc=new PointerEvent('pointercancel',{pointerId:firstId,bubbles:true});
+        synthPc._pinchSynth=true; // so our own pinchDrop listener below ignores it
+        svg.dispatchEvent(synthPc);
+      }catch(_){}
+      pinchPrev=null;
+      e.stopPropagation();e.preventDefault();
+    }
+  },true);
+  fw.addEventListener('pointermove',function(e){
+    if(e.pointerType!=='touch'||!tp[e.pointerId])return;
+    tp[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(!twoDown())return;
+    e.stopPropagation();e.preventDefault();
+    var ids=Object.keys(tp);
+    var a=tp[ids[0]],b=tp[ids[1]];
+    var d=Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y))||1;
+    var cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+    if(pinchPrev){
+      var vb=curVB();
+      var r=svg.getBoundingClientRect();
+      var scale=pinchPrev.d/d;
+      var newW=vb.w*scale, newH=vb.h*scale;
+      // Anchor the svg point under the finger centroid, then pan by the centroid delta.
+      var fx=(cx-r.left)/r.width, fy=(cy-r.top)/r.height;
+      var sx=vb.x+fx*vb.w, sy=vb.y+fy*vb.h;
+      var nx=sx-fx*newW-(cx-pinchPrev.cx)/r.width*newW;
+      var ny=sy-fy*newH-(cy-pinchPrev.cy)/r.height*newH;
+      setVB({x:nx,y:ny,w:newW,h:newH});
+    }
+    pinchPrev={d:d,cx:cx,cy:cy};
+  },true);
+  function pinchDrop(e){
+    if(e._pinchSynth)return; // our own cancel of the engine's finger — not a lifted finger
+    if(tp[e.pointerId]!==undefined){delete tp[e.pointerId];pinchPrev=null;}
+  }
+  fw.addEventListener('pointerup',pinchDrop,true);
+  fw.addEventListener('pointercancel',pinchDrop,true);
+  fw.addEventListener('wheel',function(e){
+    if(e.ctrlKey||e.metaKey){
+      // Trackpad pinch / ctrl+scroll: zoom anchored at the cursor
+      e.preventDefault();
+      var vb=curVB();
+      var r=svg.getBoundingClientRect();
+      var scale=Math.exp(e.deltaY*0.01);
+      var newW=vb.w*scale,newH=vb.h*scale;
+      var fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
+      setVB({x:vb.x+fx*vb.w-fx*newW,y:vb.y+fy*vb.h-fy*newH,w:newW,h:newH});
+    } else if(fieldVB){
+      // Plain scroll pans when zoomed in
+      e.preventDefault();
+      var vb2=curVB();
+      var r2=svg.getBoundingClientRect();
+      setVB({x:vb2.x+e.deltaX*vb2.w/r2.width,y:vb2.y+e.deltaY*vb2.h/r2.height,w:vb2.w,h:vb2.h});
+    }
+  },{passive:false});
+}
+
 function upSB(){
   // Live-update the active play's name in the tab bar, library list, and topbar title
   var cc=cards[activeIdx];
@@ -7067,6 +7257,117 @@ function tcCleanup(){
   var m=document.getElementById('tcModal');if(m)m.remove();
 }
 
+// ===== TEACHING CARD: VIDEO EXPORT (diagram + film → social-ready video) =====
+// Formats match CHLK's Export with Media: 9:16 Reels/Stories, 16:9 X/YouTube, 1:1 IG/FB.
+var TC_FORMATS={v916:{w:1080,h:1920},v169:{w:1920,h:1080},v11:{w:1080,h:1080}};
+
+// Slot geometry: optional caption bar on top, footer brand strip, and two content slots —
+// stacked for vertical/square formats, side-by-side for 16:9.
+function tcVideoLayout(fmt,hasCap){
+  var capH=hasCap?Math.round(fmt.h*0.055):0;
+  var footH=Math.round(fmt.h*0.03);
+  var body={y:capH,h:fmt.h-capH-footH};
+  var a,b;
+  if(fmt.w>fmt.h){
+    var half=Math.round(fmt.w/2);
+    a={x:0,y:body.y,w:half,h:body.h};
+    b={x:half,y:body.y,w:fmt.w-half,h:body.h};
+  } else {
+    var split=Math.round(body.h*0.46); // diagram slot a touch smaller than the film slot
+    a={x:0,y:body.y,w:fmt.w,h:split};
+    b={x:0,y:body.y+split,w:fmt.w,h:body.h-split};
+  }
+  return {cap:capH,foot:footH,a:a,b:b};
+}
+function tcDrawCover(x,src,slot){
+  var sw=src.videoWidth||src.width, sh=src.videoHeight||src.height;
+  if(!sw||!sh)return;
+  var sc=Math.max(slot.w/sw,slot.h/sh);
+  var cw=slot.w/sc, ch=slot.h/sc;
+  x.drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,slot.x,slot.y,slot.w,slot.h);
+}
+function tcDrawContain(x,src,slot){
+  var sw=src.width, sh=src.height; if(!sw||!sh)return;
+  var sc=Math.min(slot.w/sw,slot.h/sh);
+  var dw=sw*sc, dh=sh*sc;
+  x.drawImage(src,slot.x+(slot.w-dw)/2,slot.y+(slot.h-dh)/2,dw,dh);
+}
+// One composed frame: diagram aspect-fit on white, film cover-cropped, caption + brand strip.
+// Used for BOTH the live preview (film = still frame canvas) and the recording loop (film =
+// playing <video>), so what you preview is exactly what records.
+function tcDrawVideoFrame(x,fmt,opts,diag,film){
+  var lay=tcVideoLayout(fmt,!!opts.caption);
+  var accent=(teamBranding&&teamBranding.primaryColor)||'#1A3C2B';
+  x.fillStyle='#0f0f0e';x.fillRect(0,0,fmt.w,fmt.h);
+  var dSlot=opts.order==='film'?lay.b:lay.a;
+  var fSlot=opts.order==='film'?lay.a:lay.b;
+  x.fillStyle='#ffffff';x.fillRect(dSlot.x,dSlot.y,dSlot.w,dSlot.h);
+  if(diag)tcDrawContain(x,diag,dSlot);
+  x.fillStyle='#1a1a19';x.fillRect(fSlot.x,fSlot.y,fSlot.w,fSlot.h);
+  if(film)tcDrawCover(x,film,fSlot);
+  if(opts.caption){
+    x.fillStyle=accent;x.fillRect(0,0,fmt.w,lay.cap);
+    x.fillStyle='#F7F7F5';x.font='600 '+Math.round(lay.cap*0.4)+'px "Space Grotesk",Arial,sans-serif';
+    x.textAlign='center';x.textBaseline='middle';
+    x.fillText(opts.caption,fmt.w/2,lay.cap/2+1,fmt.w-40);
+  }
+  x.fillStyle='#0f0f0e';x.fillRect(0,fmt.h-lay.foot,fmt.w,lay.foot);
+  x.fillStyle='rgba(242,241,237,.55)';x.font=Math.round(lay.foot*0.5)+'px "JetBrains Mono",monospace';
+  x.textAlign='right';x.textBaseline='middle';
+  x.fillText(((teamBranding&&teamBranding.teamName)||'Juice Box Football'),fmt.w-16,fmt.h-lay.foot/2);
+}
+function tcPickVideoMime(){
+  if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return '';
+  var cands=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm'];
+  for(var i=0;i<cands.length;i++){if(MediaRecorder.isTypeSupported(cands[i]))return cands[i];}
+  return '';
+}
+// Record the film clip playing inside the composed layout. Uses a separate <video> element
+// so the scrub preview is untouched. Caps at 30s. cb(blob) on success, onErr(message) on failure.
+function tcRecordVideo(card,opts,cb,onErr){
+  var mime=tcPickVideoMime();
+  if(!mime){onErr('Video recording is not supported in this browser');return;}
+  if(!_tcVideoURL){onErr('Pick a film clip first');return;}
+  var svgStr=buildFullSVG(card,appMode==='playdesign');
+  svgToCanvas(svgStr,1440,Math.round(1440*FH/FW)).then(function(diag){
+    var fmt=opts.fmt;
+    var rv=document.createElement('video');
+    rv.muted=true;rv.playsInline=true;rv.setAttribute('playsinline','');
+    var c=document.createElement('canvas');c.width=fmt.w;c.height=fmt.h;
+    var x=c.getContext('2d');
+    var raf=null,capTimer=null,started=false;
+    function cleanup(){if(raf)cancelAnimationFrame(raf);if(capTimer)clearTimeout(capTimer);try{rv.pause()}catch(_){}}
+    function fail(msg){cleanup();onErr(msg);}
+    rv.addEventListener('error',function(){if(!started)fail('Could not play the film clip');});
+    rv.addEventListener('loadeddata',function once(){
+      rv.removeEventListener('loadeddata',once);
+      var rec,chunks=[];
+      try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:8000000});}
+      catch(e){fail('Video recording is not supported in this browser');return;}
+      rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
+      rec.onstop=function(){cleanup();cb(chunks.length?new Blob(chunks,{type:mime.split(';')[0]}):null);};
+      function stopAll(){try{if(rec.state!=='inactive')rec.stop();}catch(_){cleanup();cb(null);}}
+      rv.addEventListener('ended',stopAll);
+      capTimer=setTimeout(stopAll,30000);
+      function draw(){tcDrawVideoFrame(x,fmt,opts,diag,rv);raf=requestAnimationFrame(draw);}
+      rv.currentTime=0;
+      rv.play().then(function(){started=true;rec.start(250);draw();})
+        .catch(function(){fail('Could not play the film clip');});
+    });
+    rv.src=_tcVideoURL;
+  });
+}
+function shareVideoFileNative(blob,name,title){
+  return new Promise(function(resolve){
+    if(!navigator.share||!navigator.canShare){resolve(false);return}
+    try{
+      var file=new File([blob],name,{type:blob.type||'video/mp4'});
+      if(!navigator.canShare({files:[file]})){resolve(false);return}
+      navigator.share({files:[file],title:title||name}).then(function(){resolve(true)}).catch(function(){resolve(false)});
+    }catch(_){resolve(false)}
+  });
+}
+
 function openTeachingCard(){
   var card=cards[activeIdx];
   var existing=document.getElementById('tcModal');if(existing)existing.remove();
@@ -7086,10 +7387,27 @@ function openTeachingCard(){
   mh+='<input type="range" id="tcScrub" min="0" max="1000" value="0"/>';
   mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(242,241,237,.45);text-align:center;margin-top:4px">Scrub to the moment — the preview updates with the frame</div>';
   mh+='</div>';
+  mh+='<div class="tc2-sec">Format</div>';
+  mh+='<div class="tc2-pills">';
+  mh+='<button class="tc2-pill on" data-tcfmt="card">Card</button>';
+  mh+='<button class="tc2-pill" data-tcfmt="v916">9:16</button>';
+  mh+='<button class="tc2-pill" data-tcfmt="v169">16:9</button>';
+  mh+='<button class="tc2-pill" data-tcfmt="v11">1:1</button>';
+  mh+='</div>';
+  mh+='<div id="tcVidOpts" style="display:none">';
+  mh+='<div class="tc2-sec">Layout Order</div>';
+  mh+='<div class="tc2-pills">';
+  mh+='<button class="tc2-pill on" data-tcorder="diag">Diagram First</button>';
+  mh+='<button class="tc2-pill" data-tcorder="film">Film First</button>';
+  mh+='</div>';
+  mh+='<div class="tc2-sec">Caption</div>';
+  mh+='<input type="text" id="tcCaption" maxlength="80" placeholder="Optional caption (80 chars)..." style="width:100%;box-sizing:border-box;background:#262624;border:1px solid rgba(242,241,237,.18);border-radius:4px;color:#f2f1ed;font-family:\'Space Grotesk\',sans-serif;font-size:13px;padding:8px 10px"/>';
+  mh+='</div>';
   mh+='<div class="tc2-sec">Labels</div>';
   mh+='<label><input type="checkbox" id="tcLabels" checked style="accent-color:#8b5cf6;width:15px;height:15px"/>Show play name &amp; down/distance</label>';
   mh+='<div class="tc2-sec">Notes</div>';
   mh+='<textarea id="tcNotes" placeholder="Coaching notes for the graphic...">'+esc(card.notes||'')+'</textarea>';
+  mh+='<button class="tc2-btn tc2-cta" id="tcVideoBtn" style="display:none">&#127909; Create Video</button>';
   mh+='<button class="tc2-btn tc2-cta" id="tcShare">&#8679; Share</button>';
   mh+='<button class="tc2-btn" id="tcSave">Save PNG</button>';
   mh+='</div></div>';
@@ -7099,17 +7417,36 @@ function openTeachingCard(){
   var prev=document.getElementById('tcPrev'),prevHint=document.getElementById('tcPrevHint');
   var video=document.getElementById('tcVideo'),scrub=document.getElementById('tcScrub'),scrubRow=document.getElementById('tcScrubRow');
   var notesEl=document.getElementById('tcNotes'),labelsEl=document.getElementById('tcLabels');
+  var capEl=document.getElementById('tcCaption'),vidOpts=document.getElementById('tcVidOpts');
+  var videoBtn=document.getElementById('tcVideoBtn');
+  var tcFmt='card', tcOrder='diag';
 
+  function showPrev(c){
+    prev.src=c.toDataURL('image/jpeg',0.85);
+    prev.style.display='block';prevHint.style.display='none';
+  }
   function recompose(){
-    tcCompose(card,{labels:labelsEl.checked,notes:notesEl.value.trim()},function(c){
-      prev.src=c.toDataURL('image/jpeg',0.85);
-      prev.style.display='block';prevHint.style.display='none';
+    if(tcFmt==='card'){
+      tcCompose(card,{labels:labelsEl.checked,notes:notesEl.value.trim()},showPrev);
+      return;
+    }
+    // Video-format preview: the exact frame the recording will produce, film as still frame.
+    var fmt=TC_FORMATS[tcFmt];
+    var svgStr=buildFullSVG(card,appMode==='playdesign');
+    svgToCanvas(svgStr,1440,Math.round(1440*FH/FW)).then(function(diag){
+      var c=document.createElement('canvas');c.width=fmt.w;c.height=fmt.h;
+      tcDrawVideoFrame(c.getContext('2d'),fmt,{order:tcOrder,caption:capEl.value.trim()},diag,_tcFilm);
+      _tcCanvas=c; // Share / Save PNG then export this framed layout
+      showPrev(c);
     });
   }
   function recomposeSoon(){if(_tcTimer)clearTimeout(_tcTimer);_tcTimer=setTimeout(recompose,250);}
 
+  var _capTries=0;
   function captureVideoFrame(){
-    if(!video.videoWidth)return;
+    // Some encodes report dimensions a beat after loadeddata — retry briefly instead of bailing.
+    if(!video.videoWidth){if(_capTries++<20)setTimeout(captureVideoFrame,150);return;}
+    _capTries=0;
     var fc=document.createElement('canvas');fc.width=video.videoWidth;fc.height=video.videoHeight;
     fc.getContext('2d').drawImage(video,0,0);
     _tcFilm=fc;recomposeSoon();
@@ -7123,7 +7460,12 @@ function openTeachingCard(){
     if(f.type.indexOf('video')===0){
       _tcVideoURL=URL.createObjectURL(f);
       video.src=_tcVideoURL;scrubRow.style.display='block';
-      video.addEventListener('loadeddata',function once(){video.removeEventListener('loadeddata',once);captureVideoFrame();});
+      video.addEventListener('loadeddata',function once(){
+        video.removeEventListener('loadeddata',once);
+        captureVideoFrame(); // best-effort immediate grab
+        // Some encodes decode no frame until a seek — nudge one so `seeked` re-captures real pixels.
+        try{video.currentTime=0.05;}catch(_){}
+      });
       video.addEventListener('seeked',captureVideoFrame);
     } else {
       scrubRow.style.display='none';
@@ -7143,6 +7485,47 @@ function openTeachingCard(){
   });
   labelsEl.addEventListener('change',recompose);
   notesEl.addEventListener('input',recomposeSoon);
+  capEl.addEventListener('input',recomposeSoon);
+
+  function syncVideoUI(){
+    vidOpts.style.display=tcFmt==='card'?'none':'block';
+    videoBtn.style.display=tcFmt==='card'?'none':'block';
+  }
+  m.querySelectorAll('[data-tcfmt]').forEach(function(b){
+    b.addEventListener('click',function(){
+      tcFmt=this.getAttribute('data-tcfmt');
+      m.querySelectorAll('[data-tcfmt]').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tcfmt')===tcFmt)});
+      syncVideoUI();recompose();
+    });
+  });
+  m.querySelectorAll('[data-tcorder]').forEach(function(b){
+    b.addEventListener('click',function(){
+      tcOrder=this.getAttribute('data-tcorder');
+      m.querySelectorAll('[data-tcorder]').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tcorder')===tcOrder)});
+      recompose();
+    });
+  });
+  videoBtn.addEventListener('click',function(){
+    if(!_tcVideoURL){showToast('Pick a film CLIP first — video export needs video film');return;}
+    var btn=videoBtn;
+    btn.disabled=true;btn.textContent='Recording…';
+    tcRecordVideo(card,{fmt:TC_FORMATS[tcFmt],order:tcOrder,caption:capEl.value.trim()},function(blob){
+      btn.disabled=false;btn.innerHTML='&#127909; Create Video';
+      if(!blob){showToast('Video export failed');return;}
+      try{window.__tcLastVideo=blob}catch(_){} // test hook — verification reads the produced blob
+      var ext=(blob.type||'').indexOf('mp4')>=0?'mp4':'webm';
+      var vname=((card.play||'play').replace(/[^a-zA-Z0-9]/g,'_'))+'_'+tcFmt.replace('v','')+'.'+ext;
+      shareVideoFileNative(blob,vname,card.play||'Teaching card').then(function(ok){
+        if(!ok){
+          var a=document.createElement('a');a.download=vname;a.href=URL.createObjectURL(blob);a.click();
+          showToast('Video saved (sharing not available here)');
+        }
+      });
+    },function(err){
+      btn.disabled=false;btn.innerHTML='&#127909; Create Video';
+      showToast(err);
+    });
+  });
 
   function tcName(){return ((card.play||'play').replace(/[^a-zA-Z0-9]/g,'_'))+'_teaching.png';}
   document.getElementById('tcShare').addEventListener('click',function(){
@@ -7161,494 +7544,6 @@ function openTeachingCard(){
 
   recompose(); // initial preview: diagram + labels/notes (film added when picked)
 }
-
-// ===== NATURAL-LANGUAGE PLAY CALL (command palette) =====
-// Deterministic parser — no LLM, works offline. Type/dictate "Trips Rt, X go, H flat, Y cross,
-// RB swing, 3rd and 7, left hash" and the card builds itself. Open with '/' or Cmd/Ctrl+K, the
-// wand button in the dock, or the wand in the iPad top bar.
-
-// --- Vocabulary ---
-// Formation base word -> key prefix; combined with an adjacent direction word (R default).
-var PC_FORM_BASE={'trips':'3x1','3x1':'3x1','doubles':'doub','double':'doub','2x2':'doub','deuces':'deuce','trey':'trey','deuce':'deuce','empty':'empty','3x2':'empty'};
-var PC_DIR_L={'left':1,'lt':1,'l':1,'weak':1};
-var PC_DIR_R={'right':1,'rt':1,'r':1,'strong':1};
-// Route aliases [phrase, routeKey] — matched longest-phrase-first, case-insensitive.
-var PC_ROUTE_ALIASES=[
-  ['go','go'],['fade','go'],['streak','go'],['vert','go'],['vertical','go'],['nine','go'],['9','go'],
-  ['post','post'],['skinny post','post'],['skinny','post'],
-  ['corner','corner'],['flag','corner'],
-  ['seam','seam'],['bender','seam'],
-  ['wheel','wheel'],
-  ['dig','dig'],['square in','dig'],['in','dig'],
-  ['out','out'],['speed out','out'],['quick out','out'],
-  ['comeback','comeback'],['come back','comeback'],
-  ['slant','slant'],
-  ['over','over'],['cross','over'],['crosser','over'],['deep cross','over'],
-  ['hitch','hitch'],['curl','hitch'],['stop','hitch'],['hook','hitch'],
-  ['flat','flat'],
-  ['screen','screen'],['bubble','screen'],['bubble screen','screen'],['tunnel','screen'],['tunnel screen','screen'],
-  ['drag','drag'],['shallow','drag'],['shallow cross','drag'],
-  ['arrow','arrow'],['angle','arrow'],
-  ['swing','swing'],['check','swing'],['checkdown','swing'],['check release','swing'],['flare','swing'],
-  ['inside zone','riz'],['iz','riz'],['zone','riz'],
-  ['outside zone','roz'],['oz','roz'],['wide zone','roz'],['stretch','roz'],
-  ['power','rpwr'],['counter','rctr'],['draw','rdraw'],
-  ['sweep','rswp'],['jet sweep','rswp'],['end around','rswp'],
-  ['pass pro','bpass'],['pass protection','bpass'],['block','bpass'],['protect','bpass'],['stay in','bpass'],
-  ['drive','bdrive'],['drive block','bdrive'],['pull','bpull'],['reach','breach'],
-  ['motion left','motl'],['mot left','motl'],['motion right','motr'],['mot right','motr'],
-  ['jet left','jetl'],['jet right','jetr']
-];
-// Built per-parse so user custom routes (cr_*) join by their display name.
-function pcRouteTable(){
-  var t=PC_ROUTE_ALIASES.slice();
-  var ks=Object.keys(ROUTES);
-  for(var i=0;i<ks.length;i++){
-    if(ks[i].indexOf('cr_')===0&&ROUTES[ks[i]].n)t.push([String(ROUTES[ks[i]].n).toLowerCase(),ks[i]]);
-  }
-  t.sort(function(a,b){return b[0].length-a[0].length});
-  return t;
-}
-var PC_HASH=[['left hash','L'],['l hash','L'],['on the left','L'],['lh','L'],
-  ['right hash','R'],['r hash','R'],['on the right','R'],['rh','R'],
-  ['left middle','LM'],['lm','LM'],['right middle','RM'],['rm','RM'],
-  ['middle of field','M'],['middle','M'],['mof','M'],['mid','M']];
-var PC_FRONTS=[['4-3 over','43over'],['43 over','43over'],['over front','43over'],
-  ['4-3 under','43under'],['43 under','43under'],['under front','43under'],
-  ['3-4','odd'],['34','odd'],['odd front','odd'],['odd','odd'],
-  ['tite front','tite'],['tite','tite'],['bear','bear'],['nickel','nickel'],['dime','dime'],
-  ['no defense','none'],['no d','none'],
-  ['over','43over'],['under','43under']];
-var PC_PLAYERS={'x':'X','z':'Z','h':'H','y':'Y','w':'W','f':'F','rb':'RB','back':'RB','tailback':'RB','qb':'QB','q':'QB'};
-var PC_HASH_LABEL={'M':'Middle','L':'Left Hash','R':'Right Hash','LM':'Left Mid','RM':'Right Mid'};
-
-// --- Offensive concept catalog ---
-// Concepts are defined against receiver ROLES so they adapt to any formation: s1/s2/s3 = strong-side
-// receivers outside-in, w1/w2 = weak side, sin/win = innermost strong/weak, rb = the back.
-// `r` is an ORDERED list of [role, routeKey]: pairs fill in listed order, each only if the role exists
-// in the formation and that player isn't already assigned — so each concept controls how it degrades
-// (Mesh lists its crossers first, so Trips keeps both crossers and drops the backside go instead).
-// Aliases NEVER include a phrase that parses as player+route ('y cross', 'rb screen') — player calls
-// win by design; those concepts carry safe aliases (ycross, slip screen). `ins` = palette-chip insert
-// text where the display name wouldn't round-trip through the parser.
-var PC_CONCEPTS={
- smash:    {n:'Smash',        al:['smash'],                                   r:[['s1','hitch'],['s2','corner'],['w1','hitch'],['w2','corner'],['rb','swing']],       tags:['Pass'],grp:'Quick'},
- stick:    {n:'Stick',        al:['stick'],                                   r:[['s1','go'],['sin','hitch'],['s2','flat'],['w1','slant'],['rb','flat']],             tags:['Pass'],grp:'Quick'},
- snag:     {n:'Snag',         al:['snag','spot'],                             r:[['s1','hitch'],['s2','corner'],['s3','flat'],['w1','slant'],['rb','flat']],          tags:['Pass'],grp:'Quick'},
- curlflat: {n:'Curl Flat',    al:['curl flat','curl-flat'],                   r:[['s1','hitch'],['s2','flat'],['w1','hitch'],['w2','flat'],['rb','swing']],           tags:['Pass'],grp:'Quick'},
- slantflat:{n:'Slant Flat',   al:['slant flat','slant-flat'],                 r:[['s1','slant'],['s2','flat'],['w1','slant'],['w2','flat'],['rb','bpass']],           tags:['Pass'],grp:'Quick'},
- dblslants:{n:'Double Slants',al:['double slants'],                           r:[['s1','slant'],['s2','slant'],['w1','slant'],['w2','slant'],['rb','bpass']],         tags:['Pass'],grp:'Quick'},
- hitches:  {n:'Hitches',      al:['hitches','all hitches'],                   r:[['s1','hitch'],['s2','hitch'],['w1','hitch'],['w2','hitch'],['rb','swing']],         tags:['Pass'],grp:'Quick'},
- spacing:  {n:'Spacing',      al:['spacing'],                                 r:[['s1','hitch'],['s2','flat'],['s3','hitch'],['w1','hitch'],['w2','flat'],['rb','flat']],tags:['Pass'],grp:'Quick'},
- mesh:     {n:'Mesh',         al:['mesh'],                                    r:[['sin','drag'],['win','drag'],['s1','corner'],['w1','go'],['rb','swing']],           tags:['Pass'],grp:'Dropback'},
- flood:    {n:'Flood',        al:['flood','sail'],                            r:[['s1','go'],['s2','out'],['s3','flat'],['w1','post'],['rb','bpass']],                tags:['Pass'],grp:'Dropback'},
- verts:    {n:'Four Verts',   al:['four verts','4 verts','verts','999','all go'],ins:'verts',r:[['s1','go'],['s2','seam'],['s3','seam'],['w1','go'],['w2','seam'],['rb','swing']],tags:['Pass'],grp:'Dropback'},
- dagger:   {n:'Dagger',       al:['dagger'],                                  r:[['s2','go'],['s1','dig'],['w1','drag'],['rb','bpass']],                              tags:['Pass'],grp:'Dropback'},
- levels:   {n:'Levels',       al:['levels'],                                  r:[['s1','dig'],['s2','drag'],['w1','post'],['rb','swing']],                            tags:['Pass'],grp:'Dropback'},
- shallow:  {n:'Shallow',      al:['shallow','drive'],                         r:[['s2','drag'],['s1','dig'],['w1','post'],['rb','swing']],                            tags:['Pass'],grp:'Dropback'},
- ycross:   {n:'Y-Cross',      al:['ycross','cross concept'],ins:'ycross',     r:[['sin','over'],['s1','go'],['w1','dig'],['rb','swing']],                             tags:['Pass'],grp:'Dropback'},
- mills:    {n:'Mills',        al:['mills'],                                   r:[['s1','post'],['s2','dig'],['w1','drag'],['rb','bpass']],                            tags:['Pass'],grp:'Dropback'},
- yankee:   {n:'Yankee',       al:['yankee'],                                  r:[['s1','over'],['w1','post'],['rb','bpass']],                                         tags:['Pass','Play Action'],grp:'Dropback'},
- postwheel:{n:'Post Wheel',   al:['post wheel','post-wheel'],                 r:[['s1','post'],['s2','wheel'],['w1','dig'],['rb','bpass']],                           tags:['Pass'],grp:'Dropback'},
- scissors: {n:'Scissors',     al:['scissors'],                                r:[['s1','corner'],['s2','post'],['w1','dig'],['rb','bpass']],                          tags:['Pass'],grp:'Dropback'},
- bubble:   {n:'Bubble',       al:['bubble','bubble screen'],                  r:[['sin','screen'],['s1','bdrive'],['w1','go'],['rb','bpass']],                        tags:['Screen'],grp:'Screens'},
- tunnel:   {n:'Tunnel',       al:['tunnel','tunnel screen'],                  r:[['s1','screen'],['s2','bdrive'],['sin','bdrive'],['w1','go']],                       tags:['Screen'],grp:'Screens'},
- rbscreen: {n:'RB Screen',    al:['slip screen','running back screen'],ins:'slip screen',r:[['rb','screen'],['s1','go'],['w1','go']],                                 tags:['Screen'],grp:'Screens'},
- iz:       {n:'Inside Zone',  al:['inside zone','iz'],                        r:[['rb','riz']],                                                                       tags:['Run'],grp:'Runs'},
- oz:       {n:'Outside Zone', al:['outside zone','oz','wide zone','stretch'], r:[['rb','roz']],                                                                       tags:['Run'],grp:'Runs'},
- power:    {n:'Power',        al:['power'],                                   r:[['rb','rpwr']],                                                                      tags:['Run'],grp:'Runs'},
- counter:  {n:'Counter',      al:['counter'],                                 r:[['rb','rctr']],                                                                      tags:['Run'],grp:'Runs'},
- draw:     {n:'Draw',         al:['draw'],                                    r:[['rb','rdraw']],                                                                     tags:['Run'],grp:'Runs'},
- sweep:    {n:'Sweep',        al:['sweep','jet sweep','toss'],                r:[['rb','rswp']],                                                                      tags:['Run'],grp:'Runs'}
-};
-// Receiver roles for a formation: split WR/TE at CX, sort each side outside-in. Strong = the side
-// with more receivers; ties break by the fk suffix — FLIPPED when mirrored (mirrored doubR is
-// positionally doubL).
-function pcRoles(fk,mir){
-  var fm=FORMATIONS[fk];if(!fm)return{};
-  var p=fm.p();if(mir)p=mirrorPlayers(p);
-  var Lg=[],Rg=[],ks=Object.keys(p);
-  for(var i=0;i<ks.length;i++){
-    var pl=p[ks[i]];
-    if(pl.side!=='wr'&&pl.side!=='te')continue;
-    if(pl.x>=CX)Rg.push({k:ks[i],x:pl.x});else Lg.push({k:ks[i],x:pl.x});
-  }
-  Rg.sort(function(a,b){return b.x-a.x});
-  Lg.sort(function(a,b){return a.x-b.x});
-  var sufR=!/L$/.test(fk);if(mir)sufR=!sufR;
-  var strongRight=Rg.length>Lg.length||(Rg.length===Lg.length&&sufR);
-  var S=strongRight?Rg:Lg,W=strongRight?Lg:Rg,roles={};
-  if(S[0])roles.s1=S[0].k;if(S[1])roles.s2=S[1].k;if(S[2])roles.s3=S[2].k;
-  if(W[0])roles.w1=W[0].k;if(W[1])roles.w2=W[1].k;
-  if(S.length)roles.sin=S[S.length-1].k;
-  if(W.length)roles.win=W[W.length-1].k;
-  if(p.RB)roles.rb='RB';
-  return roles;
-}
-// Whole-clause match against the coach's saved route presets (their own catalog — wins over
-// built-ins on a name collision), then the built-in concept aliases.
-function pcMatchCall(cf){
-  if(!cf)return null;
-  for(var pi=0;pi<routePresets.length;pi++){
-    if(cf===pcStripFiller(pcNormalize(routePresets[pi].name)))return{preset:pi};
-  }
-  var ck=Object.keys(PC_CONCEPTS);
-  for(var i=0;i<ck.length;i++){
-    var al=PC_CONCEPTS[ck[i]].al;
-    for(var j=0;j<al.length;j++){if(cf===al[j])return{concept:ck[i]};}
-  }
-  return null;
-}
-
-function pcNormalize(s){
-  s=String(s||'').toLowerCase();
-  s=s.replace(/[‘’]/g,"'").replace(/[“”]/g,'"');
-  // iPad dictation speaks punctuation as words
-  s=s.replace(/\bcomma\b/g,',').replace(/\bsemicolon\b/g,';').replace(/\bperiod\b/g,' ').replace(/\bfull stop\b/g,' ').replace(/\bdash\b/g,' ').replace(/\bhyphen\b/g,' ');
-  // ordinals + number words (D&D)
-  s=s.replace(/\bfirst\b/g,'1st').replace(/\bsecond\b/g,'2nd').replace(/\bthird\b/g,'3rd').replace(/\bfourth\b/g,'4th');
-  var numWords=[['fifteen','15'],['fourteen','14'],['thirteen','13'],['twelve','12'],['eleven','11'],['ten','10'],['nine','9'],['eight','8'],['seven','7'],['six','6'],['five','5'],['four','4'],['three','3'],['two','2'],['one','1']];
-  for(var i=0;i<numWords.length;i++)s=s.replace(new RegExp('\\b'+numWords[i][0]+'\\b(?!\\s*(route|yard))','g'),numWords[i][1]);
-  return s.replace(/\s+/g,' ').trim();
-}
-
-function pcStripFiller(s){
-  return s.replace(/\b(on|the|at|ball|of|field|defense|front|d|formation|set)\b/g,' ').replace(/\s+/g,' ').trim();
-}
-
-function parsePlayCall(text,ctx){
-  var res={fk:null,mir:false,hash:null,dfk:null,asgn:{},dd:null,play:null,tags:[],unmatched:[],concept:null,presetIdx:null};
-  if(!text||!String(text).trim())return res;
-  // explicit quoted play name — captured from the RAW text so its casing is preserved
-  var rawQ=String(text).replace(/[“”]/g,'"').match(/"([^"]+)"/);
-  if(rawQ)res.play=rawQ[1].trim();
-  var s=pcNormalize(text);
-  var qm=s.match(/"([^"]+)"/);
-  if(qm)s=s.replace(qm[0],' ');
-  // D&D before clause split (so "3rd and 7" isn't split on "and")
-  var ddm=s.match(/\b([1-4])(?:st|nd|rd|th)?\s*(?:and|&|\+)\s*(\d{1,2}|goal|inches)\b/);
-  if(ddm){
-    var ordMap={'1':'1st','2':'2nd','3':'3rd','4':'4th'};
-    var dist=ddm[2]==='goal'?'Goal':(ddm[2]==='inches'?'Inches':ddm[2]);
-    res.dd=ordMap[ddm[1]]+' & '+dist;
-    s=s.replace(ddm[0],' ');
-  }
-  // tag keywords anywhere
-  var tagKw=[[/\bplay action\b/g,'Play Action'],[/\bpa\b/g,'Play Action'],[/\brpo\b/g,'RPO'],[/\bboot\b/g,'Boot'],[/\bgadget\b/g,'Gadget']];
-  for(var ti=0;ti<tagKw.length;ti++){
-    if(tagKw[ti][0].test(s)){
-      if(res.tags.indexOf(tagKw[ti][1])<0)res.tags.push(tagKw[ti][1]);
-      s=s.replace(tagKw[ti][0],' ');
-    }
-  }
-  var routeTable=pcRouteTable();
-  function matchRoute(r){
-    if(!r)return null;
-    for(var i=0;i<routeTable.length;i++){if(routeTable[i][0]===r)return routeTable[i][1];}
-    // fall back: whole-word containment in short remainders, longest-first
-    if(r.split(' ').length<=3){
-      for(var j=0;j<routeTable.length;j++){
-        if(new RegExp('\\b'+routeTable[j][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(r))return routeTable[j][1];
-      }
-    }
-    return null;
-  }
-  var clauses=s.split(/[,;\n]+|\bwith\b/);
-  for(var ci=0;ci<clauses.length;ci++){
-    var c=clauses[ci].replace(/\s+/g,' ').trim();
-    if(!c)continue;
-    var handled=false;
-    // 0) whole-clause saved-combo/concept — BEFORE the formation scan so 'double slants' isn't
-    //    eaten as formation 'double' and saved-preset names survive intact
-    var call0=pcMatchCall(pcStripFiller(c));
-    if(call0){if(call0.preset!=null)res.presetIdx=call0.preset;else res.concept=call0.concept;continue;}
-    // 1) formation (extract base + adjacent direction; rest of clause continues on)
-    var toks=c.split(' ');
-    for(var wi=0;wi<toks.length;wi++){
-      var base=PC_FORM_BASE[toks[wi]];
-      if(base){
-        var dir='R';var consumed=[wi];
-        if(wi+1<toks.length&&PC_DIR_L[toks[wi+1]]){dir='L';consumed.push(wi+1);}
-        else if(wi+1<toks.length&&PC_DIR_R[toks[wi+1]]){dir='R';consumed.push(wi+1);}
-        else if(wi>0&&PC_DIR_L[toks[wi-1]]){dir='L';consumed.push(wi-1);}
-        else if(wi>0&&PC_DIR_R[toks[wi-1]]){dir='R';consumed.push(wi-1);}
-        res.fk=(base==='empty')?'empty':(base+dir);
-        var kept=[];
-        for(var ki=0;ki<toks.length;ki++){if(consumed.indexOf(ki)<0)kept.push(toks[ki]);}
-        c=kept.join(' ').trim();
-        break;
-      }
-    }
-    if(!c)continue;
-    // 2) hash (phrase containment, longest-first — PC_HASH is ordered specific-first)
-    for(var hi=0;hi<PC_HASH.length;hi++){
-      var hRe=new RegExp('\\b'+PC_HASH[hi][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:\\s+hash)?\\b');
-      if(hRe.test(c)){res.hash=PC_HASH[hi][1];c=c.replace(hRe,' ').replace(/\s+/g,' ').trim();break;}
-    }
-    if(!c)continue;
-    // 3) front — matches only when the filler-stripped remainder IS the front phrase, so a bare
-    //    "over"/"under" inside a player clause ("Y over") stays a route.
-    var cf=pcStripFiller(c);
-    var frontHit=null;
-    for(var fi=0;fi<PC_FRONTS.length;fi++){if(cf===PC_FRONTS[fi][0]){frontHit=PC_FRONTS[fi][1];break;}}
-    if(frontHit){res.dfk=frontHit;continue;}
-    // 3.5) concept/combo as a post-extraction remainder ("trips rt mesh" spoken without a comma)
-    var call1=pcMatchCall(cf);
-    if(call1){if(call1.preset!=null)res.presetIdx=call1.preset;else res.concept=call1.concept;continue;}
-    // 4) player + route
-    var pm=c.match(/^(x|y|z|h|w|f|rb|back|tailback|qb|q)\b[\s:.\-]*(.*)$/);
-    if(pm){
-      var pk=PC_PLAYERS[pm[1]];
-      var rest=pm[2].replace(/^(?:on an? |runs? an? |run an? |to the |does an? |on the |gets an? )/,'').replace(/\broute\b/g,' ').replace(/\s+/g,' ').trim();
-      var rk=matchRoute(rest);
-      if(rk){res.asgn[pk]=rk;handled=true;}
-      if(handled)continue;
-    }
-    res.unmatched.push(c);
-  }
-  // Concept expansion — into res.asgn, before the play-name fallback so the concept's canonical
-  // name pre-empts stray leftovers and the live preview shows the expanded assignments. Ordered
-  // role list fills only unassigned players; explicit per-player calls always win.
-  if(res.concept){
-    var cdef=PC_CONCEPTS[res.concept];
-    var rfk=res.fk||(ctx&&ctx.fk)||(cards[activeIdx]&&cards[activeIdx].fk)||'doubR';
-    var rmir=res.fk?false:((ctx&&ctx.mir!=null)?!!ctx.mir:!!(cards[activeIdx]&&cards[activeIdx].mir));
-    var croles=pcRoles(rfk,rmir);
-    for(var cri=0;cri<cdef.r.length;cri++){
-      var crole=cdef.r[cri][0],crt=cdef.r[cri][1];
-      var cpk=croles[crole];
-      if(!cpk)continue;
-      if(res.asgn[cpk]!==undefined)continue;
-      res.asgn[cpk]=crt;
-    }
-    if(!res.play)res.play=cdef.n;
-    for(var cti=0;cti<cdef.tags.length;cti++){if(res.tags.indexOf(cdef.tags[cti])<0)res.tags.push(cdef.tags[cti]);}
-  }
-  // play-name fallback: exactly one digit-free leftover clause becomes the name
-  if(!res.play){
-    var cand=[];
-    for(var ui=0;ui<res.unmatched.length;ui++){if(!/\d/.test(res.unmatched[ui]))cand.push(ui);}
-    if(cand.length===1){
-      res.play=res.unmatched[cand[0]].replace(/\b\w/g,function(m){return m.toUpperCase()});
-      res.unmatched.splice(cand[0],1);
-    }
-  }
-  // tag inference from assignments
-  var aks=Object.keys(res.asgn);
-  if(aks.length){
-    var hasRun=false,hasScreen=false,allPass=true;
-    for(var ai=0;ai<aks.length;ai++){
-      var rt=ROUTES[res.asgn[aks[ai]]];
-      if(!rt)continue;
-      if(rt.t==='run')hasRun=true;
-      if(res.asgn[aks[ai]]==='screen')hasScreen=true;
-      if(rt.t!=='pass'&&rt.t!=='motion'&&rt.t!=='block')allPass=false;
-    }
-    if(hasRun&&res.tags.indexOf('Run')<0)res.tags.push('Run');
-    if(hasScreen&&res.tags.indexOf('Screen')<0)res.tags.push('Screen');
-    if(!hasRun&&allPass&&res.tags.indexOf('Pass')<0)res.tags.push('Pass');
-  }
-  return res;
-}
-
-// Apply a parse result to a card. Mirrors the route-picker + fSel/hSel handler idioms.
-// Returns player keys that don't exist in the (final) formation, e.g. RB in Empty.
-function applyPlayCall(card,res){
-  pushUndo();
-  if(res.fk){
-    // full reset, same as choosing a formation from #fSel
-    card._offPreset=null;
-    card.fk=res.fk;card.mir=false;
-    card.asgn={};card.routePts={};card.routeCurves={};
-    if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
-    if(res.hash)card.hash=res.hash;
-  } else if(res.hash&&res.hash!==card.hash){
-    // no formation spoken: shift existing custom positions/waypoints by the hash delta (hSel idiom)
-    var oldHo=getHashOffset(card);
-    card.hash=res.hash;
-    var delta=getHashOffset(card)-oldHo;
-    if(delta!==0){
-      var stores=[card.opos,card.dpos];
-      for(var si=0;si<stores.length;si++){
-        var st=stores[si];if(!st)continue;
-        var sk=Object.keys(st);
-        for(var ki2=0;ki2<sk.length;ki2++){
-          st[sk[ki2]].x+=delta;
-          if(st[sk[ki2]].x<SL+15)st[sk[ki2]].x=SL+15;
-          if(st[sk[ki2]].x>SR-15)st[sk[ki2]].x=SR-15;
-        }
-      }
-      if(card.routePts){var rks2=Object.keys(card.routePts);for(var ri2=0;ri2<rks2.length;ri2++){var rp2=card.routePts[rks2[ri2]];if(rp2){for(var rpi2=0;rpi2<rp2.length;rpi2++){rp2[rpi2].x+=delta}}}}
-    }
-  }
-  if(res.dfk){card._defPreset=null;card.dfk=res.dfk;}
-  // Coach's saved combo — EXACT loadroute semantics (see the data-loadroute handler): wholesale
-  // deep copy of asgn + routePts (routePts are absolute coords as saved — do not re-derive).
-  // res.asgn (explicit + concept) re-seeds on top below; players that came only from the preset
-  // keep their saved shapes because they're not in res.asgn.
-  if(res.presetIdx!=null&&routePresets[res.presetIdx]){
-    var prd=routePresets[res.presetIdx].data;
-    card.asgn=JSON.parse(JSON.stringify(prd.asgn));
-    if(prd.routePts)card.routePts=JSON.parse(JSON.stringify(prd.routePts));
-  }
-  // seed waypoints ONLY after fk/mir/hash are final (getOffPlayers applies all three)
-  var players=getCurOffPlayers(card);
-  var missing=[];
-  var ks3=Object.keys(res.asgn);
-  for(var i3=0;i3<ks3.length;i3++){
-    var pk3=ks3[i3];var pp3=players[pk3];
-    if(!pp3){missing.push(pk3);continue;}
-    card.asgn[pk3]=res.asgn[pk3];
-    if(!card.routePts)card.routePts={};
-    card.routePts[pk3]=routePath(res.asgn[pk3],pp3.x,pp3.y,pp3.x>CX,false);
-    if(card.routeCurves)delete card.routeCurves[pk3];
-  }
-  if(res.play)card.play=res.play;
-  if(res.dd)card.dd=res.dd;
-  if(res.tags&&res.tags.length){
-    if(!card.tags)card.tags=[];
-    for(var t3=0;t3<res.tags.length;t3++){if(card.tags.indexOf(res.tags[t3])<0)card.tags.push(res.tags[t3]);}
-  }
-  render();
-  return missing;
-}
-
-// --- Toast (survives render(): lives on document.body) ---
-var _pcToastTimer=null;
-function showToast(msg){
-  var t=document.getElementById('pcToast');
-  if(!t){t=document.createElement('div');t.id='pcToast';t.className='app-toast';document.body.appendChild(t);}
-  t.textContent=msg;
-  t.classList.add('show');
-  if(_pcToastTimer)clearTimeout(_pcToastTimer);
-  _pcToastTimer=setTimeout(function(){t.classList.remove('show');},3200);
-}
-
-// --- Palette UI (on document.body so render() can't destroy it) ---
-var pcPaletteEl=null;var pcNewCardMode=false;
-function pcRenderPreview(res,el){
-  var h='';
-  function chip(txt,err){h+='<span class="pc-chip'+(err?' err':'')+'">'+esc(txt)+'</span>';}
-  if(res.fk&&FORMATIONS[res.fk])chip(FORMATIONS[res.fk].name);
-  if(res.hash)chip(PC_HASH_LABEL[res.hash]||res.hash);
-  if(res.dfk&&DEF_FRONTS[res.dfk])chip(DEF_FRONTS[res.dfk].name);
-  if(res.concept&&PC_CONCEPTS[res.concept])chip(PC_CONCEPTS[res.concept].n);
-  if(res.presetIdx!=null&&routePresets[res.presetIdx]){
-    var rpz=routePresets[res.presetIdx];
-    chip('★ '+rpz.name);
-    // show the preset's own assignments (skipping any the user explicitly overrode)
-    var pa=rpz.data.asgn,pks=Object.keys(pa);
-    for(var p2=0;p2<pks.length;p2++){
-      if(res.asgn[pks[p2]]!==undefined)continue;
-      var rt2=ROUTES[pa[pks[p2]]];chip(pks[p2]+' → '+(rt2?rt2.n:pa[pks[p2]]));
-    }
-  }
-  var aks=Object.keys(res.asgn);
-  for(var i=0;i<aks.length;i++){var rt=ROUTES[res.asgn[aks[i]]];chip(aks[i]+' → '+(rt?rt.n:res.asgn[aks[i]]));}
-  if(res.dd)chip(res.dd);
-  if(res.play)chip('“'+res.play+'”');
-  for(var tg=0;tg<res.tags.length;tg++)chip('#'+res.tags[tg]);
-  for(var u=0;u<res.unmatched.length;u++)chip('? '+res.unmatched[u],true);
-  el.innerHTML=h||'<span class="pc-hint-inline">Formation, assignments, D&amp;D, hash — in any order</span>';
-}
-function closePlayCallPalette(){
-  if(pcPaletteEl){pcPaletteEl.remove();pcPaletteEl=null;}
-}
-function pcApply(makeNew){
-  if(!pcPaletteEl)return;
-  var inp=pcPaletteEl.querySelector('.pc-input');
-  var res=parsePlayCall(inp?inp.value:'');
-  var any=res.fk||res.hash||res.dfk||res.dd||res.play||res.tags.length||Object.keys(res.asgn).length||res.concept||res.presetIdx!=null;
-  if(!any){showToast('Didn’t catch anything — try “Trips Rt, X go, H flat”');return;}
-  if(makeNew){
-    var nc=(appMode==='playdesign')?mkPlayCard():mkCard();
-    cards.splice(activeIdx+1,0,nc);
-    activeIdx=activeIdx+1;selPlayer=null;
-    // re-parse so a formation-less concept expands against the NEW card's formation
-    res=parsePlayCall(inp?inp.value:'');
-  }
-  var missing=applyPlayCall(cards[activeIdx],res);
-  closePlayCallPalette();
-  var warn=[];
-  if(missing.length)warn.push('no '+missing.join('/')+' in this formation');
-  if(res.unmatched.length)warn.push('didn’t get: '+res.unmatched.join(' / '));
-  if(warn.length){showToast(warn.join(' · '));}
-  else{
-    var bits=[];
-    if(res.fk&&FORMATIONS[res.fk])bits.push(FORMATIONS[res.fk].name);
-    var na=Object.keys(res.asgn).length;
-    if(na)bits.push(na+' assignment'+(na>1?'s':''));
-    showToast('✓ '+(bits.length?bits.join(' · '):'Applied'));
-  }
-}
-function openPlayCallPalette(){
-  if(pcPaletteEl){var pi=pcPaletteEl.querySelector('.pc-input');if(pi)pi.focus();return;}
-  pcNewCardMode=false;
-  var ov=document.createElement('div');ov.className='pc-overlay';
-  var panel=document.createElement('div');panel.className='pc-panel';
-  panel.innerHTML='<div class="pc-title">Call It</div>'+
-    '<input class="pc-input" type="text" placeholder="Trips Rt, X go, H flat, 3rd &amp; 7, left hash" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>'+
-    '<div class="pc-preview"></div>'+
-    '<div class="pc-concepts"><button type="button" class="pc-ctoggle">Concepts ▾</button>'+
-    '<div class="pc-cbody" style="display:none"></div></div>'+
-    '<div class="pc-row"><button type="button" class="pc-new">+ New card</button>'+
-    '<div class="pc-hint">Enter apply · Shift+Enter new card · Esc close</div></div>';
-  ov.appendChild(panel);
-  ov.addEventListener('pointerdown',function(e){if(e.target===ov)closePlayCallPalette();});
-  var inp=panel.querySelector('.pc-input');
-  var prev=panel.querySelector('.pc-preview');
-  var newBtn=panel.querySelector('.pc-new');
-  pcRenderPreview(parsePlayCall(''),prev);
-  inp.addEventListener('input',function(){pcRenderPreview(parsePlayCall(this.value),prev);});
-  inp.addEventListener('keydown',function(e){
-    e.stopPropagation();
-    if(e.key==='Enter'){e.preventDefault();pcApply(e.shiftKey||pcNewCardMode);}
-    else if(e.key==='Escape'){e.preventDefault();closePlayCallPalette();}
-  });
-  newBtn.addEventListener('click',function(){
-    pcNewCardMode=!pcNewCardMode;
-    this.classList.toggle('on',pcNewCardMode);
-  });
-  // Tappable concept catalog — grouped built-ins + the coach's saved route presets. Tap appends
-  // the concept text to the input and reruns the live preview.
-  var cbody=panel.querySelector('.pc-cbody'),ctog=panel.querySelector('.pc-ctoggle');
-  var grps=['Quick','Dropback','Screens','Runs'],ch='';
-  for(var gi=0;gi<grps.length;gi++){
-    ch+='<span class="pc-cgroup">'+grps[gi]+'</span>';
-    var cks=Object.keys(PC_CONCEPTS);
-    for(var ci2=0;ci2<cks.length;ci2++){
-      var cd=PC_CONCEPTS[cks[ci2]];
-      if(cd.grp!==grps[gi])continue;
-      ch+='<button type="button" class="pc-chip pc-chip-btn" data-ins="'+esc(cd.ins||cd.n)+'">'+esc(cd.n)+'</button>';
-    }
-  }
-  if(routePresets.length){
-    ch+='<span class="pc-cgroup">Saved</span>';
-    for(var pi2=0;pi2<routePresets.length;pi2++){
-      ch+='<button type="button" class="pc-chip pc-chip-btn pc-chip-preset" data-ins="'+esc(routePresets[pi2].name)+'">'+esc(routePresets[pi2].name)+'</button>';
-    }
-  }
-  cbody.innerHTML=ch;
-  ctog.addEventListener('click',function(){
-    var open=cbody.style.display!=='none';
-    cbody.style.display=open?'none':'flex';
-    ctog.textContent=open?'Concepts ▾':'Concepts ▴';
-  });
-  cbody.addEventListener('click',function(e){
-    var b=e.target;
-    while(b&&b!==cbody&&(!b.classList||!b.classList.contains('pc-chip-btn')))b=b.parentNode;
-    if(!b||b===cbody)return;
-    var t=b.getAttribute('data-ins');
-    inp.value=inp.value.trim()?inp.value.replace(/[\s,;]+$/,'')+', '+t:t;
-    inp.dispatchEvent(new Event('input'));
-    inp.focus();
-  });
-  document.body.appendChild(ov);
-  pcPaletteEl=ov;
-  inp.focus();
-}
-// Debug/test hook — the IIFE otherwise seals the parser away from automated verification.
-try{window.__pc={parse:parsePlayCall,open:openPlayCallPalette,roles:pcRoles,concepts:PC_CONCEPTS};}catch(_){}
 
 // Keyboard shortcuts
 var clipboardCard=null;
@@ -7671,12 +7566,6 @@ document.addEventListener('keydown',function(e){
     if(popRedo()){render()}
     e.preventDefault();return;
   }
-
-  // '/' or Cmd/Ctrl+K: open the natural-language play-call palette. The INPUT/TEXTAREA/SELECT
-  // guard above keeps '/' typing normally inside form fields; the palette's own input stops
-  // propagation of its keys, so it never re-triggers this.
-  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){openPlayCallPalette();e.preventDefault();return;}
-  if(e.key==='/'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){openPlayCallPalette();e.preventDefault();return;}
 
   // Escape: exit draw/eraser mode or deselect
   if(e.key==='Escape'){
