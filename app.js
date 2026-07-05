@@ -3761,7 +3761,7 @@ function bind(){
           var ctxEl=document.getElementById('ppCard'),tail=document.getElementById('ppTail');
           if(ctxEl){
             var cr=ctxEl.getBoundingClientRect();
-            var cardW=cr.width||260,cardH=cr.height||90,gap=16;
+            var cardW=cr.width||260,cardH=cr.height||90,gap=48;
             // When the selected player has a route, place the card BESIDE the player on the side
             // AWAY from the route so it never covers the line or its waypoint handles (a route can
             // still be adjusted while the card is open). Vertical routes pick the roomier side.
@@ -3773,7 +3773,7 @@ function bind(){
                 for(var rqi=1;rqi<rpts.length;rqi++)routeMx+=(rpts[rqi].x-rpts[0].x);
                 routeMx/=(rpts.length-1);
                 var side=Math.abs(routeMx)<18?(finalX<fwR.width/2?'r':'l'):(routeMx>0?'l':'r');
-                var sideOff=26;
+                var sideOff=40;
                 function ctxFits(sd){return sd==='r'?(finalX+sideOff+cardW<=fwR.width-8):(finalX-sideOff-cardW>=8);}
                 if(!ctxFits(side))side=(side==='r'?'l':'r');
                 if(ctxFits(side)){
@@ -3790,14 +3790,16 @@ function bind(){
               }
             }catch(_){}
             if(!placed){
+              // CHLK-style: the card floats ABOVE the player, centered, with clear air
+              // between them; it drops below only when it would clip the top of the canvas.
               ctxEl.classList.remove('ctx-side','ctx-side-r','ctx-side-l');
               if(tail)tail.style.top='';
-              var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
-              ctxEl.style.top=(flipUp?-(gap+cardH):gap)+'px';
+              var flipDown=(finalY-gap-cardH<6);
+              ctxEl.style.top=(flipDown?gap:-(gap+cardH))+'px';
               var centeredLeft=finalX-cardW/2;
               var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
               ctxEl.style.left=(clampedLeft-finalX)+'px';
-              ctxEl.classList.toggle('ctx-up',flipUp);
+              ctxEl.classList.toggle('ctx-up',!flipDown);
               if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
             }
           }
