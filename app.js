@@ -2866,7 +2866,8 @@ function render(){
         ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
         ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
         ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
-        ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
+        ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>'],
+        ['free','Marker (free draw)','<path d="M3 16c2.5-6 4.5 4 7-3s4.5 3 7-4 4 2 4-3"/>']
       ];
       for(var lsi=0;lsi<lineStyles.length;lsi++){
         var ls=lineStyles[lsi];
@@ -5703,8 +5704,9 @@ function bindDrag(){
     // Commit drawing
     if(currentLine&&drawMode&&!eraserMode){
       if(currentLine.pts.length>=2){
-        // Simplify: reduce point count for storage
-        var simplified=simplifyLine(currentLine.pts,1.5);
+        // Simplify: reduce point count for storage. Marker (free) strokes keep nearly every
+        // point so handwriting/annotation stays exactly as drawn.
+        var simplified=simplifyLine(currentLine.pts,currentLine.style==='free'?0.4:1.5);
         currentLine.pts=simplified;
         var card=cards[activeIdx];
         pushUndo();
@@ -5783,7 +5785,7 @@ function bindDrag(){
     // Commit drawing on leave
     if(currentLine&&drawMode){
       if(currentLine.pts.length>=2){
-        var simplified=simplifyLine(currentLine.pts,1.5);
+        var simplified=simplifyLine(currentLine.pts,currentLine.style==='free'?0.4:1.5);
         currentLine.pts=simplified;
         var card=cards[activeIdx];
         pushUndo();
