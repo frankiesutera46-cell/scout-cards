@@ -3661,13 +3661,44 @@ function bind(){
           if(ctxEl){
             var cr=ctxEl.getBoundingClientRect();
             var cardW=cr.width||260,cardH=cr.height||90,gap=16;
-            var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
-            ctxEl.style.top=(flipUp?-(gap+cardH):gap)+'px';
-            var centeredLeft=finalX-cardW/2;
-            var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
-            ctxEl.style.left=(clampedLeft-finalX)+'px';
-            ctxEl.classList.toggle('ctx-up',flipUp);
-            if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
+            // When the selected player has a route, place the card BESIDE the player on the side
+            // AWAY from the route so it never covers the line or its waypoint handles (a route can
+            // still be adjusted while the card is open). Vertical routes pick the roomier side.
+            var placed=false;
+            try{
+              var rcx=cards[activeIdx];
+              if(selPlayer&&rcx&&rcx.routePts&&rcx.routePts[selPlayer]&&rcx.routePts[selPlayer].length>1){
+                var rpts=rcx.routePts[selPlayer],routeMx=0;
+                for(var rqi=1;rqi<rpts.length;rqi++)routeMx+=(rpts[rqi].x-rpts[0].x);
+                routeMx/=(rpts.length-1);
+                var side=Math.abs(routeMx)<18?(finalX<fwR.width/2?'r':'l'):(routeMx>0?'l':'r');
+                var sideOff=26;
+                function ctxFits(sd){return sd==='r'?(finalX+sideOff+cardW<=fwR.width-8):(finalX-sideOff-cardW>=8);}
+                if(!ctxFits(side))side=(side==='r'?'l':'r');
+                if(ctxFits(side)){
+                  var topOff=-cardH/2;
+                  if(finalY+topOff<8)topOff=8-finalY;
+                  if(finalY+topOff+cardH>fwR.height-8)topOff=fwR.height-8-cardH-finalY;
+                  ctxEl.style.top=topOff+'px';
+                  ctxEl.style.left=(side==='r'?sideOff:-(sideOff+cardW))+'px';
+                  ctxEl.classList.remove('ctx-up','ctx-side-r','ctx-side-l');
+                  ctxEl.classList.add('ctx-side',side==='r'?'ctx-side-r':'ctx-side-l');
+                  if(tail){tail.style.left='';tail.style.top=Math.max(10,Math.min(cardH-22,-topOff-6))+'px';}
+                  placed=true;
+                }
+              }
+            }catch(_){}
+            if(!placed){
+              ctxEl.classList.remove('ctx-side','ctx-side-r','ctx-side-l');
+              if(tail)tail.style.top='';
+              var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
+              ctxEl.style.top=(flipUp?-(gap+cardH):gap)+'px';
+              var centeredLeft=finalX-cardW/2;
+              var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
+              ctxEl.style.left=(clampedLeft-finalX)+'px';
+              ctxEl.classList.toggle('ctx-up',flipUp);
+              if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
+            }
           }
           pPop.style.visibility='visible';
         }

@@ -2043,3 +2043,28 @@ button.pc-chip:active{background:rgba(139,92,246,.35)}
   .app-shell.v2 .v2-top{padding-top:env(safe-area-inset-top);height:calc(48px + env(safe-area-inset-top))}
   .app-shell.v2 .play-tabs{padding-bottom:calc(5px + env(safe-area-inset-bottom));height:calc(42px + env(safe-area-inset-bottom))}
 }
+
+/* ---- v2 wins over the legacy hand-drawn design system (!important vs !important, higher specificity) ---- */
+.app-shell.v2 input.sp-input,.app-shell.v2 textarea.sp-input,.app-shell.v2 select.sp-input,
+.ctx-opts select.sp-input{
+  background:#262624 !important;color:#f2f1ed !important;
+  border:1px solid rgba(242,241,237,.18) !important;border-radius:8px !important;
+  font-family:'JetBrains Mono',monospace !important;box-shadow:none !important;
+}
+.app-shell.v2 input.sp-input::placeholder,.app-shell.v2 textarea.sp-input::placeholder{color:rgba(242,241,237,.35) !important}
+.app-shell.v2 textarea.sp-input{font-family:'Space Grotesk',sans-serif !important}
+.app-shell.v2 .sp-pill{
+  background:transparent !important;color:var(--c-ink-dim) !important;
+  border:1px solid var(--c-line-strong) !important;border-radius:8px !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:10px !important;font-weight:700 !important;
+  text-transform:uppercase;letter-spacing:.03em;box-shadow:none !important;
+}
+.app-shell.v2 .sp-pill:hover{color:var(--c-ink) !important;border-color:rgba(242,241,237,.3) !important;background:transparent !important}
+/* Active selection: purple, matching the context card — not the distracting white fill */
+.app-shell.v2 .sp-pill.on{background:var(--c-accent) !important;border-color:var(--c-accent) !important;color:#fff !important}
+.app-shell.v2 .sp-pill.on:hover{background:#9d73f8 !important;color:#fff !important}
+
+/* ---- Context card side placement (dodges the route instead of covering it) ---- */
+.ctx-card.ctx-side .ctx-tail{left:auto;margin-left:0}
+.ctx-card.ctx-side-r .ctx-tail{left:-7px;right:auto;border:none;border-left:1px solid var(--c-line-strong);border-bottom:1px solid var(--c-line-strong)}
+.ctx-card.ctx-side-l .ctx-tail{right:-7px;left:auto;border:none;border-right:1px solid var(--c-line-strong);border-top:1px solid var(--c-line-strong)}
