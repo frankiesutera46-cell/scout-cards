@@ -538,12 +538,7 @@ var selPlayer=null;
 var popupCat=null; // active category in floating player popup (label/color/shade/route/block)
 // Player-popup presentation: 'dock' (fixed bottom bar, default/chosen), 'popover' (tethered card),
 // 'classic' (original radial bubbles). Override via ?ui=classic / ?ui=popover (persisted per-device).
-var popupUI='dock';
-(function(){try{
-  var u=new URLSearchParams(location.search).get('ui');
-  if(u==='popover'||u==='dock'||u==='classic'){popupUI=u;localStorage.setItem('popupUI',u);}
-  else{var s=localStorage.getItem('popupUI');if(s==='popover'||s==='dock'||s==='classic')popupUI=s;}
-}catch(_){}})();
+// (popupUI A/B removed — the floating context card is the one player-edit surface)
 var selLabel=null;
 var selSide='off';
 var gameTitle='Week 1';
@@ -2338,6 +2333,166 @@ function cardSetupHtml(card){
   return h;
 }
 
+// ===== v2 CHROME BUILDERS (CHLK-inspired) =====
+var spCollapsed=(function(){try{
+  var v=localStorage.getItem('v2spCollapsed');
+  if(v===null)return window.innerWidth<1100; // first run: start collapsed on narrow screens (iPad portrait)
+  return v==='1';
+}catch(_){return false}})();
+var libCollapsed=(function(){try{return localStorage.getItem('v2libCollapsed')!=='0'}catch(_){return true}})();
+var SP_FORMS=[['doubR','Doub R'],['doubL','Doub L'],['3x1R','Trips R'],['3x1L','Trips L'],['treyR','Trey R'],['treyL','Trey L'],['deuceR','Deuce R'],['deuceL','Deuce L'],['empty','Empty']];
+var SP_DEFS=[['43over','4-3 Ov'],['43under','4-3 Un'],['odd','Odd'],['tite','Tite'],['bear','Bear'],['nickel','Nickel'],['dime','Dime'],['none','None']];
+var SP_FIELDS=[['hs','HS'],['ncaa','College'],['nfl','NFL'],['blank','Blank']];
+var SP_HASHES=[['L','L'],['LM','LM'],['M','M'],['RM','RM'],['R','R']];
+
+function buildSetupPanelHtml(card){
+  var h='<aside class="setup-panel'+(spCollapsed?' collapsed':'')+'" id="setupPanel">';
+  var curFt=card.fieldType||'hs';
+  h+='<div class="sp-sec"><div class="sp-label">Field</div><div class="sp-pills">';
+  for(var fi=0;fi<SP_FIELDS.length;fi++){h+='<button class="sp-pill'+(curFt===SP_FIELDS[fi][0]?' on':'')+'" data-spft="'+SP_FIELDS[fi][0]+'">'+SP_FIELDS[fi][1]+'</button>';}
+  h+='</div></div>';
+  h+='<div class="sp-sec"><div class="sp-label">Hash</div><div class="sp-pills">';
+  for(var hi=0;hi<SP_HASHES.length;hi++){h+='<button class="sp-pill'+(card.hash===SP_HASHES[hi][0]?' on':'')+'" data-sphash="'+SP_HASHES[hi][0]+'">'+SP_HASHES[hi][1]+'</button>';}
+  h+='</div></div>';
+  h+='<div class="sp-sec"><div class="sp-label">View</div><div class="sp-pills">';
+  h+='<button class="sp-pill'+(viewPerspective!=='off'?' on':'')+'" id="btnViewDef">Defense</button>';
+  h+='<button class="sp-pill'+(viewPerspective==='off'?' on':'')+'" id="btnViewOff">Offense</button>';
+  h+='</div><div class="sp-row">';
+  h+='<button class="sp-btn" id="bFlip" style="flex:1">Flip</button>';
+  h+='<button class="sp-btn" id="bResetPos" style="flex:1">Reset</button>';
+  h+='<button class="sp-btn" id="bToggleHdr" style="flex:1">Header</button>';
+  h+='</div></div>';
+  h+='<div class="sp-sec"><div class="sp-label">Offense</div><div class="sp-pills">';
+  for(var oi=0;oi<SP_FORMS.length;oi++){
+    var fOn=card._offPreset==null&&card.fk===SP_FORMS[oi][0];
+    h+='<button class="sp-pill'+(fOn?' on':'')+'" data-spfk="'+SP_FORMS[oi][0]+'">'+SP_FORMS[oi][1]+'</button>';
+  }
+  h+='</div>';
+  for(var opi=0;opi<offPresets.length;opi++){
+    h+='<div class="sp-row"><button class="sp-pill sp-preset'+(card._offPreset===opi?' on':'')+'" data-loadoff="'+opi+'" style="flex:1">'+esc(offPresets[opi].name)+'</button><button class="sp-del" data-deloff="'+opi+'">&#x2715;</button></div>';
+  }
+  h+='<div class="sp-row"><input class="sp-input" type="text" id="offPName" placeholder="Save formation as..."/><button class="sp-btn" id="btnSaveOff">Save</button></div>';
+  h+='</div>';
+  h+='<div class="sp-sec"><div class="sp-label">Defense</div><div class="sp-pills">';
+  for(var di=0;di<SP_DEFS.length;di++){
+    var dOn=card._defPreset==null&&card.dfk===SP_DEFS[di][0];
+    h+='<button class="sp-pill'+(dOn?' on':'')+'" data-spdfk="'+SP_DEFS[di][0]+'">'+SP_DEFS[di][1]+'</button>';
+  }
+  h+='</div>';
+  for(var dpi=0;dpi<defPresets.length;dpi++){
+    h+='<div class="sp-row"><button class="sp-pill sp-preset'+(card._defPreset===dpi?' on':'')+'" data-loaddef="'+dpi+'" style="flex:1">'+esc(defPresets[dpi].name)+'</button><button class="sp-del" data-deldef="'+dpi+'">&#x2715;</button></div>';
+  }
+  h+='<div class="sp-row"><input class="sp-input" type="text" id="defPName" placeholder="Save front as..."/><button class="sp-btn" id="btnSaveDef">Save</button></div>';
+  h+='</div>';
+  h+='<div class="sp-sec"><div class="sp-label">Saved Combos</div>';
+  for(var rpi=0;rpi<routePresets.length;rpi++){
+    h+='<div class="sp-row"><button class="sp-pill sp-preset" data-loadroute="'+rpi+'" style="flex:1">'+esc(routePresets[rpi].name)+'</button><button class="sp-del" data-delroute="'+rpi+'">&#x2715;</button></div>';
+  }
+  h+='<div class="sp-row"><input class="sp-input" type="text" id="routePName" placeholder="Save routes as..."/><button class="sp-btn" id="btnSaveRoute">Save</button></div>';
+  h+='</div>';
+  h+='<div class="sp-sec"><div class="sp-label">Details</div>';
+  h+='<div class="sp-row" style="margin-top:0"><input class="sp-input" type="text" id="pI" placeholder="Play name..." value="'+esc(card.play)+'"/></div>';
+  h+='<div class="sp-row"><input class="sp-input" type="text" id="dI" placeholder="Down &amp; distance..." value="'+esc(card.dd)+'"/></div>';
+  h+='<div class="sp-pills" style="margin-top:6px">';
+  for(var ti=0;ti<TAG_OPTIONS.length;ti++){
+    var tOn=card.tags&&card.tags.indexOf(TAG_OPTIONS[ti])>=0;
+    h+='<button class="sp-pill tag-btn'+(tOn?' on':'')+'" data-tag="'+TAG_OPTIONS[ti]+'" style="height:24px;font-size:8px;padding:0 8px">'+TAG_OPTIONS[ti]+'</button>';
+  }
+  h+='</div>';
+  h+='<div class="sp-row"><textarea class="sp-input" id="nI" placeholder="Tendency notes...">'+esc(card.notes)+'</textarea></div>';
+  h+='<div class="sp-row"><input class="sp-input" type="url" id="hudlI" placeholder="Hudl clip URL..." value="'+esc(card.hudlUrl||'')+'"/></div>';
+  h+='</div>';
+  h+='</aside>';
+  return h;
+}
+
+function buildLibPanelHtml(){
+  var h='<aside class="lib-panel'+(libCollapsed?' collapsed':'')+'" id="libPanel">';
+  h+='<div class="lib-head"><span class="lib-title">Library <small>&middot; '+games.length+' file'+(games.length!==1?'s':'')+'</small></span>';
+  h+='<span class="lib-tools"><button class="lib-ibtn" id="libSort" title="Sort files">'+(filesSort==='az'?'AZ':'&#8635;')+'</button><button class="lib-ibtn" id="libNewFile" title="New file">+</button></span></div>';
+  h+='<div class="lib-scroll">';
+  h+='<div class="lib-sec">Files</div>';
+  var rows=[];for(var gi=0;gi<games.length;gi++)rows.push({i:gi,g:games[gi]});
+  if(filesSort==='az')rows.sort(function(a,b){return String(a.g.name).toLowerCase()<String(b.g.name).toLowerCase()?-1:1});
+  else rows.sort(function(a,b){return (b.g.updatedAt||0)-(a.g.updatedAt||0)});
+  for(var ri=0;ri<rows.length;ri++){
+    var fidx=rows[ri].i,fg=rows[ri].g;
+    h+='<button class="lib-file'+(fidx===activeGameIdx?' on':'')+'" data-fopen2="'+fidx+'"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(fg.name)+'</span><span class="lib-count">'+(fg.cards||[]).length+'</span></button>';
+  }
+  h+='<div class="lib-sec">Plays &middot; '+esc(gameTitle)+'</div>';
+  h+='<div class="sp-pills" style="margin-bottom:6px">';
+  h+='<button class="lib-abtn" id="btnD" title="Duplicate card">&#x29C9; Dup</button>';
+  h+='<button class="lib-abtn" id="btnDF" title="Duplicate &amp; flip">&#x29C9;&#x21C4; Flip</button>';
+  h+='<button class="lib-abtn'+(cardSelectMode?' primary':'')+'" id="btnSelMode">Select</button>';
+  h+='</div>';
+  if(cardSelectMode){
+    h+='<div class="lib-actions">';
+    h+='<span style="flex-basis:100%;font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--c-accent-ink)">'+cardSel.length+' SELECTED</span>';
+    h+='<button class="lib-abtn" id="selPrint">Print</button>';
+    h+='<button class="lib-abtn" id="selShareB">Share</button>';
+    h+='<button class="lib-abtn" id="selCopy">Copy&hellip;</button>';
+    h+='<button class="lib-abtn" id="selMove">Move&hellip;</button>';
+    h+='<button class="lib-abtn primary" id="selDone">Done</button>';
+    h+='</div>';
+  }
+  h+='<div class="sp-pills" style="margin-bottom:6px">';
+  h+='<button class="sp-pill tf-btn'+(activeTagFilter===null?' on':'')+'" data-tf="all" style="height:24px;font-size:8px;padding:0 8px">All</button>';
+  for(var tfi=0;tfi<TAG_OPTIONS.length;tfi++){
+    h+='<button class="sp-pill tf-btn'+(activeTagFilter===TAG_OPTIONS[tfi]?' on':'')+'" data-tf="'+TAG_OPTIONS[tfi]+'" style="height:24px;font-size:8px;padding:0 8px">'+TAG_OPTIONS[tfi]+'</button>';
+  }
+  h+='</div>';
+  for(var ci=0;ci<cards.length;ci++){
+    var lc=cards[ci];
+    if(activeTagFilter&&(!lc.tags||lc.tags.indexOf(activeTagFilter)<0))continue;
+    var lcSel=cardSelectMode&&cardSel.indexOf(ci)>=0;
+    h+='<button class="lib-play'+(ci===activeIdx&&!cardSelectMode?' on':'')+'" data-ci="'+ci+'">';
+    if(cardSelectMode)h+='<span class="lp-check'+(lcSel?' on':'')+'">'+(lcSel?'&#10003;':'')+'</span>';
+    h+='<span class="lp-name">#'+(ci+1)+' '+(esc(lc.play)||'Unnamed')+'</span>';
+    if(!cardSelectMode)h+='<span data-cdel="'+ci+'" title="Delete card" style="color:var(--c-ink-faint);font-size:10px;padding:2px 4px;cursor:pointer">&#x2715;</span>';
+    h+='</button>';
+  }
+  if(scriptMode){
+    h+='<div class="lib-sec">Practice Script</div>';
+    h+='<div class="sp-row" style="margin-top:0"><select class="sp-input" id="scriptPeriod">';
+    for(var spi2=0;spi2<PERIODS.length;spi2++){h+='<option value="'+PERIODS[spi2]+'">'+PERIODS[spi2]+'</option>'}
+    h+='</select><button class="sp-btn" id="btnAddScript">+ Add</button></div>';
+    var curPeriod='';
+    for(var si=0;si<practiceScript.length;si++){
+      var item=practiceScript[si];
+      var sc2=null;for(var sci=0;sci<cards.length;sci++){if(cards[sci].id===item.cardId){sc2=cards[sci];break}}
+      if(!sc2)continue;
+      if(item.period!==curPeriod){curPeriod=item.period;h+='<div class="lib-sec" style="margin:6px 0 3px">'+esc(curPeriod)+'</div>'}
+      h+='<div class="script-item lib-play" data-si="'+si+'" draggable="true"><span>'+(si+1)+'.</span><span class="lp-name">'+esc(sc2.play||'Unnamed')+'</span><button class="btn-del" data-sdel="'+si+'" style="background:none;border:none;color:var(--c-ink-faint);cursor:pointer">&#x2715;</button></div>';
+    }
+    if(practiceScript.length>0){h+='<button class="lib-abtn primary" id="btnPrintScript" style="width:100%;margin-top:6px">Print Script</button>';}
+  }
+  h+='<div class="lib-sec">Tools</div>';
+  h+='<div class="sp-pills">';
+  h+='<button class="lib-abtn" id="btnExportPDF">Print / PDF</button>';
+  h+='<button class="lib-abtn" id="btnExportPNG">PNG</button>';
+  h+='<select class="sp-input" id="gridSel" style="height:26px;font-size:9px;padding:2px 6px;width:auto"><option value="">Grid&hellip;</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option></select>';
+  h+='<button class="lib-abtn" id="btnReports">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
+  h+='<button class="lib-abtn" id="btnPlaybooks">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<button class="lib-abtn" id="btnBranding">Branding</button>';
+  h+='<button class="lib-abtn'+(scriptMode?' primary':'')+'" id="btnScript">Script</button>';
+  h+='<button class="lib-abtn'+(appMode==='playdesign'?' primary':'')+'" id="btnPlayDesign">Play Designer</button>';
+  if(appMode==='playdesign')h+='<button class="lib-abtn" id="btnSavedPlays">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
+  h+='<button class="lib-abtn" id="btnSv">Save</button>';
+  h+='<button class="lib-abtn" id="btnLd">Load</button>';
+  h+='<button class="lib-abtn" id="btnHelp">Help</button>';
+  h+='</div>';
+  h+='</div>';
+  h+='<div class="lib-props">';
+  h+='<div class="lib-prop"><span>File</span><b>'+esc(gameTitle)+'</b></div>';
+  h+='<div class="lib-prop"><span>Cards</span><b>'+cards.length+'</b></div>';
+  if(games[activeGameIdx]&&games[activeGameIdx].updatedAt)h+='<div class="lib-prop"><span>Updated</span><b>'+new Date(games[activeGameIdx].updatedAt).toLocaleDateString()+'</b></div>';
+  h+='<div class="sp-row" style="margin-top:6px"><button class="sp-btn" id="libRen" style="flex:1">Rename</button><button class="sp-btn" id="libDelFile" style="flex:1">Delete</button></div>';
+  h+='<span class="lib-sync">'+(demoMode?'Local only':(currentUser?'Synced':'Local'))+'</span>';
+  h+='</div>';
+  h+='</aside>';
+  return h;
+}
+
 function render(){
   // Commit any open inline editor BEFORE #app is replaced. Otherwise innerHTML replacement destroys
   // the focused <input>/<textarea> without firing blur, so finish() never runs and `textMode` stays
@@ -2365,25 +2520,19 @@ function render(){
   var card=cards[activeIdx];
   var oPlayers=getOffPlayers(card);
   var dPlayers=getDefPlayers(card);
-  var h='<div class="app-shell'+(coachView?' coach-view':'')+(coachView&&coachFit?' coach-fit':'')+'">';
+  var h='<div class="app-shell v2'+(coachView?' coach-view':'')+(coachView&&coachFit?' coach-fit':'')+'">';
 
   // Demo banner
   if(demoMode){h+='<div class="demo-banner">You\'re in Demo Mode \u2014 Sign up to save your work! <button id="demoBannerSignUp">Sign Up Free</button></div>';}
   // Topbar
-  h+='<div class="topbar">';
-  // Row 1: Brand, week, title, user
-  h+='<div class="topbar-row1"><div class="brand">';
-  h+='<div class="brand-wordmark"><img src="juice-wordmark.png" alt="Juice"/></div></div>';
-  // Files button — replaces the old week selector + title input. Cards live in named FILES the
-  // coach organizes however they like (opponent, play type, situation); tap to browse/manage.
-  h+='<button class="file-btn" id="btnFiles" title="Files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
-  h+='<span class="file-name">'+esc(gameTitle||'Untitled')+'</span><span class="file-chev">&#9662;</span></button>';
-  h+='<span class="topbar-card-count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
-  h+='<div class="right">';
-  if(demoMode){h+='<span class="user-info" style="color:#C6A355">Demo Mode</span><button class="sign-out" id="btnExitDemo" style="color:#C6A355;border-color:rgba(198,163,85,.4)">Sign Up</button>';}
-  else if(currentUser){h+='<span class="user-info">'+esc(currentUser.email)+'</span><button class="sign-out" id="btnSignOut">Sign Out</button>';}
+  h+='<div class="v2-top">';
+  h+='<div class="v2-brand"><img src="juice-wordmark.png" alt="Juice"/></div>';
+  h+='<div class="v2-title-wrap"><button class="v2-title" id="v2Title" title="Rename play">'+(esc(card.play)||'Untitled')+'</button></div>';
+  h+='<div class="v2-right">';
+  if(demoMode){h+='<span class="v2-user" style="color:#C6A355">Demo</span><button class="v2-iconbtn" id="btnExitDemo">Sign Up</button>';}
+  else if(currentUser){h+='<span class="v2-user">'+esc(currentUser.email)+'</span><button class="v2-iconbtn" id="btnSignOut" title="Sign out">Out</button>';}
+  h+='<button class="v2-iconbtn v2-primary" id="btnShare"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.7l6.8-4.4"/><path d="M8.6 13.3l6.8 4.4"/></svg>Share</button>';
   h+='</div></div>';
-  h+='</div>';
 
   // Team Branding Modal
   h+='<div id="brandingModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
@@ -2596,293 +2745,75 @@ function render(){
   h+='</div></div>';
 
   // Bake iPad sidebar collapsed state into the layout HTML so render() doesn't briefly flash the sidebar before JS re-applies the class
-  var ipadCollapsed='';
-  try{if(localStorage.getItem(lsKey('ipadSideCollapsed'))==='1')ipadCollapsed=' ipad-side-collapsed'}catch(_){}
-  var playerSelectedClass=selPlayer?' has-player-selection':'';
-  h+='<div class="layout'+ipadCollapsed+playerSelectedClass+'">';
-  h+='<div class="panel-backdrop" id="panelBackdrop"></div>';
-  h+='<div class="mobile-panel-rail">';
-  h+='<button class="panel-toggle" id="togSidebar" title="Cards list" aria-label="Show cards list"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>';
-  h+='<button class="panel-toggle" id="togRp" title="Card settings" aria-label="Show card settings panel"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>';
-  h+='</div>';
-
-  // Sidebar
-  h+='<aside class="sidebar"><div class="btns">';
-  h+='<button class="btn btn-add" id="btnA">+ New</button>';
-  h+='<button class="btn btn-sec" id="btnD" title="Duplicate">&#x29C9;</button>';
-  h+='<button class="btn btn-sec" id="btnDF" title="Duplicate &amp; Flip">&#x29C9; &#x21C4;</button>';
-  if(appMode==='playdesign'){
-    h+='<button class="btn btn-sec" id="btnSavePlay" title="Save to Library" style="color:#C6A355;border-color:rgba(198,163,85,.4)">&#x1F4BE;</button>';
-  }
-  h+='<button class="btn btn-sec'+(cardSelectMode?' selmode-on':'')+'" id="btnSelMode" title="Select multiple cards">Select</button>';
-  h+='</div>';
-  // Multi-select action bar — print / share / copy / move the checked cards as a batch
-  if(cardSelectMode){
-    h+='<div class="selbar">';
-    h+='<span class="selbar-count">'+cardSel.length+' selected — tap cards to pick</span>';
-    h+='<button class="selbar-btn" id="selPrint">Print</button>';
-    h+='<button class="selbar-btn" id="selShareB">Share</button>';
-    h+='<button class="selbar-btn" id="selCopy">Copy to&hellip;</button>';
-    h+='<button class="selbar-btn" id="selMove">Move to&hellip;</button>';
-    h+='<button class="selbar-btn selbar-done" id="selDone">Done</button>';
+  // ===== v2 body: setup panel | canvas region | library panel =====
+  h+='<div class="v2-body">';
+  h+=buildSetupPanelHtml(card);
+  h+='<button class="panel-tab pt-left" id="togSetup" title="Setup panel">'+(spCollapsed?'&#9656;':'&#9666;')+'</button>';
+  h+='<div class="canvas-region">';
+  if(!coachView){
+    // floating clusters over the canvas (CHLK pattern)
+    h+='<div class="fc fc-tl">';
+    h+='<button class="fc-btn" id="tbUndo" title="Undo"'+(undoStack.length===0?' disabled':'')+'><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
+    h+='<button class="fc-btn" id="tbRedo" title="Redo"'+(redoStack.length===0?' disabled':'')+'><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg></button>';
     h+='</div>';
-  }
-  if(appMode==='playdesign'){
-    h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:4px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
-  }
-
-  if(scriptMode){
-    // Practice Script Builder view
-    h+='<div style="margin-bottom:6px"><div class="script-add">';
-    h+='<select id="scriptPeriod">';
-    for(var spi=0;spi<PERIODS.length;spi++){h+='<option value="'+PERIODS[spi]+'">'+PERIODS[spi]+'</option>'}
-    h+='</select>';
-    h+='<button class="btn btn-add" id="btnAddScript" style="font-size:10px;padding:4px 8px">+ Add</button>';
-    h+='</div></div>';
-    var curPeriod='';
-    for(var si=0;si<practiceScript.length;si++){
-      var item=practiceScript[si];
-      var sc=null;for(var sci=0;sci<cards.length;sci++){if(cards[sci].id===item.cardId){sc=cards[sci];break}}
-      if(!sc)continue;
-      if(item.period!==curPeriod){curPeriod=item.period;h+='<div class="script-period">'+esc(curPeriod)+'</div>'}
-      h+='<div class="script-item" data-si="'+si+'" draggable="true">';
-      h+='<span class="script-num">'+(si+1)+'</span>';
-      h+='<span class="script-play">'+esc(sc.play||'Unnamed')+'</span>';
-      h+='<button class="btn-del" data-sdel="'+si+'">&#x2715;</button>';
+    h+='<div class="fc fc-tc">';
+    h+='<button class="fc-btn" id="btnPlayCall" title="Type a Play Call (/)" style="color:#cdb8ff"><svg viewBox="0 0 24 24"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/></svg></button>';
+    h+='<span class="fc-sep"></span>';
+    h+='<button class="fc-btn'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
+    h+='<button class="fc-btn'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
+    h+='<button class="fc-btn'+(eraserMode?' on':'')+'" id="tbErase" title="Eraser"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
+    h+='<button class="fc-btn'+(shapeMode==='circle'?' on':'')+'" id="tbCircle" title="Circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></button>';
+    h+='<button class="fc-btn'+(shapeMode==='rect'?' on':'')+'" id="tbRect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>';
+    h+='<button class="fc-btn'+(textMode?' on':'')+'" id="tbText" title="Text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
+    h+='</div>';
+    // inline style strip drops below the cluster when a draw tool is active
+    if((drawMode&&!eraserMode)||shapeMode){
+      h+='<div class="pen-strip">';
+      for(var dci=0;dci<DRAW_COLORS.length;dci++){
+        var dc=DRAW_COLORS[dci];
+        h+='<button class="ps-dot color-btn'+(drawColor===dc?' on act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
+      }
+      h+='<span class="fc-sep"></span>';
+      var lineStyles=[
+        ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
+        ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
+        ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
+        ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
+      ];
+      for(var lsi=0;lsi<lineStyles.length;lsi++){
+        var ls=lineStyles[lsi];
+        h+='<button class="ps-style'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
+      }
+      h+='<button class="ps-style'+(drawDashed?' on':'')+'" id="tbDash" title="Dashed"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
+      h+='<span class="fc-sep"></span>';
+      for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
+        var dw=DRAW_WIDTHS[dwi];
+        h+='<button class="ps-style width-btn'+(drawWidth===dw?' on act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*3)+'px;height:'+(4+dwi*3)+'px;border-radius:50%;background:currentColor;display:inline-block"></span></button>';
+      }
       h+='</div>';
     }
-    if(practiceScript.length>0){
-      h+='<button class="btn btn-pri" id="btnPrintScript" style="margin-top:10px;width:100%;font-size:11px">&#x1F5A8; Print Script</button>';
-    }
-  } else {
-    // Card list
-    for(var ci=0;ci<cards.length;ci++){
-      var cc=cards[ci];var cfm=FORMATIONS[cc.fk];
-      // Filter by tag
-      if(activeTagFilter && (!cc.tags || cc.tags.indexOf(activeTagFilter)<0)) continue;
-      var ciSel=cardSelectMode&&cardSel.indexOf(ci)>=0;
-      h+='<button class="ci'+(ci===activeIdx&&!cardSelectMode?' act':'')+(ciSel?' csel':'')+'" data-ci="'+ci+'"'+(cardSelectMode?'':' draggable="true"')+'>';
-      if(cardSelectMode){h+='<span class="ci-check'+(ciSel?' on':'')+'">'+(ciSel?'&#10003;':'')+'</span>';}
-      else{h+='<span class="ci-del" data-cdel="'+ci+'" title="Delete card">&#x2715;</span>';}
-      h+='<span class="cn">#'+(ci+1)+'</span> ';
-      h+='<span class="card-name">'+(esc(cc.play)||'Unnamed')+'</span>';
-      h+='<span class="cm">'+(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+esc(cc.dd):'')+'</span>';
-      if(cc.tags&&cc.tags.length){
-        h+='<span class="tag-pills">';
-        for(var tpi=0;tpi<cc.tags.length;tpi++){h+='<span class="tag-pill">'+cc.tags[tpi]+'</span>'}
-        h+='</span>';
-      }
-      h+='</button>';
-    }
-  }
-  h+='</aside>';
-
-  // Main
-  h+='<main class="main"><div class="editor">';
-
-  // ===== iPad fixed-left tool rail (hidden on desktop via CSS) =====
-  var IPAD_FORMS=[
-    ['doubR','Doubles R'],['doubL','Doubles L'],
-    ['3x1R','Trips R'],['3x1L','Trips L'],
-    ['treyR','Trey R'],['treyL','Trey L'],
-    ['deuceR','Deuce R'],['deuceL','Deuce L'],
-    ['empty','Empty 3x2']
-  ];
-  var IPAD_DEFS=[
-    ['43over','4-3 Over'],['43under','4-3 Under'],
-    ['odd','3-4 Odd'],['tite','Tite'],
-    ['nickel','Nickel'],['dime','Dime'],['bear','Bear']
-  ];
-  var IPAD_HASHES=[['L','Left'],['M','Mid'],['R','Right']];
-  // Horizontal top toolbar (drawing tools — always visible on iPad)
-  h+='<div class="ipad-top">';
-  // Tools
-  h+='<div class="it-group">';
-  h+='<button class="it-btn" id="itPlayCall" title="Type a Play Call"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/></svg></button>';
-  h+='<button class="it-btn'+(selectMode?' it-on':'')+'" data-istool="select" title="Select (box-select)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
-  h+='<button class="it-btn'+(drawMode&&!eraserMode?' it-on':'')+'" data-istool="pen" title="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
-  h+='<button class="it-btn'+(eraserMode?' it-on':'')+'" data-istool="erase" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l9-9 8 8-4 4"/></svg></button>';
-  h+='<button class="it-btn'+(textMode?' it-on':'')+'" data-istool="text" title="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
-  h+='<button class="it-btn'+(shapeMode==='circle'?' it-on':'')+'" data-istool="circle" title="Circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>';
-  h+='<button class="it-btn'+(shapeMode==='rect'?' it-on':'')+'" data-istool="rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>';
-  h+='</div>';
-  h+='<div class="it-sep"></div>';
-  // Line styles
-  var ipLineStyles=[
-    ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
-    ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
-    ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
-    ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
-  ];
-  h+='<div class="it-group">';
-  for(var ipi=0;ipi<ipLineStyles.length;ipi++){var ls=ipLineStyles[ipi];
-    h+='<button class="it-btn'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' it-on':'')+'" data-islstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ls[2]+'</svg></button>';
-  }
-  // Dashed toggle (separate from line style — overlays a dashed pattern on any of the 4 styles)
-  h+='<button class="it-btn'+(drawDashed?' it-on':'')+'" data-isdash="1" title="Dashed Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
-  h+='</div>';
-  h+='<div class="it-sep"></div>';
-  // Colors
-  h+='<div class="it-group it-colors">';
-  for(var ipci=0;ipci<DRAW_COLORS.length;ipci++){var dc=DRAW_COLORS[ipci];
-    h+='<button class="it-color'+(drawColor===dc?' it-on':'')+'" data-iscolor="'+dc+'" style="background:'+dc+'"></button>';
-  }
-  h+='</div>';
-  h+='<div class="it-sep"></div>';
-  // Widths
-  h+='<div class="it-group">';
-  for(var ipwi=0;ipwi<DRAW_WIDTHS.length;ipwi++){var dw=DRAW_WIDTHS[ipwi];
-    h+='<button class="it-width'+(drawWidth===dw?' it-on':'')+'" data-iswidth="'+dw+'"><span style="width:'+(4+ipwi*3)+'px;height:'+(4+ipwi*3)+'px"></span></button>';
-  }
-  h+='</div>';
-  h+='<div class="it-sep"></div>';
-  // Undo / Delete Selected
-  h+='<div class="it-group" data-no-radial="1">';
-  h+='<button class="it-btn" data-istool="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>';
-  h+='<button class="it-btn" data-istool="redo" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg></button>';
-  h+='<button class="it-btn" data-istool="del" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
-  h+='</div>';
-  h+='</div>';
-
-  // Collapse toggle — rendered OUTSIDE the .ipad-side so the sidebar's transform doesn't drag it off-screen
-  h+='<button class="is-collapse" id="ipadSideToggle" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
-  h+='<aside class="ipad-side">';
-  // FIELD
-  var curFt=fieldTypeOf(card);
-  var fts=[['hs','HIGH SCHOOL'],['ncaa','COLLEGE'],['nfl','NFL'],['blank','BLANK']];
-  h+='<div class="is-section" data-issec="field"><button class="is-label is-toggle">FIELD<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
-  for(var fti=0;fti<fts.length;fti++){var ft=fts[fti];
-    h+='<button class="is-btn'+(curFt===ft[0]?' is-on':'')+'" data-isft="'+ft[0]+'">'+ft[1]+'</button>';
-  }
-  h+='</div></div>';
-  // FORMATION
-  h+='<div class="is-section" data-issec="form"><button class="is-label is-toggle">FORMATION<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
-  for(var ipfi=0;ipfi<IPAD_FORMS.length;ipfi++){var fr=IPAD_FORMS[ipfi];
-    h+='<button class="is-btn'+(card.fk===fr[0]?' is-on':'')+'" data-isfk="'+fr[0]+'">'+fr[1]+'</button>';
-  }
-  h+='</div></div>';
-  // DEFENSE
-  h+='<div class="is-section" data-issec="def"><button class="is-label is-toggle">DEFENSE<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-form">';
-  for(var ipdi=0;ipdi<IPAD_DEFS.length;ipdi++){var dr=IPAD_DEFS[ipdi];
-    h+='<button class="is-btn'+(card.dfk===dr[0]?' is-on':'')+'" data-isdfk="'+dr[0]+'">'+dr[1]+'</button>';
-  }
-  h+='</div></div>';
-  // HASH
-  h+='<div class="is-section" data-issec="hash"><button class="is-label is-toggle">HASH<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-hash">';
-  for(var iphi=0;iphi<IPAD_HASHES.length;iphi++){var hr=IPAD_HASHES[iphi];
-    h+='<button class="is-btn'+(card.hash===hr[0]?' is-on':'')+'" data-ishash="'+hr[0]+'">'+hr[1]+'</button>';
-  }
-  h+='</div></div>';
-  // QUICK TEXT
-  h+='<div class="is-section" data-issec="qt"><button class="is-label is-toggle">QUICK TEXT<span class="is-chev">&#x25BE;</span></button><div class="is-grid is-grid-qt">';
-  for(var ipqi=0;ipqi<quickTexts.length;ipqi++){
-    h+='<button class="is-btn is-qt" data-isqt="'+ipqi+'">'+esc(quickTexts[ipqi])+'</button>';
-  }
-  h+='</div></div>';
-  h+='</aside>';
-
-  // Body - draw toolbar first, then content
-  // Draw toolbar
-  h+='<div class="draw-bar">';
-  if(coachView){
-    h+='<div class="tb-group" data-no-radial="1">';
-    h+=dockButton({id:'btnCoachView',title:'Exit Coach View',icon:'present',cls:'tb-action dock-primary-action',coachOn:true});
-    h+='</div>';
-    h+='<div class="tb-group" data-no-radial="1">';
-    h+=dockButton({id:'btnPrevCard',title:'Previous Card',icon:'prev',disabled:activeIdx<=0});
-    h+=dockButton({id:'btnNextCard',title:'Next Card',icon:'next',disabled:activeIdx>=cards.length-1});
-    h+='</div>';
-    h+='<div class="tb-group" data-no-radial="1">';
-    h+=dockButton({id:'btnCoachFit',title:coachFit?'Fill Field':'Fit Field',icon:coachFit?'fill':'fit',on:coachFit});
-    h+=dockButton({id:'btnViewDef',title:'Defense View',label:'DEF',on:viewPerspective==='def'});
-    h+=dockButton({id:'btnViewOff',title:'Offense View',label:'OFF',on:viewPerspective==='off'});
-    h+='</div>';
-    h+='<div class="tb-group" data-no-radial="1">';
-    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action'});
+    h+='<div class="fc fc-tr">';
+    h+='<button class="fc-btn fc-danger" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
+    h+='<button class="fc-btn fc-danger" id="tbClear" title="Clear All Drawings"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    h+='<span class="fc-sep"></span>';
+    h+='<button class="fc-btn" id="btnCoachView" title="Coach View (fullscreen)"><rect x="4" y="5" width="16" height="11" rx="1.5" style="display:none"></rect><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M12 16v4"/><path d="M8 20h8"/><path d="M8.5 12.5l2.5-2.5 2 2 3-4"/></svg></button>';
     h+='</div>';
   } else {
-    // Group 0: Coach presentation toggle
-    h+='<div class="tb-group">';
-    h+=dockButton({id:'btnCoachView',title:'Coach View',icon:'present',cls:'tb-action dock-primary-action'});
-    h+='</div>';
-    // Group 1: View and product mode
-    h+='<div class="tb-group" data-dock-key="view">';
-    h+=dockButton({id:'btnViewDef',title:'Defense View',label:'DEF',on:viewPerspective==='def'});
-    h+=dockButton({id:'btnViewOff',title:'Offense View',label:'OFF',on:viewPerspective==='off'});
-    h+=dockButton({id:'btnPlayDesign',title:appMode==='playdesign'?'Scout Cards':'Play Designer',icon:'whistle',on:appMode==='playdesign'});
-    h+='</div>';
-    // Group 2: Navigation and drawing tools — kept inline (no radial popup)
-    h+='<div class="tb-group" data-dock-key="nav" data-no-radial="1">';
-    h+=dockButton({id:'btnPlayCall',title:'Type a Play Call (/)',icon:'wand'});
-    h+='<button class="tb-action'+(selectMode?' on':'')+'" id="tbSelect" title="Select (box-select)" aria-label="Select"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3,2"/></svg></button>';
-    h+='<button class="tb-action'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen" title="Pen" aria-label="Pen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>';
-    h+='</div>';
-    // Group 3: Markup tools (Circle, Rect, Text)
-    h+='<div class="tb-group" data-dock-key="mark">';
-    h+='<button class="tb'+(shapeMode==='circle'?' on':'')+'" id="tbCircle" title="Circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
-    h+='<button class="tb'+(shapeMode==='rect'?' on':'')+'" id="tbRect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>';
-    h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText" title="Text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>';
-    h+='</div>';
-    // Group 4: Line styles (icons for each style)
-    h+='<div class="tb-group" data-dock-key="line">';
-    var lineStyles=[
-      ['curved','Solid','<line x1="5" y1="19" x2="19" y2="5"/>'],
-      ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
-      ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
-      ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>']
-    ];
-    for(var lsi=0;lsi<lineStyles.length;lsi++){
-      var ls=lineStyles[lsi];
-      h+='<button class="tb'+(drawMode&&!eraserMode&&drawStyle===ls[0]?' on':'')+'" data-lstyle="'+ls[0]+'" title="'+ls[1]+'"><svg viewBox="0 0 24 24">'+ls[2]+'</svg></button>';
-    }
-    h+='<button class="tb'+(drawDashed?' on':'')+'" id="tbDash" title="Dashed Line"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="7" y2="12"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></button>';
-    h+='</div>';
-    // Group 5: Colors
-    h+='<div class="tb-group" data-dock-key="color" style="gap:3px;padding:2px 4px">';
-    for(var dci=0;dci<DRAW_COLORS.length;dci++){
-      var dc=DRAW_COLORS[dci];
-      h+='<button class="color-btn'+(drawColor===dc?' act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
-    }
-    h+='</div>';
-    // Group 6: Widths
-    h+='<div class="tb-group" data-dock-key="width" style="gap:2px;padding:2px 4px">';
-    for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
-      var dw=DRAW_WIDTHS[dwi];
-      h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*3)+'px;height:'+(4+dwi*3)+'px;border-radius:50%"></span></button>';
-    }
-    h+='</div>';
-    // Group 7: Undo / Redo - direct access for high-frequency coaching edits
-    h+='<div class="tb-group" data-no-radial="1">';
-    h+=dockButton({id:'tbUndo',title:'Undo',icon:'undo',disabled:undoStack.length===0});
-    h+=dockButton({id:'tbRedo',title:'Redo',icon:'redo',disabled:redoStack.length===0});
-    h+='</div>';
-    // Group 8: Delete / Clear — kept inline (no radial popup)
-    h+='<div class="tb-group" data-dock-key="edit" data-no-radial="1">';
-    h+='<button class="tb-action" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
-    h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-    h+='</div>';
-    // Group 9: Coach workflow, platform library, and exports
-    // Share + Print stay visible with text labels (never radial-compacted) — icon-only wasn't
-    // self-explanatory; the rest of the workflow buttons collapse into the labeled overflow menu.
-    h+='<div class="tb-group" data-dock-key="shareout" data-no-radial="1">';
-    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action',labelText:'Share'});
-    h+=dockButton({id:'btnExportPDF',title:'Print / Save PDF',icon:'pdf',labelText:'Print'});
-    h+='</div>';
-    h+='<div class="tb-group" data-dock-key="workflow">';
-    h+=dockButton({id:'btnExportPNG',title:'Export PNG',icon:'image'});
-    h+=dockButton({id:'btnReports',title:'Scouting Reports',icon:'report',badge:getScoutReports().length?getScoutReports().length:''});
-    h+=dockButton({id:'btnPlaybooks',title:'Playbooks',icon:'book',badge:userPlaybooks.length?userPlaybooks.length:''});
-    h+=dockButton({id:'btnBranding',title:'Team Branding',icon:'team'});
-    if(appMode==='playdesign')h+=dockButton({title:'Saved Plays',icon:'book',badge:savedPlays.length?savedPlays.length:'',data:{'open-saved-plays':'1','dock-action':'saved-plays'}});
-    h+=dockButton({id:'btnSv',title:'Save',icon:'save',data:{'dock-break':'before'}});
-    h+=dockButton({id:'btnLd',title:'Load',icon:'load'});
-    h+=dockButton({id:'btnHelp',title:'Help',icon:'help'});
+    // coach view: single minimal cluster, bottom center
+    h+='<div class="fc" style="top:auto;bottom:14px;left:50%;transform:translateX(-50%)">';
+    h+='<button class="fc-btn" id="cvExit" title="Exit Coach View"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    h+='<span class="fc-sep"></span>';
+    h+='<button class="fc-btn" id="btnPrevCard" title="Previous card"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>';
+    h+='<button class="fc-btn" id="btnNextCard" title="Next card"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>';
+    h+='<span class="fc-sep"></span>';
+    h+='<button class="fc-btn'+(viewPerspective!=='off'?' on':'')+'" id="cvDef" title="Defense view"><svg viewBox="0 0 24 24"><path d="M12 21s8-4.5 8-11V5l-8-3-8 3v5c0 6.5 8 11 8 11z"/></svg></button>';
+    h+='<button class="fc-btn'+(viewPerspective==='off'?' on':'')+'" id="cvOff" title="Offense view"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/></svg></button>';
+    h+='<span class="fc-sep"></span>';
+    h+='<button class="fc-btn'+(coachFit?' on':'')+'" id="btnCoachFit" title="Fit / Fill"><svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>';
     h+='</div>';
   }
-  h+='</div>';
 
-  // Quick Text stamp bar — visually hidden, but kept in DOM so the iPad sidebar's quick-text
-  // buttons can delegate clicks to these qt-btns (which carry the actual click handlers).
+  // Quick Text stamp bar — hidden delegate carrying the real handlers (quick-text buttons proxy here)
   h+='<div class="quick-text-bar" id="qtBar" style="display:none">';
   h+='<span class="qt-label">Quick Text</span>';
   for(var qi=0;qi<quickTexts.length;qi++){
@@ -2954,10 +2885,9 @@ function render(){
       // style/width/end the same way the freehand draw tool does.
       var ppHasCustom=card.asgn[selPlayer]==='custom';
       if(ppHasCustom)cats.push(['line','Line']);
-      // Player context popup — three presentation modes (popupUI): 'classic' (radial bubbles +
-      // detached tray, original), 'popover' (one tethered card), 'dock' (fixed bottom bar). All three
-      // reuse the same data-pp-* buttons, so the event handlers below are shared across modes.
-      // Capture the active category's option buttons into a string so each shell can place them.
+      // Player context popup — one floating context card at the object (tabs + option rows,
+      // all driven by the shared data-pp-* button handlers below).
+      // Capture the active category's option buttons into a string for the card shell.
       var subInner='';
       if(popupCat){
         var _ppHSave=h; h='';
@@ -3022,113 +2952,72 @@ function render(){
         }
         subInner=h; h=_ppHSave;
       }
-      // Category buttons — shared data-pp-cat. Rendered radially (classic) or as a horizontal tab
-      // strip (popover/dock). Build both; the shell below picks one.
-      var catsRadial='',tabsRow='';
+      // Category tabs — one floating context card AT the object (CHLK pattern), icon + tiny label.
+      var ctxIcons={
+        label:'<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+        color:'<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/>',
+        shade:'<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none"/>',
+        route:'<path d="M5 19L14 10"/><polyline points="9,9 15,9 15,15"/>',
+        block:'<line x1="5" y1="19" x2="15" y2="9"/><line x1="11" y1="5" x2="19" y2="13"/>',
+        line:'<line x1="5" y1="19" x2="19" y2="5"/>'
+      };
+      var tabsRow='';
       for(var ci=0;ci<cats.length;ci++){
         var cat=cats[ci][0],cn=cats[ci][1];
-        var catGlyph={label:'Lbl',color:'Clr',shade:'Shd',route:'Rte',block:'Blk',line:'Line'}[cat]||cn.substring(0,3);
-        var catAngle=(35+((cats.length===1?55:(110*ci/(cats.length-1)))))*Math.PI/180;
-        var catRadius=58;
-        catsRadial+='<button class="pp-cat'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'" style="--rx:'+(Math.cos(catAngle)*catRadius).toFixed(1)+'px;--ry:'+(Math.sin(catAngle)*catRadius).toFixed(1)+'px">'+catGlyph+'</button>';
-        tabsRow+='<button class="pp-tab'+(popupCat===cat?' act':'')+'" data-pp-cat="'+cat+'" title="'+cn+'" aria-label="'+cn+'">'+catGlyph+'</button>';
+        tabsRow+='<button class="ctx-tab'+(popupCat===cat?' on':'')+'" data-pp-cat="'+cat+'" title="'+cn+'"><svg viewBox="0 0 24 24">'+(ctxIcons[cat]||ctxIcons.label)+'</svg><span>'+cn+'</span></button>';
       }
       var ppData='id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'"';
-      if(popupUI==='popover'){
-        // #2 — one tethered card: tab strip on top, options below, with a tail pointing at the player.
-        h+='<div class="player-popup pp-mode-pop" '+ppData+'><div class="pp-card" id="ppCard"><span class="pp-tail" id="ppTail"></span><div class="pp-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="pp-opts">'+subInner+'</div>':'')+'</div></div>';
-      } else if(popupUI==='dock'){
-        // #4 — fixed bottom bar (dock-style): same tabs + options, always in the same spot.
-        h+='<div class="pp-dock" '+ppData+'><div class="pp-dock-inner"><div class="pp-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="pp-opts">'+subInner+'</div>':'')+'</div></div>';
-      } else {
-        // classic — original radial bubbles + detached tray.
-        h+='<div class="player-popup" '+ppData+'>'+(popupCat?'<div class="pp-sub">'+subInner+'</div>':'')+'<div class="pp-cats">'+catsRadial+'</div></div>';
-      }
+      h+='<div class="player-popup" '+ppData+'><div class="ctx-card" id="ppCard"><span class="ctx-tail" id="ppTail"></span><div class="ctx-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="ctx-opts">'+subInner+'</div>':'')+'</div></div>';
+    }
+  } else if(selTextBox!==null){
+    // Text-box context card — size / color / duplicate / delete at the text box
+    var tbs4=getCurTB(card);
+    var tb4=tbs4[selTextBox];
+    if(tb4){
+      var ppDataT='id="playerPopup" data-pp-x="'+tb4.x+'" data-pp-y="'+tb4.y+'"';
+      h+='<div class="player-popup" '+ppDataT+'><div class="ctx-card" id="ppCard"><span class="ctx-tail" id="ppTail"></span><div class="ctx-opts" style="margin-top:0;padding-top:0;border-top:none">';
+      h+='<select class="sp-input" id="tbSizeSel" style="width:auto;padding:5px 6px">';
+      var tbSizes=[8,10,12,14,16,20];
+      for(var tsz=0;tsz<tbSizes.length;tsz++){h+='<option value="'+tbSizes[tsz]+'"'+(tb4.size===tbSizes[tsz]?' selected':'')+'>'+tbSizes[tsz]+'px</option>';}
+      h+='</select>';
+      h+='<select class="sp-input" id="tbColorSel" style="width:auto;padding:5px 6px">';
+      var tbColors=[['#222','Black'],['#cc0000','Red'],['#0055cc','Blue'],['#22862a','Green'],['#9333ea','Purple'],['#1A3C2B','Forest'],['#888','Gray']];
+      for(var tcl=0;tcl<tbColors.length;tcl++){h+='<option value="'+tbColors[tcl][0]+'"'+(tb4.color===tbColors[tcl][0]?' selected':'')+'>'+tbColors[tcl][1]+'</option>';}
+      h+='</select>';
+      h+='<button class="pp-btn" id="btnDupTB">Dup</button>';
+      h+='<button class="pp-btn" id="btnDelTB">&#x2715;</button>';
+      h+='</div></div></div>';
     }
   }
   h+='</div>';
 
-  // Play Designer: close the field-col wrapper (notes section removed)
+  // Play Designer: close the field-col wrapper
   if(appMode==='playdesign'){
     h+='</div>'; // close field-col
   }
-
-  // Right panel
-  h+='<div class="rp'+(selPlayer?' rp-player':'')+'">';
-  var curTBs=getCurTB(card);
-  if(selTextBox!==null&&curTBs&&curTBs[selTextBox]){
-    var stb=curTBs[selTextBox];
-    h+='<div class="sel-hdr"><span style="color:#3b82f6">Text Box</span>';
-    h+='<button class="clr-btn" id="btnDupTB" style="margin-right:6px">Duplicate</button>';
-    h+='<button class="clr-btn" id="btnDelTB">Delete</button></div>';
-    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Color</label>';
-    h+='<select id="tbColorSel" style="width:100%">';
-    var tbColors=[['#222','Black'],['#cc0000','Red'],['#0055cc','Blue'],['#22862a','Green'],['#9333ea','Purple'],['#1A3C2B','Forest'],['#888','Gray']];
-    for(var tci=0;tci<tbColors.length;tci++){h+='<option value="'+tbColors[tci][0]+'"'+(stb.color===tbColors[tci][0]?' selected':'')+'>'+tbColors[tci][1]+'</option>'}
-    h+='</select></div>';
-    h+='<div class="ns"><label>Size</label>';
-    h+='<select id="tbSizeSel" style="width:100%">';
-    var tbSizes=[8,10,12,14,16,20];
-    for(var tsi=0;tsi<tbSizes.length;tsi++){h+='<option value="'+tbSizes[tsi]+'"'+(stb.size===tbSizes[tsi]?' selected':'')+'>'+tbSizes[tsi]+'px</option>'}
-    h+='</select></div>';
-    h+='<div class="np" style="padding:8px 0;font-size:10px;color:#6b6560">Double-click to edit text. Drag to move.</div>';
-    h+=cardSetupHtml(card);
-  } else if(!selPlayer){
-    h+=cardSetupHtml(card);
-    h+='<div class="np side-help">Click a player to assign a route or drag to reposition</div>';
-  } else {
-    h+=selectedPlayerInspectorHtml(card,selSide,selPlayer);
-    h+=cardSetupHtml(card);
-  }
-
-  h+='<div class="ns"><label>Card Notes</label>';
-  h+='<textarea id="nI" placeholder="Tendency notes...">'+esc(card.notes)+'</textarea></div>';
-  h+='<div class="ns"><label>&#x1F3A5; Hudl Link</label>';
-  h+='<input type="url" id="hudlI" placeholder="Paste Hudl clip URL..." value="'+esc(card.hudlUrl||'')+'" style="width:100%;font-size:11px;padding:5px 6px;border:1px solid rgba(58,58,56,.15);border-radius:4px;font-family:inherit"/></div>';
-
-  // === PRESET: Save/Load Offensive Formation ===
-  h+='<div class="preset-section"><label>&#x1F4BE; Offensive Formation Presets</label>';
-  for(var opi=0;opi<offPresets.length;opi++){
-    h+='<div class="preset-row">';
-    h+='<button class="btn btn-sec" data-loadoff="'+opi+'">'+esc(offPresets[opi].name)+'</button>';
-    h+='<button class="btn btn-x" data-deloff="'+opi+'">&#x2715;</button>';
-    h+='</div>';
-  }
-  h+='<div class="save-preset-row">';
-  h+='<input type="text" id="offPName" placeholder="Preset name..."/>';
-  h+='<button class="btn btn-pri" id="btnSaveOff">Save</button>';
-  h+='</div></div>';
-
-  // === PRESET: Save/Load Defensive Front ===
-  h+='<div class="preset-section"><label>&#x1F4BE; Defensive Front Presets</label>';
-  for(var dpi=0;dpi<defPresets.length;dpi++){
-    h+='<div class="preset-row">';
-    h+='<button class="btn btn-sec" data-loaddef="'+dpi+'">'+esc(defPresets[dpi].name)+'</button>';
-    h+='<button class="btn btn-x" data-deldef="'+dpi+'">&#x2715;</button>';
-    h+='</div>';
-  }
-  h+='<div class="save-preset-row">';
-  h+='<input type="text" id="defPName" placeholder="Preset name..."/>';
-  h+='<button class="btn btn-pri" id="btnSaveDef">Save</button>';
-  h+='</div></div>';
-
-  // === PRESET: Save/Load Route Combo ===
-  h+='<div class="preset-section"><label>&#x1F4BE; Route / Assignment Presets</label>';
-  for(var rpi=0;rpi<routePresets.length;rpi++){
-    h+='<div class="preset-row">';
-    h+='<button class="btn btn-sec" data-loadroute="'+rpi+'">'+esc(routePresets[rpi].name)+'</button>';
-    h+='<button class="btn btn-x" data-delroute="'+rpi+'">&#x2715;</button>';
-    h+='</div>';
-  }
-  h+='<div class="save-preset-row">';
-  h+='<input type="text" id="routePName" placeholder="Preset name..."/>';
-  h+='<button class="btn btn-pri" id="btnSaveRoute">Save</button>';
-  h+='</div></div>';
-
-  h+='</div>'; // rp
   h+='</div>'; // eb
-  h+='</div></main>'; // editor, main
-  h+='</div>'; // layout
+  h+='</div>'; // canvas-region
+
+  // ---- Library panel (right) + edge toggle ----
+  h+=buildLibPanelHtml();
+  h+='<button class="panel-tab pt-right" id="togLib" title="Library">'+(libCollapsed?'&#9666;':'&#9656;')+'</button>';
+  h+='</div>'; // v2-body
+
+  // ---- Bottom play tabs (primary card navigation) ----
+  h+='<div class="play-tabs" id="playTabs">';
+  h+='<button class="pt-add" id="btnA" title="New card">+</button>';
+  for(var pti=0;pti<cards.length;pti++){
+    var ptc=cards[pti];
+    if(activeTagFilter&&(!ptc.tags||ptc.tags.indexOf(activeTagFilter)<0))continue;
+    var ptOn=pti===activeIdx;
+    var ptSel=cardSelectMode&&cardSel.indexOf(pti)>=0;
+    h+='<button class="pt-tab'+((ptOn&&!cardSelectMode)||ptSel?' on':'')+'" data-ci="'+pti+'"'+(cardSelectMode?'':' draggable="true"')+'>';
+    h+='<span class="pt-name">#'+(pti+1)+' '+(esc(ptc.play)||'Unnamed')+'</span>';
+    if(ptOn&&!cardSelectMode)h+='<span class="pt-x" data-cdel="'+pti+'" title="Delete card">&#x2715;</span>';
+    h+='</button>';
+  }
+  h+='</div>';
+
   h+='</div>'; // app-shell
 
   document.getElementById('app').innerHTML=h;
@@ -3158,7 +3047,7 @@ function bind(){
   var card=cards[activeIdx];
 
   // Sidebar
-  var cis=document.querySelectorAll('.ci');
+  var cis=document.querySelectorAll('[data-ci]');
   for(var i=0;i<cis.length;i++){
     cis[i].addEventListener('click',(function(idx){return function(){
       if(cardSelectMode){
@@ -3169,7 +3058,7 @@ function bind(){
       activeIdx=idx;selPlayer=null;var l=document.querySelector('.layout');if(l)l.classList.remove('show-sidebar');render()
     }})(parseInt(cis[i].getAttribute('data-ci'))));
   }
-  var ciDels=document.querySelectorAll('.ci-del');
+  var ciDels=document.querySelectorAll('[data-cdel]');
   for(var di=0;di<ciDels.length;di++){
     ciDels[di].addEventListener('click',(function(idx){return function(e){
       e.stopPropagation();
@@ -3186,12 +3075,151 @@ function bind(){
   for(var cdi=0;cdi<cis.length;cdi++){
     (function(el,idx){
       el.addEventListener('dragstart',function(e){cardDragIdx=idx;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',idx)});
-      el.addEventListener('dragend',function(){el.classList.remove('dragging');cardDragIdx=null;var all=document.querySelectorAll('.ci.drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over')});
-      el.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='move';var all=document.querySelectorAll('.ci.drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over');if(idx!==cardDragIdx)el.classList.add('drag-over')});
+      el.addEventListener('dragend',function(){el.classList.remove('dragging');cardDragIdx=null;var all=document.querySelectorAll('[data-ci].drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over')});
+      el.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='move';var all=document.querySelectorAll('[data-ci].drag-over');for(var r=0;r<all.length;r++)all[r].classList.remove('drag-over');if(idx!==cardDragIdx)el.classList.add('drag-over')});
       el.addEventListener('dragleave',function(){el.classList.remove('drag-over')});
       el.addEventListener('drop',function(e){e.preventDefault();el.classList.remove('drag-over');if(cardDragIdx===null||cardDragIdx===idx)return;var moved=cards.splice(cardDragIdx,1)[0];cards.splice(idx,0,moved);if(activeIdx===cardDragIdx)activeIdx=idx;else if(cardDragIdx<activeIdx&&idx>=activeIdx)activeIdx--;else if(cardDragIdx>activeIdx&&idx<=activeIdx)activeIdx++;cardDragIdx=null;render()});
     })(cis[cdi],parseInt(cis[cdi].getAttribute('data-ci')));
   }
+
+  // ===== v2 chrome bindings =====
+  // Eraser tool (the old iPad rail's eraser is gone; the dock never had one)
+  var tbErase=document.getElementById('tbErase');
+  if(tbErase)tbErase.addEventListener('click',function(){
+    if(eraserMode){eraserMode=false;drawMode=false}
+    else{eraserMode=true;drawMode=true;textMode=false;shapeMode=false;lineMode=false;selectMode=false;commitStraightLine()}
+    selPlayer=null;selTextBox=null;render();
+  });
+  // Setup panel pills — replicate the old select handlers exactly
+  document.querySelectorAll('[data-spft]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var oldHo=getHashOffset(card);
+      card.fieldType=this.getAttribute('data-spft');
+      var newHo=getHashOffset(card);var delta=newHo-oldHo;
+      if(delta!==0){
+        var stores=[card.opos,card.dpos,card.pdOpos,card.pdDpos];
+        for(var si=0;si<stores.length;si++){var st=stores[si];if(!st)continue;
+          var ks=Object.keys(st);for(var ki=0;ki<ks.length;ki++){st[ks[ki]].x+=delta;
+            if(st[ks[ki]].x<SL+15)st[ks[ki]].x=SL+15;if(st[ks[ki]].x>SR-15)st[ks[ki]].x=SR-15;}}
+        if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x+=delta}}}}
+      }
+      render();
+    });
+  });
+  document.querySelectorAll('[data-sphash]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var oldHo=getHashOffset(card);
+      card.hash=this.getAttribute('data-sphash');
+      var newHo=getHashOffset(card);var delta=newHo-oldHo;
+      if(delta!==0){
+        var stores=[card.opos,card.dpos];
+        for(var si=0;si<stores.length;si++){var st=stores[si];if(!st)continue;
+          var ks=Object.keys(st);for(var ki=0;ki<ks.length;ki++){st[ks[ki]].x+=delta;
+            if(st[ks[ki]].x<SL+15)st[ks[ki]].x=SL+15;if(st[ks[ki]].x>SR-15)st[ks[ki]].x=SR-15;}}
+        if(card.routePts){var rks=Object.keys(card.routePts);for(var ri=0;ri<rks.length;ri++){var rp=card.routePts[rks[ri]];if(rp){for(var rpi=0;rpi<rp.length;rpi++){rp[rpi].x+=delta}}}}
+      }
+      render();
+    });
+  });
+  document.querySelectorAll('[data-spfk]').forEach(function(b){
+    b.addEventListener('click',function(){
+      card._offPreset=null;
+      card.fk=this.getAttribute('data-spfk');
+      card.asgn={};card.routePts={};card.routeCurves={};
+      if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
+      selPlayer=null;render();
+    });
+  });
+  document.querySelectorAll('[data-spdfk]').forEach(function(b){
+    b.addEventListener('click',function(){
+      card._defPreset=null;
+      card.dfk=this.getAttribute('data-spdfk');
+      if(appMode==='playdesign'){card.pdDpos={}}else{card.dpos=null}
+      render();
+    });
+  });
+  // Panel edge toggles
+  var togSetup=document.getElementById('togSetup');
+  if(togSetup)togSetup.addEventListener('click',function(){
+    spCollapsed=!spCollapsed;
+    try{localStorage.setItem('v2spCollapsed',spCollapsed?'1':'0')}catch(_){}
+    render();
+  });
+  var togLib=document.getElementById('togLib');
+  if(togLib)togLib.addEventListener('click',function(){
+    libCollapsed=!libCollapsed;
+    try{localStorage.setItem('v2libCollapsed',libCollapsed?'1':'0')}catch(_){}
+    render();
+  });
+  // Top-bar play title: tap to rename in place
+  var v2t=document.getElementById('v2Title');
+  if(v2t)v2t.addEventListener('click',function(){
+    var wrap=this.parentElement;
+    var inp=document.createElement('input');
+    inp.className='v2-title-input';inp.type='text';inp.value=card.play||'';
+    wrap.innerHTML='';wrap.appendChild(inp);inp.focus();inp.select();
+    var done=false;
+    function fin(){if(done)return;done=true;card.play=inp.value;render();}
+    inp.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();fin();}
+      else if(e.key==='Escape'){e.preventDefault();done=true;render();}
+    });
+    inp.addEventListener('blur',fin);
+  });
+  // Library panel
+  var libSort=document.getElementById('libSort');
+  if(libSort)libSort.addEventListener('click',function(){
+    filesSort=filesSort==='az'?'recent':'az';
+    try{localStorage.setItem('filesSort',filesSort)}catch(_){}
+    render();
+  });
+  var libNewFile=document.getElementById('libNewFile');
+  if(libNewFile)libNewFile.addEventListener('click',function(){
+    var nm=prompt('New file name (team, play type...)');
+    if(nm&&nm.trim()){
+      syncActiveFile();exitSelectMode();
+      addGame(nm.trim());
+      games[activeGameIdx].updatedAt=Date.now();
+    }
+  });
+  document.querySelectorAll('[data-fopen2]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var idx=parseInt(this.getAttribute('data-fopen2'));
+      if(idx===activeGameIdx)return;
+      syncActiveFile();exitSelectMode();
+      switchGame(idx);
+    });
+  });
+  var libRen=document.getElementById('libRen');
+  if(libRen)libRen.addEventListener('click',function(){
+    var nv=prompt('Rename file',gameTitle);
+    if(nv&&nv.trim()){
+      gameTitle=nv.trim();
+      games[activeGameIdx].name=gameTitle;
+      games[activeGameIdx].updatedAt=Date.now();
+      autoSave();render();
+    }
+  });
+  var libDelFile=document.getElementById('libDelFile');
+  if(libDelFile)libDelFile.addEventListener('click',function(){
+    if(games.length<=1){alert('This is your only file.');return;}
+    if(confirm('Delete "'+gameTitle+'" and all its cards?')){
+      syncActiveFile();exitSelectMode();
+      deleteGame(activeGameIdx);
+    }
+  });
+  // Coach-view cluster (distinct ids — the setup panel's View pills own btnViewDef/btnViewOff)
+  var cvExit=document.getElementById('cvExit');
+  if(cvExit)cvExit.addEventListener('click',function(){
+    coachView=false;
+    selPlayer=null;selTextBox=null;selLine=null;selLabel=null;popupCat=null;
+    render();
+  });
+  var cvDef=document.getElementById('cvDef');
+  if(cvDef)cvDef.addEventListener('click',function(){viewPerspective='def';selPlayer=null;popupCat=null;render();});
+  var cvOff=document.getElementById('cvOff');
+  if(cvOff)cvOff.addEventListener('click',function(){viewPerspective='off';selPlayer=null;popupCat=null;render();});
 
   // SVG interactions
   var svg=document.getElementById('fSvg');
@@ -3609,8 +3637,7 @@ function bind(){
   if(pPop){
     var svgEl=document.getElementById('fSvg');
     var fwEl=document.querySelector('.field-wrap');
-    // The dock mode is position:fixed at the bottom — it must NOT be coordinate-positioned.
-    if(svgEl&&fwEl&&popupUI!=='dock'){
+    if(svgEl&&fwEl){
       try{
         var ctm=svgEl.getScreenCTM();
         var fwR=fwEl.getBoundingClientRect();
@@ -3623,32 +3650,24 @@ function bind(){
           var lx=sx-fwR.left;
           var ly=sy-fwR.top;
           pPop.style.visibility='hidden';
-          if(popupUI==='popover'){
-            // Anchor on the player (light clamp), then place the tethered card around it: below by
-            // default, flipped above when there's no room, and shifted horizontally to stay on-field
-            // while the tail slides to keep pointing at the player.
-            var finalX=Math.max(10,Math.min(fwR.width-10,lx));
-            var finalY=Math.max(10,Math.min(fwR.height-10,ly));
-            pPop.style.left=finalX+'px';
-            pPop.style.top=finalY+'px';
-            var card=document.getElementById('ppCard'),tail=document.getElementById('ppTail');
-            if(card){
-              var cr=card.getBoundingClientRect();
-              var cardW=cr.width||260,cardH=cr.height||90,gap=16;
-              var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
-              card.style.top=(flipUp?-(gap+cardH):gap)+'px';
-              var centeredLeft=finalX-cardW/2;
-              var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
-              card.style.left=(clampedLeft-finalX)+'px';
-              card.classList.toggle('pp-card--up',flipUp);
-              if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
-            }
-          } else {
-            // classic radial — keep the original clamp that reserves room for the orbiting buttons.
-            var finalX=Math.max(82,Math.min(fwR.width-82,lx));
-            var finalY=Math.max(132,Math.min(fwR.height-92,ly));
-            pPop.style.left=finalX+'px';
-            pPop.style.top=finalY+'px';
+          // Anchor on the object (light clamp), then place the context card around it: below by
+          // default, flipped above when there's no room, shifted horizontally to stay on-field
+          // while the tail slides to keep pointing at the object.
+          var finalX=Math.max(10,Math.min(fwR.width-10,lx));
+          var finalY=Math.max(10,Math.min(fwR.height-10,ly));
+          pPop.style.left=finalX+'px';
+          pPop.style.top=finalY+'px';
+          var ctxEl=document.getElementById('ppCard'),tail=document.getElementById('ppTail');
+          if(ctxEl){
+            var cr=ctxEl.getBoundingClientRect();
+            var cardW=cr.width||260,cardH=cr.height||90,gap=16;
+            var flipUp=(finalY+gap+cardH>fwR.height-6)&&(finalY-gap-cardH>6);
+            ctxEl.style.top=(flipUp?-(gap+cardH):gap)+'px';
+            var centeredLeft=finalX-cardW/2;
+            var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
+            ctxEl.style.left=(clampedLeft-finalX)+'px';
+            ctxEl.classList.toggle('ctx-up',flipUp);
+            if(tail){var tailX=Math.max(16,Math.min(cardW-16,finalX-clampedLeft));tail.style.left=tailX+'px';}
           }
           pPop.style.visibility='visible';
         }
@@ -5828,17 +5847,18 @@ function svgPoint(svg,e){
 }
 
 function upSB(){
-  var cis=document.querySelectorAll('.ci');
+  // Live-update the active play's name in the tab bar, library list, and topbar title
+  var cc=cards[activeIdx];
+  var liveName='#'+(activeIdx+1)+' '+(cc.play||'Unnamed');
+  var cis=document.querySelectorAll('[data-ci]');
   for(var i=0;i<cis.length;i++){
     if(parseInt(cis[i].getAttribute('data-ci'))===activeIdx){
-      var cc=cards[activeIdx],cfm=FORMATIONS[cc.fk];
-      var nm=cis[i].querySelector('.card-name');if(nm)nm.textContent=cc.play||'Unnamed';
-      var cm=cis[i].querySelector('.cm');if(cm)cm.innerHTML=(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+cc.dd:'');
+      var nm=cis[i].querySelector('.pt-name')||cis[i].querySelector('.lp-name');
+      if(nm)nm.textContent=liveName;
     }
   }
-  // Update week dropdown label
-  var ws=document.getElementById('weekSel');
-  if(ws&&ws.options[activeGameIdx])ws.options[activeGameIdx].text=gameTitle;
+  var v2tl=document.getElementById('v2Title');
+  if(v2tl)v2tl.textContent=cc.play||'Untitled';
 }
 
 // ===== EXPORT FUNCTIONS =====
@@ -7021,23 +7041,26 @@ function openTeachingCard(){
   var existing=document.getElementById('tcModal');if(existing)existing.remove();
   _tcFilm=null;_tcCanvas=null;
   var m=document.createElement('div');m.id='tcModal';
-  m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:4vh 0';
-  var btnS='font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:10px 16px;border-radius:3px;cursor:pointer;touch-action:manipulation';
-  var mh='<div style="background:#F7F7F5;border-radius:4px;padding:20px;width:520px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
-  mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Teaching Card</span><button id="tcClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
-  mh+='<div id="tcPrevWrap" style="background:#e9e8e3;border:1px solid rgba(58,58,56,.12);border-radius:3px;min-height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden"><img id="tcPrev" style="width:100%;display:none" alt="Preview"/><span id="tcPrevHint" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);padding:24px;text-align:center">Building preview…</span></div>';
+  m.className='tc2-shell';
+  // CHLK-style export layout: header row, left preview, right control column, one big CTA.
+  var mh='<div class="tc2-head"><button class="tc2-cancel" id="tcClose">Cancel</button><span class="tc2-title">Teaching Card</span><span style="width:60px"></span></div>';
+  mh+='<div class="tc2-body">';
+  mh+='<div class="tc2-preview"><img id="tcPrev" style="display:none" alt="Preview"/><span id="tcPrevHint" class="tc2-prevhint">Building preview…</span></div>';
+  mh+='<div class="tc2-controls">';
   mh+='<input type="file" id="tcFile" accept="image/*,video/*" style="display:none"/>';
-  mh+='<button id="tcPick" style="'+btnS+';width:100%;background:#fff;border:1px solid rgba(58,58,56,.25);color:#20201f;margin-bottom:10px">&#127916; Choose Film Clip / Photo</button>';
-  mh+='<div id="tcScrubRow" style="display:none;margin-bottom:10px">';
-  mh+='<video id="tcVideo" playsinline muted style="width:100%;border-radius:3px;background:#000"></video>';
-  mh+='<input type="range" id="tcScrub" min="0" max="1000" value="0" style="width:100%;margin-top:6px"/>';
-  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.5);text-align:center">Scrub to the moment — the preview updates with the frame</div>';
+  mh+='<div class="tc2-sec">Film</div>';
+  mh+='<button class="tc2-btn" id="tcPick">&#127916; Choose Film Clip / Photo</button>';
+  mh+='<div id="tcScrubRow" style="display:none">';
+  mh+='<video id="tcVideo" playsinline muted></video>';
+  mh+='<input type="range" id="tcScrub" min="0" max="1000" value="0"/>';
+  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(242,241,237,.45);text-align:center;margin-top:4px">Scrub to the moment — the preview updates with the frame</div>';
   mh+='</div>';
-  mh+='<label style="display:flex;align-items:center;gap:8px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#3A3A38;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="tcLabels" checked style="accent-color:#1A3C2B;width:15px;height:15px"/>Show play name &amp; down/distance</label>';
-  mh+='<textarea id="tcNotes" placeholder="Coaching notes for the graphic..." style="width:100%;box-sizing:border-box;font-family:Arial,sans-serif;font-size:13px;padding:8px 10px;border:1px solid rgba(58,58,56,.2);border-radius:3px;min-height:56px;margin-bottom:12px">'+esc(card.notes||'')+'</textarea>';
-  mh+='<div style="display:flex;gap:8px">';
-  mh+='<button id="tcShare" style="'+btnS+';flex:1;background:#1A3C2B;border:1px solid #1A3C2B;color:#F7F7F5">Share</button>';
-  mh+='<button id="tcSave" style="'+btnS+';background:#fff;border:1px solid rgba(58,58,56,.25);color:#20201f">Save PNG</button>';
+  mh+='<div class="tc2-sec">Labels</div>';
+  mh+='<label><input type="checkbox" id="tcLabels" checked style="accent-color:#8b5cf6;width:15px;height:15px"/>Show play name &amp; down/distance</label>';
+  mh+='<div class="tc2-sec">Notes</div>';
+  mh+='<textarea id="tcNotes" placeholder="Coaching notes for the graphic...">'+esc(card.notes||'')+'</textarea>';
+  mh+='<button class="tc2-btn tc2-cta" id="tcShare">&#8679; Share</button>';
+  mh+='<button class="tc2-btn" id="tcSave">Save PNG</button>';
   mh+='</div></div>';
   m.innerHTML=mh;
   document.body.appendChild(m);
@@ -7062,7 +7085,6 @@ function openTeachingCard(){
   }
 
   document.getElementById('tcClose').addEventListener('click',tcCleanup);
-  m.addEventListener('click',function(e){if(e.target===m)tcCleanup();});
   document.getElementById('tcPick').addEventListener('click',function(){document.getElementById('tcFile').click();});
   document.getElementById('tcFile').addEventListener('change',function(){
     var f=this.files&&this.files[0];if(!f)return;
