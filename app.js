@@ -1500,13 +1500,13 @@ function buildField(card){
         s+=ynum(pdNums[ni].lbl, numLnx, numRnx, yy);
       }
     } else if(zn==='fifty'){
-      // Midfield: LOS is the 50 — real-field numbers reading 40 / 50 / 40 bottom-to-top
+      // Midfield: LOS is the 50 — real-field numbers reading 40 / 50 / 40 / 30 bottom-to-top
       for(var i=0;i<=TOTAL_YARDS/5;i++){
         var yy = MARGIN_TOP + i * Y5;
         if(yy < hh || yy > FH - MARGIN_BOT) continue;
         var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
-        if(yardsFromLOS!==-10&&yardsFromLOS!==0&&yardsFromLOS!==10) continue;
-        s+=ynum(yardsFromLOS===0?'50':'40', numLnx, numRnx, yy);
+        if(yardsFromLOS!==-10&&yardsFromLOS!==0&&yardsFromLOS!==10&&yardsFromLOS!==20) continue;
+        s+=ynum(yardsFromLOS===0?'50':yardsFromLOS===20?'30':'40', numLnx, numRnx, yy);
       }
     } else {
       // Scout mode: only 10 and 20 above LOS (defensive side)
