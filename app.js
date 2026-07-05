@@ -2557,22 +2557,6 @@ function buildLibPanelHtml(){
     }
     if(practiceScript.length>0){h+='<button class="lib-abtn primary" id="btnPrintScript" style="width:100%;margin-top:6px">Print Script</button>';}
   }
-  h+='<div class="lib-sec">Tools</div>';
-  h+='<div class="sp-pills">';
-  h+='<button class="lib-abtn" id="btnExportPDF">Print / PDF</button>';
-  h+='<button class="lib-abtn" id="btnExportPNG">PNG</button>';
-  h+='<select class="sp-input" id="gridSel" style="height:26px;font-size:9px;padding:2px 6px;width:auto"><option value="">Grid&hellip;</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option></select>';
-  h+='<button class="lib-abtn" id="btnReports">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
-  h+='<button class="lib-abtn" id="btnPlaybooks">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
-  h+='<button class="lib-abtn" id="btnBranding">Branding</button>';
-  h+='<button class="lib-abtn'+(scriptMode?' primary':'')+'" id="btnScript">Script</button>';
-  h+='<button class="lib-abtn'+(appMode==='playdesign'?' primary':'')+'" id="btnPlayDesign">Play Designer</button>';
-  if(appMode==='playdesign')h+='<button class="lib-abtn" id="btnSavedPlays">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
-  h+='<button class="lib-abtn" id="btnSv">Save</button>';
-  h+='<button class="lib-abtn" id="btnLd">Load</button>';
-  h+='<button class="lib-abtn" id="btnHelp">Help</button>';
-  h+='</div>';
-  h+='</div>';
   h+='<div class="lib-props">';
   h+='<div class="lib-prop"><span>File</span><b>'+esc(gameTitle)+'</b></div>';
   h+='<div class="lib-prop"><span>Cards</span><b>'+cards.length+'</b></div>';
@@ -2622,6 +2606,20 @@ function render(){
   h+='<div class="v2-right">';
   if(demoMode){h+='<span class="v2-user" style="color:#C6A355">Demo</span><button class="v2-iconbtn" id="btnExitDemo">Sign Up</button>';}
   else if(currentUser){h+='<span class="v2-user">'+esc(currentUser.email)+'</span><button class="v2-iconbtn" id="btnSignOut" title="Sign out">Out</button>';}
+  // Tools dropdown (export + management actions, moved out of the Library panel)
+  h+='<div class="v2-menu-wrap">';
+  h+='<button class="v2-iconbtn" id="btnToolsMenu"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>Tools</button>';
+  h+='<div class="v2-menu" id="toolsMenu" style="display:none">';
+  h+='<button class="v2-menu-item" id="btnExportPDF">Print / PDF</button>';
+  h+='<button class="v2-menu-item" id="btnExportPNG">PNG</button>';
+  h+='<div class="v2-menu-row"><span>Grid</span><button class="v2-menu-chip" data-grid-export="2">2-up</button><button class="v2-menu-chip" data-grid-export="4">4-up</button><button class="v2-menu-chip" data-grid-export="6">6-up</button></div>';
+  h+='<div class="v2-menu-div"></div>';
+  h+='<button class="v2-menu-item" id="btnReports">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
+  h+='<button class="v2-menu-item" id="btnPlaybooks">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<button class="v2-menu-item" id="btnBranding">Branding</button>';
+  h+='<button class="v2-menu-item'+(scriptMode?' on':'')+'" id="btnScript">Practice Script'+(scriptMode?' &#10003;':'')+'</button>';
+  h+='</div></div>';
+  h+='<button class="v2-iconbtn" id="btnHelp" title="Help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help</button>';
   h+='<button class="v2-iconbtn v2-primary" id="btnShare"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.7l6.8-4.4"/><path d="M8.6 13.3l6.8 4.4"/></svg>Share</button>';
   h+='</div></div>';
 
@@ -4507,9 +4505,23 @@ function bind(){
   if(btnVD)btnVD.addEventListener('click',function(){if(viewPerspective!=='def'){viewPerspective='def';selPlayer=null;render()}});
   var btnVO=document.getElementById('btnViewOff');
   if(btnVO)btnVO.addEventListener('click',function(){if(viewPerspective!=='off'){viewPerspective='off';selPlayer=null;render()}});
-  // Play Designer button
-  var btnPD=document.getElementById('btnPlayDesign');
-  if(btnPD)btnPD.addEventListener('click',function(){switchMode(appMode==='playdesign'?'scout':'playdesign')});
+  // Tools dropdown (topbar) — toggle, close on outside tap or after any item action
+  var btnToolsMenu=document.getElementById('btnToolsMenu');
+  var toolsMenu=document.getElementById('toolsMenu');
+  if(btnToolsMenu&&toolsMenu){
+    btnToolsMenu.addEventListener('click',function(e){
+      e.stopPropagation();
+      toolsMenu.style.display=toolsMenu.style.display==='none'?'block':'none';
+    });
+    toolsMenu.addEventListener('click',function(e){
+      // let the item's own handler run, then close (Script re-renders anyway)
+      var t=e.target.closest('button');
+      if(t)setTimeout(function(){if(document.body.contains(toolsMenu))toolsMenu.style.display='none';},0);
+    });
+    document.addEventListener('pointerdown',function(e){
+      if(toolsMenu.style.display!=='none'&&!e.target.closest('.v2-menu-wrap'))toolsMenu.style.display='none';
+    });
+  }
 
   // Play Designer notes
   var pdFN=document.getElementById('pdFrontNotes');
