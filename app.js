@@ -2429,7 +2429,7 @@ var SP_FORMS=[['doubR','Doub R'],['doubL','Doub L'],['3x1R','Trips R'],['3x1L','
 var SP_DEFS=[['43over','4-3 Ov'],['43under','4-3 Un'],['odd','Odd'],['tite','Tite'],['bear','Bear'],['nickel','Nickel'],['dime','Dime'],['none','None']];
 var SP_FIELDS=[['hs','HS'],['ncaa','College'],['nfl','NFL'],['blank','Blank']];
 var SP_ZONES=[['mid','Open'],['fifty','Midfield'],['rz','Red Zone'],['gl','Goal Line'],['bu','Backed Up']];
-var SP_HASHES=[['L','L'],['LM','LM'],['M','M'],['RM','RM'],['R','R']];
+var SP_HASHES=[['L','L'],['M','M'],['R','R']];
 
 function buildSetupPanelHtml(card){
   var h='<aside class="setup-panel'+(spCollapsed?' collapsed':'')+'" id="setupPanel">';
