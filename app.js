@@ -1777,6 +1777,61 @@ function buildTextLabels(card){
   return s;
 }
 
+// ===== MOTION LINES (zig / partial-dash head treatment) =====
+// Walk a polyline by cumulative arc length. Returns {pt,idx} at a given distance.
+function polylinePointAt(pts,dist){
+  var walked=0;
+  for(var i=1;i<pts.length;i++){
+    var dx=pts[i].x-pts[i-1].x,dy=pts[i].y-pts[i-1].y;
+    var len=Math.sqrt(dx*dx+dy*dy);
+    if(walked+len>=dist){
+      var t=len?(dist-walked)/len:0;
+      return {pt:{x:pts[i-1].x+dx*t,y:pts[i-1].y+dy*t},idx:i};
+    }
+    walked+=len;
+  }
+  return {pt:pts[pts.length-1],idx:pts.length};
+}
+function polylineLength(pts){
+  var total=0;
+  for(var i=1;i<pts.length;i++){var dx=pts[i].x-pts[i-1].x,dy=pts[i].y-pts[i-1].y;total+=Math.sqrt(dx*dx+dy*dy);}
+  return total;
+}
+// Split at an arc-length fraction: head ends exactly at the split point, tail starts there.
+function splitPtsAtFrac(pts,frac){
+  if(frac>=1)return {head:pts,tail:[]};
+  var total=polylineLength(pts);
+  var at=polylinePointAt(pts,total*frac);
+  var head=pts.slice(0,at.idx);head.push(at.pt);
+  var tail=[at.pt].concat(pts.slice(at.idx));
+  return {head:head,tail:tail};
+}
+function polyD(pts){
+  var d='M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+  for(var i=1;i<pts.length;i++)d+=' L '+pts[i].x.toFixed(1)+' '+pts[i].y.toFixed(1);
+  return d;
+}
+// Classic jet-motion squiggle: resample the polyline at a fixed step and offset alternate
+// samples perpendicular to travel, so waypoint density never changes the wave shape.
+function zigzagD(pts){
+  if(pts.length<2)return polyD(pts);
+  var step=7,amp=3.5;
+  var total=polylineLength(pts);
+  var d='M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+  var flip=1;
+  for(var dist=step;dist<total-step*0.5;dist+=step){
+    var here=polylinePointAt(pts,dist).pt;
+    var ahead=polylinePointAt(pts,Math.min(total,dist+step)).pt;
+    var dx=ahead.x-here.x,dy=ahead.y-here.y;
+    var len=Math.sqrt(dx*dx+dy*dy)||1;
+    d+=' L '+(here.x+(-dy/len)*amp*flip).toFixed(1)+' '+(here.y+(dx/len)*amp*flip).toFixed(1);
+    flip=-flip;
+  }
+  var ep=pts[pts.length-1];
+  d+=' L '+ep.x.toFixed(1)+' '+ep.y.toFixed(1);
+  return d;
+}
+
 function buildDrawnLines(lines){
   var s='';
   for(var li=0;li<lines.length;li++){
@@ -1825,7 +1880,19 @@ function buildDrawnLines(lines){
     var dash=(ln.dashed||ln.style==='dashed')?' stroke-dasharray="8,5"':'';
     // Wider invisible hit area for clicking to select (always straight for hit testing)
     s+='<path d="'+dLine+'" fill="none" stroke="transparent" stroke-width="'+(Math.max(10,ln.width+8))+'" data-linesel="'+li+'" style="cursor:pointer"/>';
-    s+='<path d="'+d+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-line="'+li+'"'+(isSel?' filter="url(#selGlow)"':'')+'/>';
+    if(ln.motion&&ln.pts.length>=2){
+      // Motion head treatment: first `mfrac` of the line is a squiggle (zig) or dashed,
+      // the rest renders as a solid straight tail. Endpoint art (arrow etc.) is unaffected.
+      var mBase=isArrow?drawPts:ln.pts;
+      var mSplit=splitPtsAtFrac(mBase,(ln.mfrac==null)?1:ln.mfrac);
+      var mHeadD=(ln.motion==='dash')?polyD(mSplit.head):zigzagD(mSplit.head);
+      var mHeadDash=(ln.motion==='dash')?' stroke-dasharray="8,5"':'';
+      var mSelGlow=(isSel?' filter="url(#selGlow)"':'');
+      s+='<path d="'+mHeadD+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round"'+mHeadDash+' data-line="'+li+'"'+mSelGlow+'/>';
+      if(mSplit.tail.length>=2)s+='<path d="'+polyD(mSplit.tail)+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round" data-line="'+li+'"'+mSelGlow+'/>';
+    } else {
+      s+='<path d="'+d+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-line="'+li+'"'+(isSel?' filter="url(#selGlow)"':'')+'/>';
+    }
     // Arrow endpoint
     if(isArrow&&ln.pts.length>=2){
       var ep=ln.pts[ln.pts.length-1];
@@ -2867,6 +2934,7 @@ function render(){
         ['curvedarrow','Arrow','<line x1="5" y1="19" x2="19" y2="5"/><polyline points="13,5 19,5 19,11"/>'],
         ['curvedblock','Block','<line x1="5" y1="19" x2="19" y2="5"/><line x1="16" y1="3" x2="21" y2="8"/>'],
         ['dot','Dotted','<line x1="5" y1="19" x2="16" y2="8"/><circle cx="17.5" cy="6.5" r="2.5" fill="currentColor" stroke="none"/>'],
+        ['zig','Motion (squiggle into solid)','<path d="M2 17l2.5-4 2.5 4 2.5-4 2.5 4 2.5-4L17 15"/><polyline points="17,10 22,12 19,16"/>'],
         ['free','Marker (free draw)','<path d="M3 16c2.5-6 4.5 4 7-3s4.5 3 7-4 4 2 4-3"/>']
       ];
       for(var lsi=0;lsi<lineStyles.length;lsi++){
@@ -3059,6 +3127,27 @@ function render(){
       var ppData='id="playerPopup" data-pp-x="'+ppP.x+'" data-pp-y="'+ppP.y+'"';
       h+='<div class="player-popup" '+ppData+'><div class="ctx-card" id="ppCard"><span class="ctx-tail" id="ppTail"></span><div class="ctx-tabs">'+tabsRow+'</div>'+(popupCat?'<div class="ctx-opts">'+subInner+'</div>':'')+'</div></div>';
     }
+  } else if(selLine!==null&&getCurLines(card)[selLine]&&getCurLines(card)[selLine].pts&&getCurLines(card)[selLine].pts.length>=2){
+    // Line context card — motion head treatment (squiggle / dashed / off) + how much of
+    // the line it covers. Anchored at the line's midpoint.
+    var mln=getCurLines(card)[selLine];
+    var mMid=polylinePointAt(mln.pts,polylineLength(mln.pts)/2).pt;
+    var ppDataL='id="playerPopup" data-pp-x="'+mMid.x.toFixed(1)+'" data-pp-y="'+mMid.y.toFixed(1)+'"';
+    h+='<div class="player-popup" '+ppDataL+'><div class="ctx-card" id="ppCard"><span class="ctx-tail" id="ppTail"></span><div class="ctx-opts" style="margin-top:0;padding-top:0;border-top:none">';
+    var mCur=mln.motion||'';
+    var mOpts=[['','Solid'],['zig','Squiggle'],['dash','Dashed']];
+    for(var moi=0;moi<mOpts.length;moi++){
+      h+='<button class="pp-btn'+(mCur===mOpts[moi][0]?' act':'')+'" data-lnmotion="'+mOpts[moi][0]+'">'+mOpts[moi][1]+'</button>';
+    }
+    if(mCur){
+      h+='<span class="pp-sep" style="display:inline-block;width:1px;height:18px;background:rgba(0,0,0,.15);margin:0 4px"></span>';
+      var mfCur=(mln.mfrac==null)?1:mln.mfrac;
+      var mfOpts=[[0.33,'&#8531;'],[0.5,'&#189;'],[0.66,'&#8532;'],[1,'All']];
+      for(var mfi=0;mfi<mfOpts.length;mfi++){
+        h+='<button class="pp-btn'+(Math.abs(mfCur-mfOpts[mfi][0])<0.01?' act':'')+'" data-lnfrac="'+mfOpts[mfi][0]+'" title="Squiggle/dash portion">'+mfOpts[mfi][1]+'</button>';
+      }
+    }
+    h+='</div></div></div>';
   } else if(selTextBox!==null){
     // Text-box context card — size / color / duplicate / delete at the text box
     var tbs4=getCurTB(card);
@@ -5205,6 +5294,28 @@ function bind(){
   });
 
   // === TEXT BOX: duplicate / delete from right panel ===
+  // Line context card — motion head treatment
+  document.querySelectorAll('[data-lnmotion]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var lns=getCurLines(card);
+      if(selLine===null||!lns[selLine])return;
+      pushUndo();
+      var v=this.getAttribute('data-lnmotion');
+      if(v){lns[selLine].motion=v;if(lns[selLine].mfrac==null)lns[selLine].mfrac=0.66;}
+      else{delete lns[selLine].motion;delete lns[selLine].mfrac;}
+      render();
+    });
+  });
+  document.querySelectorAll('[data-lnfrac]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var lns=getCurLines(card);
+      if(selLine===null||!lns[selLine])return;
+      pushUndo();
+      lns[selLine].mfrac=parseFloat(this.getAttribute('data-lnfrac'));
+      render();
+    });
+  });
+
   var btnDupTB=document.getElementById('btnDupTB');
   if(btnDupTB)btnDupTB.addEventListener('click',function(){if(selTextBox!==null)duplicateTextBox(selTextBox)});
   var btnDelTB=document.getElementById('btnDelTB');
@@ -5290,7 +5401,9 @@ function bindDrag(){
       }
       var isCurvedPreview=!e.shiftKey&&(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock'||currentLine.style==='curveddot');
       var d;
-      if(isCurvedPreview&&currentLine.pts.length>=3){
+      if(currentLine.style==='zig'&&currentLine.pts.length>=2){
+        d=zigzagD(currentLine.pts);
+      } else if(isCurvedPreview&&currentLine.pts.length>=3){
         d=smoothPath(currentLine.pts);
       } else {
         d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
@@ -5712,6 +5825,9 @@ function bindDrag(){
         pushUndo();
         var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
         var newLine={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
+        // Motion style: squiggle over the first 60% of the stroke, solid into an arrow —
+        // the classic jet-motion look. Tune the split via the line's context card.
+        if(currentLine.style==='zig'){newLine.style='arrow';newLine.motion='zig';newLine.mfrac=0.66;}
         var anc=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc)newLine.anchor=anc.prefix+anc.key;
         card[lk].push(newLine);
@@ -5791,6 +5907,7 @@ function bindDrag(){
         pushUndo();
         var lk=getCurLinesKey();if(!card[lk])card[lk]=[];
         var newLine2={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style,dashed:currentLine.dashed};
+        if(currentLine.style==='zig'){newLine2.style='arrow';newLine2.motion='zig';newLine2.mfrac=0.66;}
         var anc2=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
         if(anc2)newLine2.anchor=anc2.prefix+anc2.key;
         card[lk].push(newLine2);
