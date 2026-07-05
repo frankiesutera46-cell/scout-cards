@@ -1720,3 +1720,35 @@ select:focus{
 button.pc-chip{cursor:pointer;font-family:inherit;touch-action:manipulation}
 button.pc-chip:active{background:#e0d0ff}
 .pc-chip-preset{background:#e7f0ea;color:#1A3C2B;border-color:rgba(26,60,43,.25)}
+
+/* ===== FILES + MULTI-SELECT + LABELED DOCK ===== */
+/* Topbar Files button (replaces week selector + title input) */
+.topbar .file-btn{display:flex;align-items:center;gap:8px;background:rgba(247,247,245,.1);color:#F7F7F5;
+  border:1px solid rgba(247,247,245,.2);padding:7px 12px;border-radius:2px;font-family:'JetBrains Mono',monospace;
+  font-size:11px;cursor:pointer;max-width:300px;transition:border .15s;touch-action:manipulation}
+.topbar .file-btn:hover{border-color:rgba(247,247,245,.45)}
+.topbar .file-btn svg{width:13px;height:13px;flex-shrink:0;opacity:.7}
+.topbar .file-btn .file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.topbar .file-btn .file-chev{opacity:.5;font-size:9px}
+
+/* Dock buttons with visible text labels (Share / Print) */
+.tb-action.tb-labeled{width:auto;padding:0 14px;gap:7px}
+.tb-labeled .tb-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+
+/* Overflow (radial) menu: labeled pill options, wraps instead of one long icon row */
+.dock-menu{flex-wrap:wrap;max-width:min(92vw,540px);justify-content:center}
+.dock-menu-option.has-lbl{width:auto;padding:0 12px;gap:7px}
+.dock-menu-option .dock-menu-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+
+/* Sidebar multi-select */
+.btn.selmode-on{background:#ede4ff !important;color:#8b5cf6 !important;border-color:rgba(139,92,246,.28) !important}
+.selbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:8px;background:#ede4ff;border-radius:6px;margin:0 8px 8px}
+.selbar-count{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6d43d8;flex-basis:100%;margin-bottom:2px}
+.selbar-btn{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.03em;padding:6px 9px;
+  background:#fff;border:1px solid rgba(139,92,246,.3);border-radius:4px;color:#20201f;cursor:pointer;touch-action:manipulation}
+.selbar-btn:active{background:#e0d0ff}
+.selbar-done{background:#8b5cf6;color:#fff;border-color:#8b5cf6}
+.ci.csel{border-color:#8b5cf6 !important;background:#f6f1ff !important}
+.ci-check{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(139,92,246,.5);
+  background:#fff;color:#fff;font-size:11px;line-height:16px;text-align:center}
+.ci-check.on{background:#8b5cf6;border-color:#8b5cf6}

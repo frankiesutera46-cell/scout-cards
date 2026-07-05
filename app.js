@@ -281,7 +281,9 @@ function autoSave(){
   autoSaveTimer=setTimeout(function(){
     if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
     else{games[activeGameIdx].cards=cards}
-    games[activeGameIdx].name=gameTitle;saveToCloud();
+    games[activeGameIdx].name=gameTitle;
+    games[activeGameIdx].updatedAt=Date.now(); // drives the Files browser 'recent' sort
+    saveToCloud();
   },2000);
 }
 
@@ -585,6 +587,7 @@ function switchGame(idx){
     cards=games[idx].cards;
   }
   activeIdx=0;selPlayer=null;selLabel=null;selLine=null;selTextBox=null;
+  cardSelectMode=false;cardSel=[];
   undoStack=[];redoStack=[];
   render();
 }
@@ -1031,7 +1034,11 @@ function showRadialTools(anchor,mode){
     opt.type='button';
     opt.className='dock-menu-option'+((source.classList.contains('on')||source.classList.contains('act')||source.classList.contains('it-on')||source.classList.contains('text-on')||source.classList.contains('eraser-on'))?' active':'')+(source.classList.contains('dock-primary-action')?' primary':'');
     opt.setAttribute('title',radialButtonLabel(source));
-    opt.innerHTML=radialButtonMarkup(source);
+    // icon + visible text — icon-only menu options weren't self-explanatory. Only buttons with a
+    // human title get a label (color swatches / width dots stay as-is, they read visually).
+    var optTitle=source.getAttribute('title')||'';
+    opt.innerHTML=radialButtonMarkup(source)+(optTitle?'<span class="dock-menu-lbl">'+esc(optTitle)+'</span>':'');
+    if(optTitle)opt.className+=' has-lbl';
     opt.addEventListener('click',(function(btn){return function(e){
       e.preventDefault();
       e.stopPropagation();
@@ -2194,6 +2201,8 @@ function dockButton(o){
   if(o.disabled)attrs+=' disabled aria-disabled="true"';
   if(o.data){var keys=Object.keys(o.data);for(var i=0;i<keys.length;i++){attrs+=' data-'+keys[i]+'="'+esc(o.data[keys[i]])+'"'}}
   var inner=o.icon?dockIcon(o.icon):'<span class="dock-text">'+esc(o.label||'')+'</span>';
+  // labelText: icon + visible text label side by side (self-explanatory buttons like Share/Print)
+  if(o.labelText){cls+=' tb-labeled';inner+='<span class="tb-lbl">'+esc(o.labelText)+'</span>';}
   if(o.badge)inner+='<span class="dock-badge">'+esc(o.badge)+'</span>';
   return '<button class="'+cls+'" type="button"'+attrs+'>'+inner+'</button>';
 }
@@ -2365,14 +2374,10 @@ function render(){
   // Row 1: Brand, week, title, user
   h+='<div class="topbar-row1"><div class="brand">';
   h+='<div class="brand-wordmark"><img src="juice-wordmark.png" alt="Juice"/></div></div>';
-  h+='<select class="week-sel" id="weekSel">';
-  for(var gi=0;gi<games.length;gi++){
-    h+='<option value="'+gi+'"'+(gi===activeGameIdx?' selected':'')+'>'+esc(games[gi].name)+'</option>';
-  }
-  h+='</select>';
-  h+='<button class="week-btn" id="weekAdd" title="New Week">+</button>';
-  h+='<button class="week-btn" id="weekDel" title="Delete Week"'+(games.length<=1?' disabled style="opacity:.3;cursor:default"':'')+'>&#x2715;</button>';
-  h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
+  // Files button — replaces the old week selector + title input. Cards live in named FILES the
+  // coach organizes however they like (opponent, play type, situation); tap to browse/manage.
+  h+='<button class="file-btn" id="btnFiles" title="Files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+  h+='<span class="file-name">'+esc(gameTitle||'Untitled')+'</span><span class="file-chev">&#9662;</span></button>';
   h+='<span class="topbar-card-count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
   h+='<div class="right">';
   if(demoMode){h+='<span class="user-info" style="color:#C6A355">Demo Mode</span><button class="sign-out" id="btnExitDemo" style="color:#C6A355;border-color:rgba(198,163,85,.4)">Sign Up</button>';}
@@ -2609,7 +2614,19 @@ function render(){
   if(appMode==='playdesign'){
     h+='<button class="btn btn-sec" id="btnSavePlay" title="Save to Library" style="color:#C6A355;border-color:rgba(198,163,85,.4)">&#x1F4BE;</button>';
   }
+  h+='<button class="btn btn-sec'+(cardSelectMode?' selmode-on':'')+'" id="btnSelMode" title="Select multiple cards">Select</button>';
   h+='</div>';
+  // Multi-select action bar — print / share / copy / move the checked cards as a batch
+  if(cardSelectMode){
+    h+='<div class="selbar">';
+    h+='<span class="selbar-count">'+cardSel.length+' selected — tap cards to pick</span>';
+    h+='<button class="selbar-btn" id="selPrint">Print</button>';
+    h+='<button class="selbar-btn" id="selShareB">Share</button>';
+    h+='<button class="selbar-btn" id="selCopy">Copy to&hellip;</button>';
+    h+='<button class="selbar-btn" id="selMove">Move to&hellip;</button>';
+    h+='<button class="selbar-btn selbar-done" id="selDone">Done</button>';
+    h+='</div>';
+  }
   if(appMode==='playdesign'){
     h+='<button class="btn btn-sec" id="btnSavedPlays" style="width:100%;margin-bottom:4px;font-size:10px;padding:6px;color:#C6A355;border-color:rgba(198,163,85,.4)">Saved Plays'+(savedPlays.length?' ('+savedPlays.length+')':'')+'</button>';
   }
@@ -2643,8 +2660,10 @@ function render(){
       var cc=cards[ci];var cfm=FORMATIONS[cc.fk];
       // Filter by tag
       if(activeTagFilter && (!cc.tags || cc.tags.indexOf(activeTagFilter)<0)) continue;
-      h+='<button class="ci'+(ci===activeIdx?' act':'')+'" data-ci="'+ci+'" draggable="true">';
-      h+='<span class="ci-del" data-cdel="'+ci+'" title="Delete card">&#x2715;</span>';
+      var ciSel=cardSelectMode&&cardSel.indexOf(ci)>=0;
+      h+='<button class="ci'+(ci===activeIdx&&!cardSelectMode?' act':'')+(ciSel?' csel':'')+'" data-ci="'+ci+'"'+(cardSelectMode?'':' draggable="true"')+'>';
+      if(cardSelectMode){h+='<span class="ci-check'+(ciSel?' on':'')+'">'+(ciSel?'&#10003;':'')+'</span>';}
+      else{h+='<span class="ci-del" data-cdel="'+ci+'" title="Delete card">&#x2715;</span>';}
       h+='<span class="cn">#'+(ci+1)+'</span> ';
       h+='<span class="card-name">'+(esc(cc.play)||'Unnamed')+'</span>';
       h+='<span class="cm">'+(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+esc(cc.dd):'')+'</span>';
@@ -2843,11 +2862,15 @@ function render(){
     h+='<button class="tb-action danger" id="tbClear" title="Clear All"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     h+='</div>';
     // Group 9: Coach workflow, platform library, and exports
+    // Share + Print stay visible with text labels (never radial-compacted) — icon-only wasn't
+    // self-explanatory; the rest of the workflow buttons collapse into the labeled overflow menu.
+    h+='<div class="tb-group" data-dock-key="shareout" data-no-radial="1">';
+    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action',labelText:'Share'});
+    h+=dockButton({id:'btnExportPDF',title:'Print / Save PDF',icon:'pdf',labelText:'Print'});
+    h+='</div>';
     h+='<div class="tb-group" data-dock-key="workflow">';
-    h+=dockButton({id:'btnShare',title:'Share to Players',icon:'share',cls:'tb-action dock-primary-action'});
-    h+=dockButton({id:'btnExportPDF',title:'Export PDF',icon:'pdf',data:{'dock-break':'before'}});
     h+=dockButton({id:'btnExportPNG',title:'Export PNG',icon:'image'});
-    h+=dockButton({id:'btnReports',title:'Scouting Reports',icon:'report',badge:getScoutReports().length?getScoutReports().length:'',data:{'dock-break':'before'}});
+    h+=dockButton({id:'btnReports',title:'Scouting Reports',icon:'report',badge:getScoutReports().length?getScoutReports().length:''});
     h+=dockButton({id:'btnPlaybooks',title:'Playbooks',icon:'book',badge:userPlaybooks.length?userPlaybooks.length:''});
     h+=dockButton({id:'btnBranding',title:'Team Branding',icon:'team'});
     if(appMode==='playdesign')h+=dockButton({title:'Saved Plays',icon:'book',badge:savedPlays.length?savedPlays.length:'',data:{'open-saved-plays':'1','dock-action':'saved-plays'}});
@@ -3137,7 +3160,14 @@ function bind(){
   // Sidebar
   var cis=document.querySelectorAll('.ci');
   for(var i=0;i<cis.length;i++){
-    cis[i].addEventListener('click',(function(idx){return function(){activeIdx=idx;selPlayer=null;var l=document.querySelector('.layout');if(l)l.classList.remove('show-sidebar');render()}})(parseInt(cis[i].getAttribute('data-ci'))));
+    cis[i].addEventListener('click',(function(idx){return function(){
+      if(cardSelectMode){
+        var sp=cardSel.indexOf(idx);
+        if(sp>=0)cardSel.splice(sp,1);else cardSel.push(idx);
+        render();return;
+      }
+      activeIdx=idx;selPlayer=null;var l=document.querySelector('.layout');if(l)l.classList.remove('show-sidebar');render()
+    }})(parseInt(cis[i].getAttribute('data-ci'))));
   }
   var ciDels=document.querySelectorAll('.ci-del');
   for(var di=0;di<ciDels.length;di++){
@@ -3918,22 +3948,8 @@ function bind(){
       var ni=document.getElementById('clI');if(ni){ni.focus();ni.selectionStart=ni.selectionEnd=ni.value.length}
     }
   });
-  var gtI=document.getElementById('gtI');if(gtI)gtI.addEventListener('input',function(){gameTitle=this.value;games[activeGameIdx].name=gameTitle});
-  var weekSel=document.getElementById('weekSel');
-  if(weekSel)weekSel.addEventListener('change',function(){
-    games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
-    switchGame(parseInt(this.value));
-  });
-  var weekAdd=document.getElementById('weekAdd');
-  if(weekAdd)weekAdd.addEventListener('click',function(){
-    games[activeGameIdx].cards=cards;games[activeGameIdx].name=gameTitle;
-    addGame();
-  });
-  var weekDel=document.getElementById('weekDel');
-  if(weekDel)weekDel.addEventListener('click',function(){
-    if(games.length<=1)return;
-    if(confirm('Delete "'+gameTitle+'" and all its cards?')){deleteGame(activeGameIdx)}
-  });
+  var btnFiles=document.getElementById('btnFiles');
+  if(btnFiles)btnFiles.addEventListener('click',openFilesModal);
 
   var fSel=document.getElementById('fSel');
   if(fSel)fSel.addEventListener('change',function(){
@@ -4217,6 +4233,21 @@ function bind(){
 
   var btnA=document.getElementById('btnA');
   if(btnA)btnA.addEventListener('click',function(){cards.push(appMode==='playdesign'?mkPlayCard():mkCard());activeIdx=cards.length-1;selPlayer=null;render()});
+  var btnSelMode=document.getElementById('btnSelMode');
+  if(btnSelMode)btnSelMode.addEventListener('click',function(){cardSelectMode=!cardSelectMode;cardSel=[];render()});
+  var selDone=document.getElementById('selDone');
+  if(selDone)selDone.addEventListener('click',function(){exitSelectMode();render()});
+  var selPrint=document.getElementById('selPrint');
+  if(selPrint)selPrint.addEventListener('click',function(){
+    if(!cardSel.length){showToast('Tap cards to select them first');return;}
+    exportPrintView(selectedCardsList());
+  });
+  var selShareB=document.getElementById('selShareB');
+  if(selShareB)selShareB.addEventListener('click',function(){shareSelectedCards()});
+  var selCopy=document.getElementById('selCopy');
+  if(selCopy)selCopy.addEventListener('click',function(){copySelectedToFile(false)});
+  var selMove=document.getElementById('selMove');
+  if(selMove)selMove.addEventListener('click',function(){copySelectedToFile(true)});
 
   var btnD=document.getElementById('btnD');
   if(btnD)btnD.addEventListener('click',function(){
@@ -6018,10 +6049,12 @@ function buildPDFFromImages(jpegDataUrls, imgW, imgH){
 }
 
 // Simpler, more reliable export: open print-friendly window
-async function exportPrintView(){
+async function exportPrintView(subsetCards){
+  // Optional subsetCards: print just those (multi-select "Print"); default = every card in the file.
   var win = window.open('','_blank','width=900,height=700');
   if(!win){alert('Please allow popups for export');return}
   var isPD=appMode==='playdesign';
+  var printList=(subsetCards&&subsetCards.length)?subsetCards:cards;
   var html = '<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - '+(isPD?'Play Designs':'Scout Cards')+'</title>';
   if(isPD){
     html += '<style>@page{size:portrait;margin:0.25in}body{margin:0;font-family:Arial,sans-serif}';
@@ -6048,8 +6081,8 @@ async function exportPrintView(){
   html += '</style></head><body>';
   html += '<div class="instructions"><button class="save-btn" onclick="window.print()">SAVE PDF</button><span>Opens print dialog — choose &ldquo;Save as PDF&rdquo; as the destination.</span></div>';
 
-  for(var ci=0;ci<cards.length;ci++){
-    var card = cards[ci];
+  for(var ci=0;ci<printList.length;ci++){
+    var card = printList[ci];
     var svgStr = buildFullSVG(card,isPD?false:false);
     if(isPD){
       // For PD: render field-only SVG (no notes baked in)
@@ -6707,6 +6740,189 @@ async function exportScript(){
   }
   html+='</body></html>';
   win.document.write(html);win.document.close();
+}
+
+// ===== FILES (named card collections) + MULTI-SELECT =====
+// Cards live in named FILES (the old "weeks" — same games[] data, reframed): name one per opponent,
+// per play type, per situation — whatever sorts your library. Multi-select lets the coach pick a set
+// of cards and print / share / copy / move them as a batch.
+var filesSort=(function(){try{return localStorage.getItem('filesSort')||'recent'}catch(_){return 'recent'}})();
+var cardSelectMode=false;
+var cardSel=[]; // selected card indices within the current file
+
+function syncActiveFile(){
+  if(appMode==='playdesign'){games[activeGameIdx].playDesigns=cards}
+  else{games[activeGameIdx].cards=cards}
+  games[activeGameIdx].name=gameTitle;
+}
+function exitSelectMode(){cardSelectMode=false;cardSel=[];}
+
+function openFilesModal(){
+  var ex=document.getElementById('filesModal');if(ex)ex.remove();
+  var m=document.createElement('div');m.id='filesModal';
+  m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:6vh 0';
+  var mono='font-family:\'JetBrains Mono\',monospace;';
+  var mh='<div style="background:#F7F7F5;border-radius:4px;padding:20px;width:440px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Files</span>';
+  mh+='<span><button id="fmSort" style="'+mono+'font-size:9px;font-weight:700;letter-spacing:.06em;background:#fff;border:1px solid rgba(58,58,56,.2);border-radius:3px;padding:5px 9px;cursor:pointer;margin-right:8px" title="Toggle sort">'+(filesSort==='az'?'A–Z':'RECENT')+'</button>';
+  mh+='<button id="fmClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></span></div>';
+  mh+='<div style="display:flex;gap:6px;margin-bottom:12px">';
+  mh+='<input id="fmNew" type="text" placeholder="New file name (team, play type...)" style="flex:1;'+mono+'font-size:11px;padding:8px 10px;border:1px solid rgba(58,58,56,.2);border-radius:3px"/>';
+  mh+='<button id="fmCreate" style="'+mono+'font-size:10px;font-weight:700;padding:8px 14px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:3px;cursor:pointer">CREATE</button></div>';
+  // sorted view of games (original indices preserved)
+  var rows=[];for(var gi=0;gi<games.length;gi++)rows.push({i:gi,g:games[gi]});
+  if(filesSort==='az')rows.sort(function(a,b){return String(a.g.name).toLowerCase()<String(b.g.name).toLowerCase()?-1:1});
+  else rows.sort(function(a,b){return (b.g.updatedAt||0)-(a.g.updatedAt||0)});
+  for(var ri=0;ri<rows.length;ri++){
+    var idx=rows[ri].i,g=rows[ri].g;
+    var n=(g.cards||[]).length,act=idx===activeGameIdx;
+    mh+='<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:6px">';
+    mh+='<button data-fopen="'+idx+'" style="flex:1;text-align:left;padding:10px 12px;background:'+(act?'#ede4ff':'#fff')+';border:1px solid '+(act?'rgba(139,92,246,.35)':'rgba(58,58,56,.12)')+';border-radius:3px;cursor:pointer">'+
+      '<span style="'+mono+'font-size:11px;font-weight:700;color:'+(act?'#6d43d8':'#20201f')+';display:block">'+esc(g.name)+(act?' &middot; open':'')+'</span>'+
+      '<span style="'+mono+'font-size:9px;color:rgba(58,58,56,.45)">'+n+' card'+(n!==1?'s':'')+'</span></button>';
+    mh+='<button data-fren="'+idx+'" title="Rename" style="width:36px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;cursor:pointer;color:#3A3A38">&#9998;</button>';
+    mh+='<button data-fdel="'+idx+'" title="Delete file" style="width:36px;background:#fff;border:1px solid rgba(58,58,56,.15);border-radius:3px;cursor:pointer;color:#b04a2a'+(games.length<=1?';opacity:.3;cursor:default':'')+'">&#x2715;</button>';
+    mh+='</div>';
+  }
+  mh+='</div>';
+  m.innerHTML=mh;
+  document.body.appendChild(m);
+  m.addEventListener('click',function(e){if(e.target===m)m.remove()});
+  document.getElementById('fmClose').addEventListener('click',function(){m.remove()});
+  document.getElementById('fmSort').addEventListener('click',function(){
+    filesSort=filesSort==='az'?'recent':'az';
+    try{localStorage.setItem('filesSort',filesSort)}catch(_){}
+    m.remove();openFilesModal();
+  });
+  document.getElementById('fmCreate').addEventListener('click',function(){
+    var nm=document.getElementById('fmNew').value.trim()||('File '+(games.length+1));
+    syncActiveFile();exitSelectMode();
+    addGame(nm);
+    games[activeGameIdx].updatedAt=Date.now();
+    m.remove();
+  });
+  m.querySelectorAll('[data-fopen]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var idx=parseInt(this.getAttribute('data-fopen'));
+      m.remove();
+      if(idx===activeGameIdx)return;
+      syncActiveFile();exitSelectMode();
+      switchGame(idx);
+    });
+  });
+  m.querySelectorAll('[data-fren]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var idx=parseInt(this.getAttribute('data-fren'));
+      var nv=prompt('Rename file',games[idx].name);
+      if(nv&&nv.trim()){
+        games[idx].name=nv.trim();
+        if(idx===activeGameIdx)gameTitle=nv.trim();
+        games[idx].updatedAt=Date.now();
+        autoSave();
+        m.remove();render();openFilesModal();
+      }
+    });
+  });
+  m.querySelectorAll('[data-fdel]').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(games.length<=1)return;
+      var idx=parseInt(this.getAttribute('data-fdel'));
+      var cnt=(games[idx].cards||[]).length;
+      if(!confirm('Delete "'+games[idx].name+'" and its '+cnt+' card'+(cnt!==1?'s':'')+'?'))return;
+      syncActiveFile();exitSelectMode();
+      if(idx===activeGameIdx){deleteGame(idx);}
+      else{
+        games.splice(idx,1);
+        if(idx<activeGameIdx)activeGameIdx--;
+        autoSave();render();
+      }
+      m.remove();openFilesModal();
+    });
+  });
+}
+
+// Pick a target file (or create one) for copy/move. cb(targetIdx) fires after selection.
+function openFilePickerModal(title,excludeIdx,cb){
+  var ex=document.getElementById('filePickModal');if(ex)ex.remove();
+  var m=document.createElement('div');m.id='filePickModal';
+  m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9100;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:8vh 0';
+  var mono='font-family:\'JetBrains Mono\',monospace;';
+  var mh='<div style="background:#F7F7F5;border-radius:4px;padding:20px;width:400px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:15px;color:#1A3C2B">'+esc(title)+'</span><button id="fpClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  mh+='<div style="display:flex;gap:6px;margin-bottom:12px">';
+  mh+='<input id="fpNew" type="text" placeholder="New file name..." style="flex:1;'+mono+'font-size:11px;padding:8px 10px;border:1px solid rgba(58,58,56,.2);border-radius:3px"/>';
+  mh+='<button id="fpCreate" style="'+mono+'font-size:10px;font-weight:700;padding:8px 12px;background:#1A3C2B;color:#F7F7F5;border:none;border-radius:3px;cursor:pointer">NEW</button></div>';
+  for(var gi=0;gi<games.length;gi++){
+    if(gi===excludeIdx)continue;
+    var n=(games[gi].cards||[]).length;
+    mh+='<button data-fpick="'+gi+'" style="display:block;width:100%;text-align:left;padding:10px 12px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:3px;margin-bottom:6px;cursor:pointer">'+
+      '<span style="'+mono+'font-size:11px;font-weight:700;color:#20201f;display:block">'+esc(games[gi].name)+'</span>'+
+      '<span style="'+mono+'font-size:9px;color:rgba(58,58,56,.45)">'+n+' card'+(n!==1?'s':'')+'</span></button>';
+  }
+  mh+='</div>';
+  m.innerHTML=mh;
+  document.body.appendChild(m);
+  m.addEventListener('click',function(e){if(e.target===m)m.remove()});
+  document.getElementById('fpClose').addEventListener('click',function(){m.remove()});
+  document.getElementById('fpCreate').addEventListener('click',function(){
+    var nm=document.getElementById('fpNew').value.trim();
+    if(!nm){document.getElementById('fpNew').focus();return;}
+    games.push(mkGame(nm));
+    games[games.length-1].cards=[]; // start the new file empty — its cards come from the copy/move
+    m.remove();cb(games.length-1);
+  });
+  m.querySelectorAll('[data-fpick]').forEach(function(b){
+    b.addEventListener('click',function(){var idx=parseInt(this.getAttribute('data-fpick'));m.remove();cb(idx);});
+  });
+}
+
+function copySelectedToFile(move){
+  if(!cardSel.length){showToast('Tap cards to select them first');return;}
+  openFilePickerModal(move?'Move '+cardSel.length+' to file':'Copy '+cardSel.length+' to file',move?activeGameIdx:null,function(tIdx){
+    syncActiveFile();
+    var target=games[tIdx];
+    var arr=appMode==='playdesign'?(target.playDesigns||(target.playDesigns=[])):(target.cards||(target.cards=[]));
+    var sorted=cardSel.slice().sort(function(a,b){return a-b});
+    for(var i=0;i<sorted.length;i++){
+      var cl=JSON.parse(JSON.stringify(cards[sorted[i]]));
+      cl.id=nid++;
+      arr.push(cl);
+    }
+    target.updatedAt=Date.now();
+    var n=sorted.length;
+    if(move&&tIdx!==activeGameIdx){
+      for(var j=sorted.length-1;j>=0;j--)cards.splice(sorted[j],1);
+      if(!cards.length)cards.push(appMode==='playdesign'?mkPlayCard():mkCard());
+      activeIdx=Math.min(activeIdx,cards.length-1);
+    }
+    exitSelectMode();autoSave();render();
+    showToast(n+' card'+(n>1?'s':'')+(move?' moved':' copied')+' to “'+target.name+'”');
+  });
+}
+
+function selectedCardsList(){
+  return cardSel.slice().sort(function(a,b){return a-b}).map(function(i){return cards[i]}).filter(Boolean);
+}
+async function shareSelectedCards(){
+  if(!cardSel.length){showToast('Tap cards to select them first');return;}
+  var list=selectedCardsList();
+  showToast('Building '+list.length+' image'+(list.length>1?'s':'')+'…');
+  var files=[];
+  for(var i=0;i<list.length;i++){
+    var cnv=await svgToCanvas(buildFullSVG(list[i],appMode==='playdesign'),FW*2,FH*2);
+    if(!cnv)continue;
+    var blob=await new Promise(function(res){cnv.toBlob(res,'image/png')});
+    if(blob)files.push(new File([blob],((list[i].play||'card_'+(i+1)).replace(/[^a-zA-Z0-9]/g,'_'))+'.png',{type:'image/png'}));
+  }
+  if(!files.length){showToast('Export failed');return;}
+  var shared=false;
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:files})){
+    try{await navigator.share({files:files,title:gameTitle||'Scout cards'});shared=true;}catch(_){shared=false;}
+  }
+  if(!shared){
+    // no share sheet here — open the print view with just these cards (print or save as PDF)
+    exportPrintView(list);
+  }
 }
 
 // ===== TEACHING CARD (diagram + film frame → shareable graphic) =====
