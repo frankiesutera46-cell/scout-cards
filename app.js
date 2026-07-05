@@ -1432,16 +1432,11 @@ function buildField(card){
   var isBlank=(ft==='blank');
 
   if(!isBlank){
-    // Yard lines every 5 yards
+    // Yard lines every 5 yards. The LOS is NOT drawn specially anymore — the regular
+    // yard line at that spot marks it (the formation alignment shows the LOS anyway).
     for(var i=0;i<=TOTAL_YARDS/5;i++){
       var yy = MARGIN_TOP + i * Y5;
       if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
-      var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
-      var pdLosIdx = 15/5; // PD_LOS_Y is at 15 yards from top
-      // Skip the yard line where the dashed LOS is drawn
-      var usePdLos=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
-      var skipIdx=usePdLos?pdLosIdx:losIdx;
-      if(i===skipIdx) continue;
       s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7" opacity="0.7"/>';
     }
 
@@ -1504,6 +1499,15 @@ function buildField(card){
         if(znGoalY!==null&&yy<=znGoalY+2) continue;
         s+=ynum(pdNums[ni].lbl, numLnx, numRnx, yy);
       }
+    } else if(zn==='fifty'){
+      // Midfield: LOS is the 50 — real-field numbers reading 40 / 50 / 40 bottom-to-top
+      for(var i=0;i<=TOTAL_YARDS/5;i++){
+        var yy = MARGIN_TOP + i * Y5;
+        if(yy < hh || yy > FH - MARGIN_BOT) continue;
+        var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
+        if(yardsFromLOS!==-10&&yardsFromLOS!==0&&yardsFromLOS!==10) continue;
+        s+=ynum(yardsFromLOS===0?'50':'40', numLnx, numRnx, yy);
+      }
     } else {
       // Scout mode: only 10 and 20 above LOS (defensive side)
       for(var i=0;i<=TOTAL_YARDS/5;i++){
@@ -1520,10 +1524,10 @@ function buildField(card){
     s+='<line x1="'+SL+'" y1="'+hh+'" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
     s+='<line x1="'+SR+'" y1="'+hh+'" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
 
-    // LOS - dashed line (PD defensive perspective uses PD_LOS_Y, all others use LOS_Y)
+    // LOS reference (no dashed line drawn — the regular yard line at this spot marks it;
+    // zones and the line-to-gain marker below still measure from here)
     var usePdLayout=(appMode==='playdesign'&&viewPerspective==='def')||(appMode!=='playdesign'&&viewPerspective==='off');
     var losLineY=usePdLayout?PD_LOS_Y:LOS_Y;
-    s+='<line x1="'+SL+'" y1="'+losLineY.toFixed(1)+'" x2="'+SR+'" y2="'+losLineY.toFixed(1)+'" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4"/>';
 
     // Field-area context. Offense always attacks UP on the card, so the goal line the offense
     // is driving toward sits ABOVE the LOS (red zone = 20 out, goal line = 5 out), and the
@@ -2424,7 +2428,7 @@ var libCollapsed=(function(){try{return localStorage.getItem('v2libCollapsed')!=
 var SP_FORMS=[['doubR','Doub R'],['doubL','Doub L'],['3x1R','Trips R'],['3x1L','Trips L'],['treyR','Trey R'],['treyL','Trey L'],['deuceR','Deuce R'],['deuceL','Deuce L'],['empty','Empty']];
 var SP_DEFS=[['43over','4-3 Ov'],['43under','4-3 Un'],['odd','Odd'],['tite','Tite'],['bear','Bear'],['nickel','Nickel'],['dime','Dime'],['none','None']];
 var SP_FIELDS=[['hs','HS'],['ncaa','College'],['nfl','NFL'],['blank','Blank']];
-var SP_ZONES=[['mid','Open'],['rz','Red Zone'],['gl','Goal Line'],['bu','Backed Up']];
+var SP_ZONES=[['mid','Open'],['fifty','Midfield'],['rz','Red Zone'],['gl','Goal Line'],['bu','Backed Up']];
 var SP_HASHES=[['L','L'],['LM','LM'],['M','M'],['RM','RM'],['R','R']];
 
 function buildSetupPanelHtml(card){
