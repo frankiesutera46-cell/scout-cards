@@ -6170,8 +6170,9 @@ async function updateActiveShareMeta(){
 
 // ===== SHARE TO PLAYERS =====
 function shareToPlayers(){
-  if(!supabase){alert('Supabase not loaded');return}
-  if(!currentUser){alert(demoMode?'Sign up to unlock sharing! Your work will be saved to the cloud.':'Sign in first');return}
+  // The modal always opens: the Teaching Card is purely local (canvas + native share sheet) and
+  // needs no account. Only creating a cloud share LINK requires sign-in — checked on that action.
+  var canLink=!!(supabase&&currentUser);
   // Show share modal
   var existing=document.getElementById('shareModal');
   if(existing)existing.remove();
@@ -6182,6 +6183,10 @@ function shareToPlayers(){
   var mh='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:460px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
   mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Share to Players</span><button id="shareModalClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
   mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:rgba(58,58,56,.6);margin-bottom:16px">From <strong>'+esc(gameTitle)+'</strong>'+(activeTagFilter?' (filtered: '+esc(activeTagFilter)+')':'')+'</div>';
+  // Teaching Card — single-play graphic (diagram + film frame) via the native share sheet
+  mh+='<button id="shareTeachingCard" style="display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:12px 14px;background:#fff;border:1px solid rgba(26,60,43,.3);border-radius:3px;margin-bottom:16px;cursor:pointer;text-align:left;touch-action:manipulation">'+
+     '<span style="font-size:16px">&#127916;</span><span><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;color:#1A3C2B;display:block">TEACHING CARD</span>'+
+     '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.5)">This play + a film frame &rarr; one shareable graphic</span></span></button>';
   // Section toggles
   var srForShare=getScoutReports();
   var pdForShare=appMode==='playdesign'?cards:(games[activeGameIdx].playDesigns||[]);
@@ -6220,10 +6225,13 @@ function shareToPlayers(){
 
   // Close modal
   document.getElementById('shareModalClose').addEventListener('click',function(){m.remove()});
+  var tcBtn=document.getElementById('shareTeachingCard');
+  if(tcBtn)tcBtn.addEventListener('click',function(){m.remove();openTeachingCard();});
   m.addEventListener('click',function(e){if(e.target===m)m.remove()});
 
   // Confirm share
   document.getElementById('shareConfirmBtn').addEventListener('click',async function(){
+    if(!canLink){alert(demoMode?'Sign up to create share links! Your work will be saved to the cloud.':'Sign in first');return;}
     var btn=this;var status=document.getElementById('shareStatus');
     btn.disabled=true;btn.textContent='GENERATING...';
     status.textContent='Building card images...';
@@ -6699,6 +6707,190 @@ async function exportScript(){
   }
   html+='</body></html>';
   win.document.write(html);win.document.close();
+}
+
+// ===== TEACHING CARD (diagram + film frame → shareable graphic) =====
+// Coach picks a photo or video clip from the device (on iPad this opens Photos — e.g. a saved or
+// screen-recorded Hudl clip), scrubs to the frame, and the app composes: header (play name · D&D),
+// the play diagram, the film still, and coaching notes into one PNG, previewed live and sent
+// through the native share sheet (sharePngFileNative) with a download fallback.
+var _tcFilm=null;     // captured film frame as a canvas
+var _tcVideoURL=null; // object URL of the picked video (revoked on close/re-pick)
+var _tcCanvas=null;   // last composed graphic
+var _tcTimer=null;
+
+function tcWrapText(ctx,text,maxW){
+  var out=[],paras=String(text||'').split('\n');
+  for(var p=0;p<paras.length;p++){
+    var words=paras[p].split(/\s+/),line='';
+    for(var w=0;w<words.length;w++){
+      var t=line?line+' '+words[w]:words[w];
+      if(ctx.measureText(t).width>maxW&&line){out.push(line);line=words[w];}
+      else line=t;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+function tcCompose(card,opts,cb){
+  var W=1440;
+  var svgStr=buildFullSVG(card,appMode==='playdesign');
+  svgToCanvas(svgStr,W,Math.round(W*FH/FW)).then(function(diag){
+    var accent=(teamBranding&&teamBranding.primaryColor)||'#1A3C2B';
+    var headerH=0,dd=card.dd||'',pn=card.play||'';
+    if(opts.labels&&(pn||dd))headerH=120;
+    var diagH=diag?diag.height:Math.round(W*FH/FW);
+    // film: scale to width; portrait sources crop-center to a 1100px cap so the card stays tidy
+    var filmH=0,film=_tcFilm;
+    if(film&&film.width){filmH=Math.min(1100,Math.round(W*film.height/film.width));}
+    // notes strip (wrapped)
+    var notesLines=[],notesH=0;
+    var meas=document.createElement('canvas').getContext('2d');
+    if(opts.notes){
+      meas.font='34px Arial';
+      notesLines=tcWrapText(meas,opts.notes,W-112);
+      notesH=notesLines.length*46+52;
+    }
+    var footH=44,barH=film?8:0;
+    var H=headerH+diagH+barH+filmH+notesH+footH;
+    var c=document.createElement('canvas');c.width=W;c.height=H;
+    var x=c.getContext('2d');
+    x.fillStyle='#ffffff';x.fillRect(0,0,W,H);
+    var y=0;
+    if(headerH){
+      x.fillStyle=accent;x.fillRect(0,0,W,headerH);
+      x.fillStyle='#F7F7F5';x.textBaseline='middle';
+      x.font='700 46px "Space Grotesk",Arial,sans-serif';x.textAlign='left';
+      x.fillText(pn||'',56,headerH/2+2);
+      if(dd){x.font='30px "JetBrains Mono",monospace';x.textAlign='right';x.fillText(dd,W-56,headerH/2+2);}
+      y=headerH;
+    }
+    if(diag){x.drawImage(diag,0,y,W,diagH);}
+    y+=diagH;
+    if(film&&filmH){
+      x.fillStyle=accent;x.fillRect(0,y,W,barH);y+=barH;
+      var natH=Math.round(W*film.height/film.width);
+      if(natH<=filmH){x.drawImage(film,0,y,W,filmH);}
+      else{
+        // portrait/taller source: crop vertically centered
+        var srcH=Math.round(film.width*filmH/W);
+        var sy=Math.max(0,Math.round((film.height-srcH)/2));
+        x.drawImage(film,0,sy,film.width,srcH,0,y,W,filmH);
+      }
+      y+=filmH;
+    }
+    if(notesH){
+      x.fillStyle='#F2F1EC';x.fillRect(0,y,W,notesH);
+      x.fillStyle='#2c2c2a';x.font='34px Arial';x.textAlign='left';x.textBaseline='alphabetic';
+      for(var li=0;li<notesLines.length;li++){x.fillText(notesLines[li],56,y+48+li*46);}
+      y+=notesH;
+    }
+    x.fillStyle='#ffffff';x.fillRect(0,y,W,footH);
+    x.fillStyle='rgba(58,58,56,.45)';x.font='22px "JetBrains Mono",monospace';x.textAlign='right';x.textBaseline='middle';
+    x.fillText(((teamBranding&&teamBranding.teamName)||'Juice Box Football'),W-32,y+footH/2);
+    _tcCanvas=c;
+    cb(c);
+  });
+}
+
+function tcCleanup(){
+  if(_tcVideoURL){try{URL.revokeObjectURL(_tcVideoURL)}catch(_){}_tcVideoURL=null;}
+  _tcFilm=null;_tcCanvas=null;
+  var m=document.getElementById('tcModal');if(m)m.remove();
+}
+
+function openTeachingCard(){
+  var card=cards[activeIdx];
+  var existing=document.getElementById('tcModal');if(existing)existing.remove();
+  _tcFilm=null;_tcCanvas=null;
+  var m=document.createElement('div');m.id='tcModal';
+  m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:4vh 0';
+  var btnS='font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:10px 16px;border-radius:3px;cursor:pointer;touch-action:manipulation';
+  var mh='<div style="background:#F7F7F5;border-radius:4px;padding:20px;width:520px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
+  mh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Teaching Card</span><button id="tcClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  mh+='<div id="tcPrevWrap" style="background:#e9e8e3;border:1px solid rgba(58,58,56,.12);border-radius:3px;min-height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden"><img id="tcPrev" style="width:100%;display:none" alt="Preview"/><span id="tcPrevHint" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);padding:24px;text-align:center">Building preview…</span></div>';
+  mh+='<input type="file" id="tcFile" accept="image/*,video/*" style="display:none"/>';
+  mh+='<button id="tcPick" style="'+btnS+';width:100%;background:#fff;border:1px solid rgba(58,58,56,.25);color:#20201f;margin-bottom:10px">&#127916; Choose Film Clip / Photo</button>';
+  mh+='<div id="tcScrubRow" style="display:none;margin-bottom:10px">';
+  mh+='<video id="tcVideo" playsinline muted style="width:100%;border-radius:3px;background:#000"></video>';
+  mh+='<input type="range" id="tcScrub" min="0" max="1000" value="0" style="width:100%;margin-top:6px"/>';
+  mh+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:rgba(58,58,56,.5);text-align:center">Scrub to the moment — the preview updates with the frame</div>';
+  mh+='</div>';
+  mh+='<label style="display:flex;align-items:center;gap:8px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#3A3A38;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="tcLabels" checked style="accent-color:#1A3C2B;width:15px;height:15px"/>Show play name &amp; down/distance</label>';
+  mh+='<textarea id="tcNotes" placeholder="Coaching notes for the graphic..." style="width:100%;box-sizing:border-box;font-family:Arial,sans-serif;font-size:13px;padding:8px 10px;border:1px solid rgba(58,58,56,.2);border-radius:3px;min-height:56px;margin-bottom:12px">'+esc(card.notes||'')+'</textarea>';
+  mh+='<div style="display:flex;gap:8px">';
+  mh+='<button id="tcShare" style="'+btnS+';flex:1;background:#1A3C2B;border:1px solid #1A3C2B;color:#F7F7F5">Share</button>';
+  mh+='<button id="tcSave" style="'+btnS+';background:#fff;border:1px solid rgba(58,58,56,.25);color:#20201f">Save PNG</button>';
+  mh+='</div></div>';
+  m.innerHTML=mh;
+  document.body.appendChild(m);
+
+  var prev=document.getElementById('tcPrev'),prevHint=document.getElementById('tcPrevHint');
+  var video=document.getElementById('tcVideo'),scrub=document.getElementById('tcScrub'),scrubRow=document.getElementById('tcScrubRow');
+  var notesEl=document.getElementById('tcNotes'),labelsEl=document.getElementById('tcLabels');
+
+  function recompose(){
+    tcCompose(card,{labels:labelsEl.checked,notes:notesEl.value.trim()},function(c){
+      prev.src=c.toDataURL('image/jpeg',0.85);
+      prev.style.display='block';prevHint.style.display='none';
+    });
+  }
+  function recomposeSoon(){if(_tcTimer)clearTimeout(_tcTimer);_tcTimer=setTimeout(recompose,250);}
+
+  function captureVideoFrame(){
+    if(!video.videoWidth)return;
+    var fc=document.createElement('canvas');fc.width=video.videoWidth;fc.height=video.videoHeight;
+    fc.getContext('2d').drawImage(video,0,0);
+    _tcFilm=fc;recomposeSoon();
+  }
+
+  document.getElementById('tcClose').addEventListener('click',tcCleanup);
+  m.addEventListener('click',function(e){if(e.target===m)tcCleanup();});
+  document.getElementById('tcPick').addEventListener('click',function(){document.getElementById('tcFile').click();});
+  document.getElementById('tcFile').addEventListener('change',function(){
+    var f=this.files&&this.files[0];if(!f)return;
+    if(_tcVideoURL){try{URL.revokeObjectURL(_tcVideoURL)}catch(_){}_tcVideoURL=null;}
+    if(f.type.indexOf('video')===0){
+      _tcVideoURL=URL.createObjectURL(f);
+      video.src=_tcVideoURL;scrubRow.style.display='block';
+      video.addEventListener('loadeddata',function once(){video.removeEventListener('loadeddata',once);captureVideoFrame();});
+      video.addEventListener('seeked',captureVideoFrame);
+    } else {
+      scrubRow.style.display='none';
+      var url=URL.createObjectURL(f);
+      var img=new Image();
+      img.onload=function(){
+        var fc=document.createElement('canvas');fc.width=img.naturalWidth;fc.height=img.naturalHeight;
+        fc.getContext('2d').drawImage(img,0,0);
+        _tcFilm=fc;try{URL.revokeObjectURL(url)}catch(_){}
+        recompose();
+      };
+      img.src=url;
+    }
+  });
+  scrub.addEventListener('input',function(){
+    if(video.duration)video.currentTime=(this.value/1000)*video.duration;
+  });
+  labelsEl.addEventListener('change',recompose);
+  notesEl.addEventListener('input',recomposeSoon);
+
+  function tcName(){return ((card.play||'play').replace(/[^a-zA-Z0-9]/g,'_'))+'_teaching.png';}
+  document.getElementById('tcShare').addEventListener('click',function(){
+    if(!_tcCanvas){showToast('Preview still building — one sec');return;}
+    sharePngFileNative(_tcCanvas,tcName(),(card.play||'Teaching card')).then(function(ok){
+      if(!ok){
+        var a=document.createElement('a');a.download=tcName();a.href=_tcCanvas.toDataURL('image/png');a.click();
+        showToast('Saved PNG (sharing not available here)');
+      } else {tcCleanup();}
+    });
+  });
+  document.getElementById('tcSave').addEventListener('click',function(){
+    if(!_tcCanvas)return;
+    var a=document.createElement('a');a.download=tcName();a.href=_tcCanvas.toDataURL('image/png');a.click();
+  });
+
+  recompose(); // initial preview: diagram + labels/notes (film added when picked)
 }
 
 // ===== NATURAL-LANGUAGE PLAY CALL (command palette) =====
