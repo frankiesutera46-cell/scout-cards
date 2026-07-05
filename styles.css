@@ -1980,7 +1980,6 @@ textarea.sp-input{resize:vertical;min-height:46px;font-family:'Space Grotesk',sa
 /* v2 canvas spacing: clear the floating clusters (top) and drop the old dock reserve (bottom) */
 .app-shell.v2 .eb{flex:1;display:flex;min-height:0}
 .app-shell.v2 .field-wrap{padding:64px 24px 18px !important}
-.app-shell.v2 .canvas-region:has(.pen-strip) .field-wrap{padding-top:112px !important}
 .app-shell.v2.coach-view .field-wrap{padding:14px !important}
 
 /* ---- Teaching Card: CHLK export layout (fullscreen takeover) ---- */
