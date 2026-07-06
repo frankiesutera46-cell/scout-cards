@@ -3430,7 +3430,9 @@ function bind(){
       card._offPreset=null;
       card.fk=this.getAttribute('data-spfk');
       card.asgn={};card.routePts={};card.routeCurves={};
-      if(appMode==='playdesign'){card.pdOpos={}}else{card.opos=null}
+      // Clear custom-dragged positions for BOTH views — the flipped (defense-view) store
+      // must reset too, or stale drags from the old formation stick in that perspective.
+      if(appMode==='playdesign'){card.pdOpos={};card.pdOposOff={}}else{card.opos=null;card.oposOff=null}
       selPlayer=null;render();
     });
   });
@@ -3438,7 +3440,7 @@ function bind(){
     b.addEventListener('click',function(){
       card._defPreset=null;
       card.dfk=this.getAttribute('data-spdfk');
-      if(appMode==='playdesign'){card.pdDpos={}}else{card.dpos=null}
+      if(appMode==='playdesign'){card.pdDpos={};card.pdDposOff={}}else{card.dpos=null;card.dposOff=null}
       render();
     });
   });
