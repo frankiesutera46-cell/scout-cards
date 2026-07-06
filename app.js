@@ -319,7 +319,7 @@ var LOS_YARDS_FROM_TOP = 25;
 var LOS_Y = MARGIN_TOP + LOS_YARDS_FROM_TOP * YPX; // ~365
 
 var CX = FW/2;
-var OL_SP = 36;
+var OL_SP = 27;
 var OL_Y = LOS_Y + 12; // OL right on the ball
 
 // Player colors matching pro apps
