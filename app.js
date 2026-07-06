@@ -433,11 +433,17 @@ bdrive:{n:'Drive',t:'block',c:COL_BLOCK,cap:'bar'},
 bdown:{n:'Down',t:'block',c:COL_BLOCK,cap:'bar'},
 breach:{n:'Reach',t:'block',c:COL_BLOCK,cap:'bar'},
 bzone:{n:'Zone',t:'block',c:COL_BLOCK,cap:'bar'},
+// Directional variants — point a FIXED screen direction (R=right, L=left) instead of
+// auto-mirroring off the center, so the coach picks the side explicitly.
+bzoneR:{n:'Zone Rt',t:'block',c:COL_BLOCK,cap:'bar'},
+bzoneL:{n:'Zone Lt',t:'block',c:COL_BLOCK,cap:'bar'},
 bcombo:{n:'Combo',t:'block',c:COL_BLOCK,cap:'bar2'},
 blead:{n:'Lead',t:'block',c:COL_BLOCK,cap:'bar'},
 bpull:{n:'Pull',t:'block',c:COL_BLOCK,cap:'arrow'},
 btrap:{n:'Trap',t:'block',c:COL_BLOCK,cap:'arrow'},
 bkick:{n:'Kickout',t:'block',c:COL_BLOCK,cap:'bar'},
+bkickR:{n:'Kick Rt',t:'block',c:COL_BLOCK,cap:'bar'},
+bkickL:{n:'Kick Lt',t:'block',c:COL_BLOCK,cap:'bar'},
 bfold:{n:'Fold',t:'block',c:COL_BLOCK,cap:'arrow'},
 bcut:{n:'Cut',t:'block',c:COL_BLOCK,cap:'x'},
 // Motion
@@ -498,11 +504,15 @@ function routePath(rk,px,py,playerIsOnRight,dirDown){
     bdown:  [[2*X*m,-0.4*Y],[3.5*X*m,-1*Y]],                        // Down — flat angle inside to next gap
     breach: [[-2*X*m,-0.5*Y],[-3*X*m,-1.5*Y]],                     // Reach — angle outside
     bzone:  [[-1.5*X*m,-0.4*Y],[-2*X*m,-2.2*Y]],                   // Zone — lateral step, climb playside
+    bzoneR: [[2.5*X,-2.2*Y],[0,-1.4*Y]],                          // Zone Rt — reach up-right, climb to horizontal bar
+    bzoneL: [[-2.5*X,-2.2*Y],[0,-1.4*Y]],                         // Zone Lt — mirror (up-left)
     bcombo: [[1*X*m,-1.2*Y],[1.5*X*m,-2.6*Y]],                     // Combo — double-team inside, climb
     blead:  [[0.3*X*m,-1.5*Y],[0.8*X*m,-3.2*Y]],                   // Lead — iso up to LB level
     bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
     btrap:  [[2*X*m,1.2*Y],[5*X*m,0.8*Y],[7.5*X*m,-0.8*Y]],        // Trap — short pull across, kick first man
     bkick:  [[-3*X*m,2*Y],[-4.5*X*m,3.5*Y]],                       // Kickout — step down and out, block-surface bar
+    bkickR: [[3*X,2*Y],[4.5*X,3.5*Y]],                            // Kickout Rt — step down-right to a bar
+    bkickL: [[-3*X,2*Y],[-4.5*X,3.5*Y]],                          // Kickout Lt — step down-left to a bar
     bfold:  [[1.8*X*m,0.8*Y],[3.5*X*m,0],[4*X*m,-1.8*Y]],          // Fold — loop around neighbor, up to LB
     bcut:   [[0.3*X*m,-1*Y]],                                       // Cut — short fire out low
 
@@ -3154,7 +3164,7 @@ function render(){
         } else if(popupCat==='block'){
           // Picker intentionally trimmed to Drive only — more will be re-added later.
           // The other block ROUTES/renderers stay defined so existing cards still display them.
-          var blockOpts=[['bdrive','Drive'],['bkick','Kickout']];
+          var blockOpts=[['bdrive','Drive'],['bzoneR','Zone Rt'],['bzoneL','Zone Lt'],['bkickR','Kick Rt'],['bkickL','Kick Lt']];
           var curB=card.asgn[selPlayer];
           for(var bki=0;bki<blockOpts.length;bki++){
             var bk=blockOpts[bki][0],bn=blockOpts[bki][1];
