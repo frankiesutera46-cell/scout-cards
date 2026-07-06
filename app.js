@@ -2212,8 +2212,8 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       else if(oShade==='full'){s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+(orx-1)+'" ry="'+(ory-1)+'" fill="#222" pointer-events="none"/>';}
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(oShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
       if(showSelBox){s+='<rect x="'+(pp.x-orx-3)+'" y="'+(pp.y-ory-3)+'" width="'+(orx*2+6)+'" height="'+(ory*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
-    } else if((pp.side==='qb'||pp.side==='wr'||pp.side==='rb'||pp.side==='te')&&(bpCard()&&bpCard().oStyle)==='text'){
-      // Text-only offense markers — mirrors the defense look (letters, no shapes)
+    } else if((pp.side==='qb'||pp.side==='wr'||pp.side==='rb'||pp.side==='te')&&bpCard()&&bpCard().pShape&&bpCard().pShape[pk]==='letter'){
+      // Per-player standalone letter — mirrors the defense look (no oval, just the label)
       var customOc=cl._pc&&cl._pc[pk];
       var ocol=isSel?'#1A3C2B':(customOc||'#222222');
       var ofs=lbl.length>2?12:16;
@@ -2575,7 +2575,8 @@ function buildSetupPanelHtml(card){
   h+='<button class="sp-pill'+(viewPerspective==='off'?' on':'')+'" id="btnViewOff">Offense</button>';
   h+='</div>';
   var curOsty=card.oStyle||'color';
-  var SP_OSTYLES=[['color','Color'],['white','White'],['text','Text']];
+  if(curOsty==='text')curOsty='color'; // retired card-wide mode — letter is per-player now
+  var SP_OSTYLES=[['color','Color'],['white','White']];
   h+='<div class="sp-pills" style="margin-top:6px">';
   for(var osi=0;osi<SP_OSTYLES.length;osi++){h+='<button class="sp-pill'+(curOsty===SP_OSTYLES[osi][0]?' on':'')+'" data-spostyle="'+SP_OSTYLES[osi][0]+'" title="Offense marker style">'+SP_OSTYLES[osi][1]+'</button>';}
   h+='</div><div class="sp-row">';
@@ -3114,6 +3115,13 @@ function render(){
         var _ppHSave=h; h='';
         if(popupCat==='label'){
           h+='<input class="pp-input" id="ppLabel" type="text" placeholder="Number / label" maxlength="4" value="'+esc(ppCl)+'" style="width:140px"/>';
+          // Marker form for offense skill/QB: keep the oval, or show just the letter/number
+          if(!ppIsDef&&!ppIsOl){
+            var curForm=(card.pShape&&card.pShape[selPlayer])||'oval';
+            h+='<span class="pp-sep" style="display:inline-block;width:1px;height:18px;background:rgba(0,0,0,.15);margin:0 4px"></span>';
+            h+='<button class="pp-btn'+(curForm!=='letter'?' act':'')+'" data-pp-form="oval">Oval</button>';
+            h+='<button class="pp-btn'+(curForm==='letter'?' act':'')+'" data-pp-form="letter">Letter</button>';
+          }
         } else if(popupCat==='color'){
           var ppColors=[['#cc0000'],['#0055cc'],['#22862a'],['#d4a017'],['#9333ea'],['#ffffff']];
           var curPpCol=ppIsDef?((card.cl._dc&&card.cl._dc[selPlayer])||''):((card.cl._pc&&card.cl._pc[selPlayer])||'');
@@ -4033,6 +4041,17 @@ function bind(){
           card.routeStyle[selPlayer]={style:'solid',width:'med',end:defaultRouteEnd(_lpl&&_lpl.side)};
         }
         card.routeStyle[selPlayer][key]=val;
+        render();
+      });
+    });
+    // Marker form buttons — oval vs standalone letter for one offensive player
+    pPop.querySelectorAll('[data-pp-form]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!selPlayer)return;
+        pushUndo();
+        if(!card.pShape)card.pShape={};
+        if(this.getAttribute('data-pp-form')==='letter')card.pShape[selPlayer]='letter';
+        else delete card.pShape[selPlayer];
         render();
       });
     });
