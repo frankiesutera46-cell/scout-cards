@@ -3152,7 +3152,9 @@ function render(){
           }
           if(curR){h+='<button class="pp-btn" data-pp-route="">&#x2715;</button>';}
         } else if(popupCat==='block'){
-          var blockOpts=[['bdrive','Drive'],['bdown','Down'],['breach','Reach'],['bzone','Zone'],['bcombo','Combo'],['blead','Lead'],['bpull','Pull'],['btrap','Trap'],['bkick','Kickout'],['bfold','Fold'],['bcut','Cut'],['bpass','Pass Pro']];
+          // Picker intentionally trimmed to Drive only — more will be re-added later.
+          // The other block ROUTES/renderers stay defined so existing cards still display them.
+          var blockOpts=[['bdrive','Drive']];
           var curB=card.asgn[selPlayer];
           for(var bki=0;bki<blockOpts.length;bki++){
             var bk=blockOpts[bki][0],bn=blockOpts[bki][1];
