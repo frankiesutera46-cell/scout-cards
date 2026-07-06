@@ -437,7 +437,7 @@ bcombo:{n:'Combo',t:'block',c:COL_BLOCK,cap:'bar2'},
 blead:{n:'Lead',t:'block',c:COL_BLOCK,cap:'bar'},
 bpull:{n:'Pull',t:'block',c:COL_BLOCK,cap:'arrow'},
 btrap:{n:'Trap',t:'block',c:COL_BLOCK,cap:'arrow'},
-bkick:{n:'Kickout',t:'block',c:COL_BLOCK,cap:'arrow'},
+bkick:{n:'Kickout',t:'block',c:COL_BLOCK,cap:'bar'},
 bfold:{n:'Fold',t:'block',c:COL_BLOCK,cap:'arrow'},
 bcut:{n:'Cut',t:'block',c:COL_BLOCK,cap:'x'},
 // Motion
@@ -502,7 +502,7 @@ function routePath(rk,px,py,playerIsOnRight,dirDown){
     blead:  [[0.3*X*m,-1.5*Y],[0.8*X*m,-3.2*Y]],                   // Lead — iso up to LB level
     bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
     btrap:  [[2*X*m,1.2*Y],[5*X*m,0.8*Y],[7.5*X*m,-0.8*Y]],        // Trap — short pull across, kick first man
-    bkick:  [[-2.5*X*m,1.2*Y],[-6*X*m,0.6*Y],[-8*X*m,-0.8*Y]],     // Kickout — pull to the edge, turn out
+    bkick:  [[-3*X*m,2*Y],[-4.5*X*m,3.5*Y]],                       // Kickout — step down and out, block-surface bar
     bfold:  [[1.8*X*m,0.8*Y],[3.5*X*m,0],[4*X*m,-1.8*Y]],          // Fold — loop around neighbor, up to LB
     bcut:   [[0.3*X*m,-1*Y]],                                       // Cut — short fire out low
 
@@ -3154,7 +3154,7 @@ function render(){
         } else if(popupCat==='block'){
           // Picker intentionally trimmed to Drive only — more will be re-added later.
           // The other block ROUTES/renderers stay defined so existing cards still display them.
-          var blockOpts=[['bdrive','Drive']];
+          var blockOpts=[['bdrive','Drive'],['bkick','Kickout']];
           var curB=card.asgn[selPlayer];
           for(var bki=0;bki<blockOpts.length;bki++){
             var bk=blockOpts[bki][0],bn=blockOpts[bki][1];
