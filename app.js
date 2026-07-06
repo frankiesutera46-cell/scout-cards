@@ -2026,6 +2026,10 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // buildPlayers has no `card` parameter — reach for the active card via the global `cards` array.
       var _bpCard=bpCard();
       var customStyle=(ra==='custom'&&_bpCard&&_bpCard.routeStyle&&_bpCard.routeStyle[rk2])?_bpCard.routeStyle[rk2]:null;
+      // Per-player route color override (Line tab). Works for ANY route type, not just custom;
+      // falls back to the route category's built-in color when no override is set.
+      var _rsForColor=(_bpCard&&_bpCard.routeStyle&&_bpCard.routeStyle[rk2])?_bpCard.routeStyle[rk2]:null;
+      var rtColor=(_rsForColor&&_rsForColor.color)?_rsForColor.color:rt.c;
       var dashStr=isMot?' stroke-dasharray="6,4"':'';
       if(customStyle){
         if(customStyle.style==='dashed')dashStr=' stroke-dasharray="8,5"';
@@ -2094,24 +2098,24 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
           if(sgi2===drawPts.length-2&&endTrim>0)sgSample=trimPolyEnd(sgSample,endTrim);
           var sgD=(sgSt==='zig')?zigzagD(sgSample):polyD(sgSample);
           var sgDash=(sgSt==='dashed')?' stroke-dasharray="8,5"':'';
-          routeSvg+='<path d="'+sgD+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+sgDash+' data-route="'+rk2+'"/>';
+          routeSvg+='<path d="'+sgD+'" fill="none" stroke="'+rtColor+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+sgDash+' data-route="'+rk2+'"/>';
         }
       } else {
-        routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
+        routeSvg+='<path d="'+dDraw+'" fill="none" stroke="'+rtColor+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dashStr+' data-route="'+rk2+'"/>';
       }
       // Invisible hit-area uses the full-length path so clicking near the tip still selects the route.
       routeSvg+='<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" data-routehit="'+prefix+rk2+'" style="cursor:pointer"/>';
       if(ra==='custom'&&effEnd==='none'){
         // no endpoint marker
       } else if(ra==='custom'&&effEnd==='dot'){
-        routeSvg+='<circle cx="'+ep.x.toFixed(1)+'" cy="'+ep.y.toFixed(1)+'" r="5" fill="'+rt.c+'"/>';
+        routeSvg+='<circle cx="'+ep.x.toFixed(1)+'" cy="'+ep.y.toFixed(1)+'" r="5" fill="'+rtColor+'"/>';
       } else if(ra==='custom'&&effEnd==='block'){
         if(pts.length>=2){
           var lpB=endRef;
           var angB=Math.atan2(ep.y-lpB.y,ep.x-lpB.x);
           var bpx1=ep.x+7*Math.cos(angB+1.57),bpy1=ep.y+7*Math.sin(angB+1.57);
           var bpx2=ep.x+7*Math.cos(angB-1.57),bpy2=ep.y+7*Math.sin(angB-1.57);
-          routeSvg+='<line x1="'+bpx1+'" y1="'+bpy1+'" x2="'+bpx2+'" y2="'+bpy2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+          routeSvg+='<line x1="'+bpx1+'" y1="'+bpy1+'" x2="'+bpx2+'" y2="'+bpy2+'" stroke="'+rtColor+'" stroke-width="2.5" stroke-linecap="round"/>';
         }
       } else if(!isBlk){
         // Default: arrow tip — match the freehand pen's arrow (max(10, sw*4), spread 0.45)
@@ -2122,7 +2126,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
           var arrSpread=0.45;
           var ax1=ep.x-arrSz*Math.cos(ang-arrSpread),ay1=ep.y-arrSz*Math.sin(ang-arrSpread);
           var ax2=ep.x-arrSz*Math.cos(ang+arrSpread),ay2=ep.y-arrSz*Math.sin(ang+arrSpread);
-          routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
+          routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rtColor+'"/>';
         }
       } else {
         // Typed block assignment — endpoint symbol chosen by the route's cap type.
@@ -2135,16 +2139,16 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
             var cu1x=ep.x+cupR*Math.cos(ang2+1.57),cu1y=ep.y+cupR*Math.sin(ang2+1.57);
             var cu2x=ep.x+cupR*Math.cos(ang2-1.57),cu2y=ep.y+cupR*Math.sin(ang2-1.57);
             var cufx=ep.x+cupR*1.4*Math.cos(ang2),cufy=ep.y+cupR*1.4*Math.sin(ang2);
-            routeSvg+='<path d="M '+cu1x.toFixed(1)+' '+cu1y.toFixed(1)+' Q '+cufx.toFixed(1)+' '+cufy.toFixed(1)+' '+cu2x.toFixed(1)+' '+cu2y.toFixed(1)+'" fill="none" stroke="'+rt.c+'" stroke-width="3" stroke-linecap="round"/>';
+            routeSvg+='<path d="M '+cu1x.toFixed(1)+' '+cu1y.toFixed(1)+' Q '+cufx.toFixed(1)+' '+cufy.toFixed(1)+' '+cu2x.toFixed(1)+' '+cu2y.toFixed(1)+'" fill="none" stroke="'+rtColor+'" stroke-width="3" stroke-linecap="round"/>';
           } else if(blkCap==='arrow'){
             var arrSzB=Math.max(10,sw*4);
             var abx1=ep.x-arrSzB*Math.cos(ang2-0.45),aby1=ep.y-arrSzB*Math.sin(ang2-0.45);
             var abx2=ep.x-arrSzB*Math.cos(ang2+0.45),aby2=ep.y-arrSzB*Math.sin(ang2+0.45);
-            routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+abx1+','+aby1+' '+abx2+','+aby2+'" fill="'+rt.c+'"/>';
+            routeSvg+='<polygon points="'+ep.x+','+ep.y+' '+abx1+','+aby1+' '+abx2+','+aby2+'" fill="'+rtColor+'"/>';
           } else if(blkCap==='x'){
             var xr=5.5;
-            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y-xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y+xr)+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
-            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y+xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y-xr)+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y-xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y+xr)+'" stroke="'+rtColor+'" stroke-width="2.5" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+(ep.x-xr)+'" y1="'+(ep.y+xr)+'" x2="'+(ep.x+xr)+'" y2="'+(ep.y-xr)+'" stroke="'+rtColor+'" stroke-width="2.5" stroke-linecap="round"/>';
           } else if(blkCap==='bar2'){
             // Combo/double-team: twin parallel bars stacked along the line.
             for(var b2i=0;b2i<2;b2i++){
@@ -2152,12 +2156,12 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
               var b2x=ep.x-b2off*Math.cos(ang2),b2y=ep.y-b2off*Math.sin(ang2);
               var q1x=b2x+7*Math.cos(ang2+1.57),q1y=b2y+7*Math.sin(ang2+1.57);
               var q2x=b2x+7*Math.cos(ang2-1.57),q2y=b2y+7*Math.sin(ang2-1.57);
-              routeSvg+='<line x1="'+q1x+'" y1="'+q1y+'" x2="'+q2x+'" y2="'+q2y+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+              routeSvg+='<line x1="'+q1x+'" y1="'+q1y+'" x2="'+q2x+'" y2="'+q2y+'" stroke="'+rtColor+'" stroke-width="2.5" stroke-linecap="round"/>';
             }
           } else {
             var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
             var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
-            routeSvg+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+            routeSvg+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rtColor+'" stroke-width="2.5" stroke-linecap="round"/>';
           }
         }
       }
@@ -3178,6 +3182,15 @@ function render(){
             var ev=endOpts[eli][0],en=endOpts[eli][1];
             h+='<button class="pp-btn'+(curLend===ev?' act':'')+'" data-pp-line="end:'+ev+'" title="End: '+ev+'">'+en+'</button>';
           }
+          // Line color — swatches + reset to the route's default color
+          h+='<div style="flex-basis:100%;height:0"></div>';
+          var curLcol=rs.color||'';
+          var lineCols=[['#000000'],['#cc0000'],['#0055cc'],['#22862a'],['#d4a017'],['#9333ea']];
+          for(var lci=0;lci<lineCols.length;lci++){
+            var lc2=lineCols[lci][0];
+            h+='<button class="pp-color'+(curLcol===lc2?' act':'')+'" data-pp-line="color:'+lc2+'" style="background:'+lc2+'" title="Line color"></button>';
+          }
+          if(curLcol){h+='<button class="pp-btn" data-pp-line="color:" title="Default color">&#x2715;</button>';}
           // Per-segment style: one button per route segment, tap to cycle
           // solid → squiggle → dashed → back. Overrides the whole-route style for that leg.
           var rppSeg=card.routePts&&card.routePts[selPlayer];
