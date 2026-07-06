@@ -541,7 +541,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs',fieldZone:'mid',redLine:false}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs',fieldZone:'mid',redLine:false,oStyle:'color'}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -566,6 +566,11 @@ var coachView=false;
 // SVG string (buildFullSVG) with a fixed viewBox, so zoom never leaks into output.
 // null = fit-to-card; {x,y,w,h} when zoomed in. Aspect is always FW:FH.
 var fieldVB=null;
+// Card whose per-card styles (routeCurves/routeStyle/routeSegStyle/oStyle/olShade) buildPlayers
+// should read. buildFullSVG sets this to the card being exported so multi-card print/grid
+// exports don't style every card from whichever card happens to be active on screen.
+var _bpCardOverride=null;
+function bpCard(){return _bpCardOverride||cards[activeIdx];}
 var coachFit=false;
 
 function getPlayDesigns(){return games[activeGameIdx].playDesigns||(games[activeGameIdx].playDesigns=[])}
@@ -2009,7 +2014,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // like one continuous curve, hiding the segment structure.
       var isThisSelTmp=(sel===rk2&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
       // Per-segment curve bows for this player, if any (dragged via the midpoint handle).
-      var _curCard=cards[activeIdx];
+      var _curCard=bpCard();
       var rcurves=(_curCard&&_curCard.routeCurves)?_curCard.routeCurves[rk2]:null;
       var hasCurve=!!(rcurves&&Object.keys(rcurves).length>0);
       var noSmooth=(ra==='post'||ra==='corner'||ra==='dig'||ra==='out'||ra==='hitch'||ra==='comeback'||ra==='slant'||ra==='custom'||isThisSelTmp||hasCurve);
@@ -2019,7 +2024,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       // For 'custom' (hand-drawn) routes, apply per-player style options: line style (solid/dashed/dotted),
       // width (thin/med/thick), and end-cap (arrow/block/dot/none). Other route types keep their built-in look.
       // buildPlayers has no `card` parameter — reach for the active card via the global `cards` array.
-      var _bpCard=cards[activeIdx];
+      var _bpCard=bpCard();
       var customStyle=(ra==='custom'&&_bpCard&&_bpCard.routeStyle&&_bpCard.routeStyle[rk2])?_bpCard.routeStyle[rk2]:null;
       var dashStr=isMot?' stroke-dasharray="6,4"':'';
       if(customStyle){
@@ -2190,7 +2195,7 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var sz=9;
       s+='<rect x="'+(pp.x-sz)+'" y="'+(pp.y-sz)+'" width="'+(sz*2)+'" height="'+(sz*2)+'" rx="1" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       // Defensive shade overlay on Center (left/right/full)
-      var cShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
+      var cShade=(bpCard()&&bpCard().olShade&&bpCard().olShade[pk])||null;
       if(cShade==='left'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
       else if(cShade==='right'){s+='<rect x="'+(pp.x)+'" y="'+(pp.y-sz+2)+'" width="'+(sz-2)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
       else if(cShade==='full'){s+='<rect x="'+(pp.x-sz+2)+'" y="'+(pp.y-sz+2)+'" width="'+(sz*2-4)+'" height="'+(sz*2-4)+'" rx="1" fill="#222" pointer-events="none"/>';}
@@ -2201,12 +2206,20 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       var orx=11,ory=8;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+orx+'" ry="'+ory+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
       // Defensive shade overlay — left/right half or full
-      var oShade=(cards[activeIdx]&&cards[activeIdx].olShade&&cards[activeIdx].olShade[pk])||null;
+      var oShade=(bpCard()&&bpCard().olShade&&bpCard().olShade[pk])||null;
       if(oShade==='left'){s+='<path d="M '+pp.x+' '+(pp.y-ory+1)+' A '+(orx-1)+' '+(ory-1)+' 0 0 0 '+pp.x+' '+(pp.y+ory-1)+' Z" fill="#222" pointer-events="none"/>';}
       else if(oShade==='right'){s+='<path d="M '+pp.x+' '+(pp.y-ory+1)+' A '+(orx-1)+' '+(ory-1)+' 0 0 1 '+pp.x+' '+(pp.y+ory-1)+' Z" fill="#222" pointer-events="none"/>';}
       else if(oShade==='full'){s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+(orx-1)+'" ry="'+(ory-1)+'" fill="#222" pointer-events="none"/>';}
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(oShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
       if(showSelBox){s+='<rect x="'+(pp.x-orx-3)+'" y="'+(pp.y-ory-3)+'" width="'+(orx*2+6)+'" height="'+(ory*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
+    } else if((pp.side==='qb'||pp.side==='wr'||pp.side==='rb'||pp.side==='te')&&(bpCard()&&bpCard().oStyle)==='text'){
+      // Text-only offense markers — mirrors the defense look (letters, no shapes)
+      var customOc=cl._pc&&cl._pc[pk];
+      var ocol=isSel?'#1A3C2B':(customOc||'#222222');
+      var ofs=lbl.length>2?12:16;
+      s+='<rect x="'+(pp.x-14)+'" y="'+(pp.y-10)+'" width="28" height="20" fill="transparent" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+5)+'" text-anchor="middle" fill="'+ocol+'" font-size="'+ofs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+      if(showSelBox){s+='<rect x="'+(pp.x-16)+'" y="'+(pp.y-12)+'" width="32" height="24" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='qb'){
       // QB: same oval size + black border as the OL
       var qlbl=cl[pk]||'Q';
@@ -2216,14 +2229,20 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
       if(showSelBox){s+='<rect x="'+(pp.x-qrx-3)+'" y="'+(pp.y-qry-3)+'" width="'+(qrx*2+6)+'" height="'+(qry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='wr'||pp.side==='rb'||pp.side==='te'){
-      // Skill players: same oval size as the OL, colored fill, uniform black border
+      // Skill players: same oval size as the OL, colored fill, uniform black border.
+      // In the card's "white" style the fill goes white and the label flips to black
+      // (a custom per-player color still wins; white fills always get black text).
       var defFills={'wr':['#cc0000','#990000'],'rb':['#22862a','#1a6b21'],'te':['#d4a017','#b8860b']};
       var customPc=cl._pc&&cl._pc[pk];
-      var pFill=isSel?'#1A3C2B':(customPc||defFills[pp.side][0]);
+      var oSty=(bpCard()&&bpCard().oStyle)||'color';
+      var effFill=customPc||(oSty==='white'?'#ffffff':defFills[pp.side][0]);
+      var whiteFill=(effFill.toLowerCase()==='#ffffff'||effFill.toLowerCase()==='#fff');
+      var pFill=isSel?'#1A3C2B':effFill;
       var pStroke=isSel?'#1A3C2B':'#222';
+      var pTxt=isSel?'#fff':(whiteFill?'#222':'#fff');
       var srx=11,sry=8;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+srx+'" ry="'+sry+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
-      s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+pTxt+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
       if(showSelBox){s+='<rect x="'+(pp.x-srx-3)+'" y="'+(pp.y-sry-3)+'" width="'+(srx*2+6)+'" height="'+(sry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else {
       var customPc2=cl._pc&&cl._pc[pk];
@@ -2554,6 +2573,11 @@ function buildSetupPanelHtml(card){
   h+='<div class="sp-sec"><div class="sp-label">View</div><div class="sp-pills">';
   h+='<button class="sp-pill'+(viewPerspective!=='off'?' on':'')+'" id="btnViewDef">Defense</button>';
   h+='<button class="sp-pill'+(viewPerspective==='off'?' on':'')+'" id="btnViewOff">Offense</button>';
+  h+='</div>';
+  var curOsty=card.oStyle||'color';
+  var SP_OSTYLES=[['color','Color'],['white','White'],['text','Text']];
+  h+='<div class="sp-pills" style="margin-top:6px">';
+  for(var osi=0;osi<SP_OSTYLES.length;osi++){h+='<button class="sp-pill'+(curOsty===SP_OSTYLES[osi][0]?' on':'')+'" data-spostyle="'+SP_OSTYLES[osi][0]+'" title="Offense marker style">'+SP_OSTYLES[osi][1]+'</button>';}
   h+='</div><div class="sp-row">';
   h+='<button class="sp-btn" id="bFlip" style="flex:1">Flip</button>';
   h+='<button class="sp-btn" id="bResetPos" style="flex:1">Reset</button>';
@@ -3323,6 +3347,12 @@ function bind(){
   document.querySelectorAll('[data-spzone]').forEach(function(b){
     b.addEventListener('click',function(){
       card.fieldZone=this.getAttribute('data-spzone');
+      render();
+    });
+  });
+  document.querySelectorAll('[data-spostyle]').forEach(function(b){
+    b.addEventListener('click',function(){
+      card.oStyle=this.getAttribute('data-spostyle');
       render();
     });
   });
@@ -6288,6 +6318,7 @@ function upSB(){
 function buildFullSVG(card,forPlayDesign){
   var isPD=forPlayDesign||false;
   var prevMode=appMode;
+  _bpCardOverride=card; // per-card styles must come from THIS card, not the on-screen one
   if(isPD)appMode='playdesign'; else appMode='scout';
   // Notes section removed — Play Designer exports now match the scout card height (no extra 180px band).
   var totalH=FH;
@@ -6309,6 +6340,7 @@ function buildFullSVG(card,forPlayDesign){
   svg += buildTextBoxes(card);
   svg += '</svg>';
   appMode=prevMode;
+  _bpCardOverride=null;
   return svg;
 }
 
