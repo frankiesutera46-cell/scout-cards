@@ -3115,7 +3115,6 @@ function render(){
       cats.push(['label','Label']);
       if(ppIsSkill||ppIsDef)cats.push(['color','Color']);
       if(ppIsOl)cats.push(['shade','Shade']);
-      if(ppIsSkill)cats.push(['route','Route']);
       if(ppIsOl||ppIsSkill)cats.push(['block','Block']);
       // 'Line' tab shows when the player has a hand-drawn (custom) route — lets you pick
       // style/width/end the same way the freehand draw tool does.
