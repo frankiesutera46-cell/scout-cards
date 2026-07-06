@@ -2585,8 +2585,10 @@ function buildSetupPanelHtml(card){
   for(var hi=0;hi<SP_HASHES.length;hi++){h+='<button class="sp-pill'+(card.hash===SP_HASHES[hi][0]?' on':'')+'" data-sphash="'+SP_HASHES[hi][0]+'">'+SP_HASHES[hi][1]+'</button>';}
   h+='</div></div>';
   h+='<div class="sp-sec"><div class="sp-label">View</div><div class="sp-pills">';
-  h+='<button class="sp-pill'+(viewPerspective!=='off'?' on':'')+'" id="btnViewDef">Defense</button>';
-  h+='<button class="sp-pill'+(viewPerspective==='off'?' on':'')+'" id="btnViewOff">Offense</button>';
+  // Label matches what's on the BOTTOM of the card: the 'def' perspective puts the offense
+  // on the bottom (so it's labeled Offense), 'off' puts the defense on the bottom (Defense).
+  h+='<button class="sp-pill'+(viewPerspective!=='off'?' on':'')+'" id="btnViewDef">Offense</button>';
+  h+='<button class="sp-pill'+(viewPerspective==='off'?' on':'')+'" id="btnViewOff">Defense</button>';
   h+='</div>';
   var curOsty=card.oStyle||'color';
   if(curOsty==='text')curOsty='color'; // retired card-wide mode — letter is per-player now
