@@ -2208,22 +2208,22 @@ function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap,ren
       if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':(oShade==='full'?'#fff':'#222'))+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
       if(showSelBox){s+='<rect x="'+(pp.x-orx-3)+'" y="'+(pp.y-ory-3)+'" width="'+(orx*2+6)+'" height="'+(ory*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='qb'){
-      // QB: pill-shaped oval (wider than tall) with label
+      // QB: same oval size + black border as the OL
       var qlbl=cl[pk]||'Q';
-      var qfs=qlbl.length>2?9:qlbl.length>1?11:13;
-      var qrx=14,qry=10;
+      var qfs=qlbl.length>2?8:qlbl.length>1?9:10;
+      var qrx=11,qry=8;
       s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+qrx+'" ry="'+qry+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
-      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
       if(showSelBox){s+='<rect x="'+(pp.x-qrx-3)+'" y="'+(pp.y-qry-3)+'" width="'+(qrx*2+6)+'" height="'+(qry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else if(pp.side==='wr'||pp.side==='rb'||pp.side==='te'){
-      // Skill players: horizontal (wider than tall) ovals
+      // Skill players: same oval size as the OL, colored fill, uniform black border
       var defFills={'wr':['#cc0000','#990000'],'rb':['#22862a','#1a6b21'],'te':['#d4a017','#b8860b']};
       var customPc=cl._pc&&cl._pc[pk];
       var pFill=isSel?'#1A3C2B':(customPc||defFills[pp.side][0]);
-      var pStroke=isSel?'#1A3C2B':(customPc||defFills[pp.side][1]);
-      var srx=13,sry=10;
-      s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+srx+'" ry="'+sry+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
-      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+      var pStroke=isSel?'#1A3C2B':'#222';
+      var srx=11,sry=8;
+      s+='<ellipse cx="'+pp.x+'" cy="'+pp.y+'" rx="'+srx+'" ry="'+sry+'" fill="'+pFill+'" stroke="'+pStroke+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
       if(showSelBox){s+='<rect x="'+(pp.x-srx-3)+'" y="'+(pp.y-sry-3)+'" width="'+(srx*2+6)+'" height="'+(sry*2+6)+'" fill="none" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,2" pointer-events="none"/>'}
     } else {
       var customPc2=cl._pc&&cl._pc[pk];
