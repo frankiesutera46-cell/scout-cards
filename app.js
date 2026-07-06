@@ -504,15 +504,15 @@ function routePath(rk,px,py,playerIsOnRight,dirDown){
     bdown:  [[2*X*m,-0.4*Y],[3.5*X*m,-1*Y]],                        // Down — flat angle inside to next gap
     breach: [[-2*X*m,-0.5*Y],[-3*X*m,-1.5*Y]],                     // Reach — angle outside
     bzone:  [[-1.5*X*m,-0.4*Y],[-2*X*m,-2.2*Y]],                   // Zone — lateral step, climb playside
-    bzoneR: [[2.5*X,-2.2*Y],[0,-1.4*Y]],                          // Zone Rt — reach up-right, climb to horizontal bar
-    bzoneL: [[-2.5*X,-2.2*Y],[0,-1.4*Y]],                         // Zone Lt — mirror (up-left)
+    bzoneR: [[0,-3.6*Y],[2.8*X,0]],                               // Zone Rt — stem straight up, right-angle hook to the right
+    bzoneL: [[0,-3.6*Y],[-2.8*X,0]],                              // Zone Lt — stem up, hook left
     bcombo: [[1*X*m,-1.2*Y],[1.5*X*m,-2.6*Y]],                     // Combo — double-team inside, climb
     blead:  [[0.3*X*m,-1.5*Y],[0.8*X*m,-3.2*Y]],                   // Lead — iso up to LB level
     bpull:  [[-3*X*m,1.5*Y],[-8*X*m,1*Y],[-10*X*m,0],[-10*X*m,-2*Y]], // Pull — deep behind OL, turn up
     btrap:  [[2*X*m,1.2*Y],[5*X*m,0.8*Y],[7.5*X*m,-0.8*Y]],        // Trap — short pull across, kick first man
     bkick:  [[-3*X*m,2*Y],[-4.5*X*m,3.5*Y]],                       // Kickout — step down and out, block-surface bar
-    bkickR: [[3*X,2*Y],[4.5*X,3.5*Y]],                            // Kickout Rt — step down-right to a bar
-    bkickL: [[-3*X,2*Y],[-4.5*X,3.5*Y]],                          // Kickout Lt — step down-left to a bar
+    bkickR: [[0,3.4*Y],[2.8*X,0]],                                // Kickout Rt — stem down, right-angle hook to the right
+    bkickL: [[0,3.4*Y],[-2.8*X,0]],                               // Kickout Lt — stem down, hook left
     bfold:  [[1.8*X*m,0.8*Y],[3.5*X*m,0],[4*X*m,-1.8*Y]],          // Fold — loop around neighbor, up to LB
     bcut:   [[0.3*X*m,-1*Y]],                                       // Cut — short fire out low
 
