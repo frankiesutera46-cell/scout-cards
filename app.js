@@ -3031,7 +3031,7 @@ function render(){
     }
     h+='<div class="fc fc-tr">';
     h+='<button class="fc-btn fc-danger" id="tbDel" title="Delete Selected"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
-    h+='<button class="fc-btn fc-danger" id="tbClear" title="Clear All Drawings"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    h+='<button class="fc-btn fc-danger" id="tbClear" title="Clear All Drawings, Routes & Text"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     h+='<span class="fc-sep"></span>';
     h+='<button class="fc-btn" id="btnCoachView" title="Coach View (fullscreen)"><rect x="4" y="5" width="16" height="11" rx="1.5" style="display:none"></rect><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M12 16v4"/><path d="M8 20h8"/><path d="M8.5 12.5l2.5-2.5 2 2 3-4"/></svg></button>';
     h+='</div>';
@@ -4198,8 +4198,18 @@ function bind(){
     var hasLines=clines2.length>0;
     var curTBsCl=getCurTB(card);
     var hasTextBoxes=curTBsCl.length>0;
-    if(hasLines||hasTextBoxes){
-      if(confirm('Clear all drawings and text boxes on this card?')){pushUndo();card[getCurLinesKey()]=[];card[getCurTBKey()]=[];render()}
+    // Player routes AND blocks live in asgn/routePts (drawn from the green anchor), separate
+    // from freehand pen lines — include them so the X truly clears everything drawn.
+    var hasRoutes=(card.asgn&&Object.keys(card.asgn).length>0)||(card.routePts&&Object.keys(card.routePts).length>0);
+    if(hasLines||hasTextBoxes||hasRoutes){
+      if(confirm('Clear all drawings, routes, and text on this card?')){
+        pushUndo();
+        card[getCurLinesKey()]=[];
+        card[getCurTBKey()]=[];
+        card.asgn={};card.routePts={};card.routeCurves={};card.routeStyle={};card.routeSegStyle={};
+        selPlayer=null;
+        render();
+      }
     }
   });
   var dStyleSel=document.getElementById('dStyle');
