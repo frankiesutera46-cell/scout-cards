@@ -551,7 +551,7 @@ var OL_KEYS=['C','LG','RG','LT','RT'];
 
 // ===== STATE =====
 var nid=1;
-function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs',fieldZone:'mid',redLine:false,oStyle:'color'}}
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},lsz:{},cl:{},routePts:{},routeCurves:{},textBoxes:[],tags:[],hudlUrl:'',olShade:{},fieldType:'hs',fieldZone:'mid',redLine:false,oStyle:'color',rpFlipped:false}}
 function mkPlayCard(){var c=mkCard();c.dfk='43over';c.frontNotes='';c.coverageNotes='';c.pdOpos={};c.pdDpos={};return c}
 
 // Multi-week game system
@@ -1332,6 +1332,49 @@ function getCurDefPlayers(card){
 function getCurPosStore(isDef){
   if(appMode==='playdesign') return isDef?(viewPerspective==='off'?'pdDposOff':'pdDpos'):(viewPerspective==='off'?'pdOposOff':'pdOpos');
   return isDef?(viewPerspective==='off'?'dposOff':'dpos'):(viewPerspective==='off'?'oposOff':'opos');
+}
+
+// ===== ROUTE COORDINATE SPACE =====
+// Green-dot routes (card.routePts) and their per-segment bows (card.routeCurves) are stored in
+// the CURRENT view's screen space, so every render/drag/build handler works unchanged. The two
+// views are a pure VERTICAL reflection about ROUTE_FLIP_K = PD_LOS_Y + LOS_Y (x unchanged, same
+// for offense & defense). When the view flips, syncRouteSpace() reflects the stored points once
+// so they stay glued to their players. card.rpFlipped records which space they're currently in,
+// so this survives reload (viewPerspective resets, the reconcile fixes it on first render).
+// The flip CONDITION is inverted between modes: scout flips in the 'off' perspective, while the
+// play-designer's DEFAULT view is already flipped (getPDOffPlayers -> getFlippedOffPlayers).
+var ROUTE_FLIP_K = PD_LOS_Y + LOS_Y;
+// The two per-view custom-position stores for each player pool are reflections of each other
+// about ROUTE_FLIP_K. When a player is dragged in one view we also write its reflection here so
+// both views stay in sync (keeps green-dot routes attached in both).
+var POS_STORE_COUNTERPART = {opos:'oposOff',oposOff:'opos',dpos:'dposOff',dposOff:'dpos',
+  pdOpos:'pdOposOff',pdOposOff:'pdOpos',pdDpos:'pdDposOff',pdDposOff:'pdDpos'};
+function routeFlipActive(){
+  return appMode==='playdesign' ? viewPerspective!=='off' : viewPerspective==='off';
+}
+// Reconcile a card's stored routePts/routeCurves to the current view. Reflects in place only when
+// the view's flip-state differs from the space the points are currently stored in. Idempotent.
+function syncRouteSpace(card){
+  if(!card) return;
+  var want=routeFlipActive();
+  var have=!!card.rpFlipped;
+  if(want===have) return;
+  if(card.routePts){
+    var pk=Object.keys(card.routePts);
+    for(var i=0;i<pk.length;i++){
+      var arr=card.routePts[pk[i]]; if(!arr) continue;
+      for(var j=0;j<arr.length;j++){ arr[j].y = ROUTE_FLIP_K - arr[j].y; }
+    }
+  }
+  if(card.routeCurves){
+    var ck=Object.keys(card.routeCurves);
+    for(var i=0;i<ck.length;i++){
+      var segs=card.routeCurves[ck[i]]; if(!segs) continue;
+      var sk=Object.keys(segs);
+      for(var j=0;j<sk.length;j++){ if(segs[sk[j]]) segs[sk[j]].b = -segs[sk[j]].b; }
+    }
+  }
+  card.rpFlipped=want;
 }
 function selectAdjacentPlayer(delta){
   if(!selPlayer)return false;
@@ -2740,6 +2783,7 @@ function render(){
   }
   try{
   var card=cards[activeIdx];
+  syncRouteSpace(card); // keep green-dot routes glued to players across view flips
   var oPlayers=getOffPlayers(card);
   var dPlayers=getDefPlayers(card);
   var h='<div class="app-shell v2'+(coachView?' coach-view':'')+(coachView&&coachFit?' coach-fit':'')+'">';
@@ -5911,6 +5955,11 @@ function bindDrag(){
 
     // Store directly in screen space (no transforms needed)
     card[posStore][dragInfo.key]={x:nx,y:ny};
+    // Mirror the drag into the OTHER view's position store (reflected about ROUTE_FLIP_K) so a
+    // player sits at the same spot on the field whether you view it Offense-up or Defense-up —
+    // otherwise the two views diverge and a route (single store) can only attach in one of them.
+    var _cp=POS_STORE_COUNTERPART[posStore];
+    if(_cp){ if(!card[_cp])card[_cp]={}; card[_cp][dragInfo.key]={x:nx,y:ROUTE_FLIP_K-ny}; }
 
     // Update SVG element positions directly for smooth drag
     var dp=(dragInfo.isDef?'d_':'o_')+dragInfo.key;
@@ -6377,6 +6426,7 @@ function buildFullSVG(card,forPlayDesign){
   var prevMode=appMode;
   _bpCardOverride=card; // per-card styles must come from THIS card, not the on-screen one
   if(isPD)appMode='playdesign'; else appMode='scout';
+  syncRouteSpace(card); // reconcile this card's routes to the export view (self-correcting)
   // Notes section removed — Play Designer exports now match the scout card height (no extra 180px band).
   var totalH=FH;
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+totalH+'" width="'+FW*2+'" height="'+totalH*2+'">';
