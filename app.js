@@ -5929,9 +5929,10 @@ function bindDrag(){
     var oldPos=card[posStore][dragInfo.key]||playerPool[dragInfo.key]||{x:nx,y:ny};
     var dx2=nx-oldPos.x,dy2=ny-oldPos.y;
 
-    // Sync waypoints with player position delta
-    var syncWaypoints=(!dragInfo.isDef)||(dragInfo.isDef&&appMode==='playdesign');
-    if(syncWaypoints&&card.routePts&&card.routePts[dragInfo.key]){
+    // Sync waypoints with player position delta. Any player that has a green-dot route (offense
+    // OR defense — a coverage/blitz path) should carry it when dragged; the routePts guard below
+    // makes this a no-op for players without one.
+    if(card.routePts&&card.routePts[dragInfo.key]){
       if(dx2!==0||dy2!==0){
         for(var wi2=0;wi2<card.routePts[dragInfo.key].length;wi2++){
           card.routePts[dragInfo.key][wi2].x+=dx2;
