@@ -2726,7 +2726,7 @@ function buildLibPanelHtml(){
     var lc=cards[ci];
     if(activeTagFilter&&(!lc.tags||lc.tags.indexOf(activeTagFilter)<0))continue;
     var lcSel=cardSelectMode&&cardSel.indexOf(ci)>=0;
-    h+='<button class="lib-play'+(ci===activeIdx&&!cardSelectMode?' on':'')+'" data-ci="'+ci+'">';
+    h+='<button class="lib-play'+(ci===activeIdx&&!cardSelectMode?' on':'')+'" data-ci="'+ci+'"'+(cardSelectMode?'':' draggable="true"')+'>';
     if(cardSelectMode)h+='<span class="lp-check'+(lcSel?' on':'')+'">'+(lcSel?'&#10003;':'')+'</span>';
     h+='<span class="lp-name">#'+(ci+1)+' '+(esc(lc.play)||'Unnamed')+'</span>';
     if(!cardSelectMode)h+='<span data-cdel="'+ci+'" title="Delete card" style="color:var(--c-ink-faint);font-size:10px;padding:2px 4px;cursor:pointer">&#x2715;</span>';
