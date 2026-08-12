@@ -2414,6 +2414,22 @@ function buildTextBoxes(card){
 // ===== RENDER =====
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+// Brief bottom-center toast. Was referenced in ~12 places but never implemented, so every call
+// silently threw — including the "select cards first" hint on Copy/Move. This renders the
+// .app-toast element (styles already exist) and auto-hides it.
+var _toastTimer=null;
+function showToast(msg){
+  try{
+    var t=document.getElementById('appToast');
+    if(!t){t=document.createElement('div');t.id='appToast';t.className='app-toast';document.body.appendChild(t);}
+    t.textContent=msg;
+    t.classList.remove('show');void t.offsetWidth; // restart the fade if a toast is already up
+    t.classList.add('show');
+    if(_toastTimer)clearTimeout(_toastTimer);
+    _toastTimer=setTimeout(function(){t.classList.remove('show');},2400);
+  }catch(_){}
+}
+
 function dockIcon(name){
   var paths={
     wand:'<path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M17.8 6.2L19 5"/><path d="M12.2 6.2L11 5"/><path d="M14 9l-9.5 9.5a1.77 1.77 0 0 0 2.5 2.5L16.5 11.5z"/>',
