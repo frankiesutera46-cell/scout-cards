@@ -4032,16 +4032,20 @@ function bind(){
             // AWAY from the route so it never covers the line or its waypoint handles (a route can
             // still be adjusted while the card is open). Vertical routes pick the roomier side.
             var placed=false;
+            var routeMy=0, hasRt=false;
             try{
               var rcx=cards[activeIdx];
               if(selPlayer&&rcx&&rcx.routePts&&rcx.routePts[selPlayer]&&rcx.routePts[selPlayer].length>1){
+                hasRt=true;
                 var rpts=rcx.routePts[selPlayer],routeMx=0;
-                for(var rqi=1;rqi<rpts.length;rqi++)routeMx+=(rpts[rqi].x-rpts[0].x);
-                routeMx/=(rpts.length-1);
+                for(var rqi=1;rqi<rpts.length;rqi++){routeMx+=(rpts[rqi].x-rpts[0].x);routeMy+=(rpts[rqi].y-rpts[0].y);}
+                routeMx/=(rpts.length-1); routeMy/=(rpts.length-1);
                 var side=Math.abs(routeMx)<18?(finalX<fwR.width/2?'r':'l'):(routeMx>0?'l':'r');
                 var sideOff=40;
                 function ctxFits(sd){return sd==='r'?(finalX+sideOff+cardW<=fwR.width-8):(finalX-sideOff-cardW>=8);}
-                if(!ctxFits(side))side=(side==='r'?'l':'r');
+                // Only place beside when the side AWAY from the route fits. If it doesn't (player
+                // near a sideline) DON'T flip onto the route side — fall through to above/below so
+                // the card never covers the line or its green extend-anchor.
                 if(ctxFits(side)){
                   var topOff=-cardH/2;
                   if(finalY+topOff<8)topOff=8-finalY;
@@ -4056,11 +4060,14 @@ function bind(){
               }
             }catch(_){}
             if(!placed){
-              // CHLK-style: the card floats ABOVE the player, centered, with clear air
-              // between them; it drops below only when it would clip the top of the canvas.
+              // Float the card off the player on the side away from where the route heads, so it
+              // clears the line and its end anchor: route going up -> card below; otherwise above
+              // (default), dropping below only when it would clip the top of the canvas.
               ctxEl.classList.remove('ctx-side','ctx-side-r','ctx-side-l');
               if(tail)tail.style.top='';
-              var flipDown=(finalY-gap-cardH<6);
+              var flipDown;
+              if(hasRt && routeMy < -6){ flipDown=(finalY+gap+cardH<=fwR.height-6); }
+              else { flipDown=(finalY-gap-cardH<6); }
               ctxEl.style.top=(flipDown?gap:-(gap+cardH))+'px';
               var centeredLeft=finalX-cardW/2;
               var clampedLeft=Math.max(8,Math.min(Math.max(8,fwR.width-cardW-8),centeredLeft));
