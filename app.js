@@ -5786,6 +5786,15 @@ function bindDrag(){
     var nx=Math.max(20,Math.min(FW-20,pt.x-(dragInfo.offX||0)));
     var ny=Math.max(5,Math.min(FH-5,pt.y-(dragInfo.offY||0)));
 
+    // While shaping a route (dragging a waypoint, a curve, or the green build anchor), hide the
+    // floating context card. Near a sideline it can't dodge to the empty side and ends up sitting
+    // on top of the line — and if it's under the finger it also steals the drag. render() on
+    // pointerup rebuilds and re-places it.
+    if(dragInfo.isWaypoint||dragInfo.isCurve||dragInfo.isRouteBuild){
+      var _ppHide=document.getElementById('playerPopup');
+      if(_ppHide&&_ppHide.style.visibility!=='hidden')_ppHide.style.visibility='hidden';
+    }
+
     // CHLK-style segment build — draw a live dashed preview from the anchor to the current pointer
     if(dragInfo.isRouteBuild){
       dragInfo.moved=true;
