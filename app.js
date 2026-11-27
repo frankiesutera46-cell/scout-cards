@@ -3006,7 +3006,7 @@ function render(){
 
   h+='<div style="'+hs+'">Team, Playbook &amp; Reports</div>';
   h+='<div style="'+ps+'"><b>Team</b> &mdash; Set your team name, logo URL, and primary color. Branding appears on shared player pages.</div>';
-  h+='<div style="'+ps+'"><b>Playbook</b> &mdash; Your call finder. Add every call once, then find it by pressure, front and coverage. Import a call list (CSV) and your playbook PDF, or add calls by hand. Only you can see it.</div>';
+  h+='<div style="'+ps+'"><b>Playbook</b> &mdash; Your call finder. Add every call once, then find it by pressure, front and coverage. Import a call list (CSV) and your playbook PDF, or add calls by hand. Only you can see it, unless you hit Share to create a view-only link for your staff. You can turn the link off at any time.</div>';
   h+='<div style="'+ps+'"><b>PDF Library</b> &mdash; Upload PDF playbook files. These persist across weeks and are included in share links. Upload a glossary PDF for terminology reference.</div>';
   h+='<div style="'+ps+'"><b>Reports</b> &mdash; Upload scouting report PDFs for each game week. These are week-specific and included when sharing.</div>';
 
