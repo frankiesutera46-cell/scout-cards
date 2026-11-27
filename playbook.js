@@ -14,7 +14,8 @@ var COLS=[['name',['call','name','play','call name']],['front',['front']],['cove
   ['snaps',['snaps','snap','count']],['tag',['tag','status','group']],['page',['slide','page','pdf page']],
   ['link',['link','url']],['notes',['notes','note']]];
 
-var S={calls:[],loadedFor:undefined,mode:'fc',ty:null,a:null,b:null,q:'',urls:{},mem:{},busy:''};
+var S={calls:[],loadedFor:undefined,mode:'fc',ty:null,a:null,b:null,q:'',urls:{},mem:{},busy:'',shareId:null,view:false};
+var SHARE_TABLE='shares',shareTimer=null;
 var root=null,saveTimer=null;
 
 function jb(){return window.JBF||{}}
@@ -38,14 +39,14 @@ function normalize(list){
 async function load(){
   var u=user(),key=u?u.id:null;
   if(S.loadedFor===key)return;
-  S.loadedFor=key;S.calls=[];S.urls={};
+  S.loadedFor=key;S.calls=[];S.urls={};S.shareId=null;
   try{var r=localStorage.getItem(lsKey());if(r)S.calls=normalize(JSON.parse(r).calls)}catch(e){}
   if(u&&sb()){
     S.busy='Loading your playbook…';draw();
     try{
       var res=await sb().from(TABLE).select('data').eq('user_id',u.id).maybeSingle();
       if(res.error){S.setup=/does not exist|schema cache|404/i.test(res.error.message||'')||res.error.code==='42P01'||res.error.code==='PGRST205'}
-      else if(res.data&&res.data.data){S.calls=normalize(res.data.data.calls)}
+      else if(res.data&&res.data.data){S.calls=normalize(res.data.data.calls);S.shareId=res.data.data.shareId||null}
     }catch(e){}
     S.busy='';
     await signUrls();
@@ -53,12 +54,14 @@ async function load(){
   draw();
 }
 function save(){
+  if(S.view)return;
   try{localStorage.setItem(lsKey(),JSON.stringify({calls:S.calls}))}catch(e){}
   var u=user();if(!u||!sb())return;
+  if(S.shareId){clearTimeout(shareTimer);shareTimer=setTimeout(function(){publishShare().catch(function(){})},2500)}
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async function(){
     try{
-      var res=await sb().from(TABLE).upsert({user_id:u.id,data:{calls:S.calls},updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      var res=await sb().from(TABLE).upsert({user_id:u.id,data:{calls:S.calls,shareId:S.shareId||null},updated_at:new Date().toISOString()},{onConflict:'user_id'});
       if(res.error){console.warn('Playbook save failed:',res.error);toast('Playbook could not be saved to the cloud')}
     }catch(e){console.warn(e)}
   },600);
@@ -102,6 +105,79 @@ function shrink(file,maxW){ // image file -> jpeg blob no wider than maxW
     im.onerror=function(){no(new Error('Could not read that picture'))};
     im.src=URL.createObjectURL(file);
   });
+}
+
+/* ---------- view-only share link ---------- */
+function shareUrl(){return location.origin+'/?playbook='+S.shareId}
+async function publishShare(){ // writes a read-only snapshot anyone with the link can open
+  var u=user();if(!u||!sb())throw new Error('Sign in to share your playbook.');
+  var paths=[],urls={};S.calls.forEach(function(c){if(c.img&&c.img.indexOf('mem:')!==0&&paths.indexOf(c.img)<0)paths.push(c.img)});
+  for(var i=0;i<paths.length;i+=100){
+    var r=await sb().storage.from(BUCKET).createSignedUrls(paths.slice(i,i+100),60*60*24*365);
+    if(r.error)throw r.error;
+    (r.data||[]).forEach(function(d){if(d&&d.signedUrl)urls[d.path]=d.signedUrl});
+  }
+  var payload={kind:'playbook',updated:new Date().toISOString(),calls:S.calls.map(function(c){
+    return {name:c.name,front:c.front,coverage:c.coverage,type:c.type,who:c.who,snaps:c.snaps,tag:c.tag,notes:c.notes,link:c.link,u:urls[c.img]||''};
+  })};
+  var res=null;
+  if(S.shareId)res=await sb().from(SHARE_TABLE).update({game_name:'Playbook',data:payload}).eq('id',S.shareId).select('id').single();
+  if(!S.shareId||res.error)res=await sb().from(SHARE_TABLE).insert({user_id:u.id,game_name:'Playbook',data:payload}).select('id').single();
+  if(res.error)throw res.error;
+  if(S.shareId!==res.data.id){S.shareId=res.data.id;save()}
+  return S.shareId;
+}
+async function stopShare(){
+  if(!S.shareId||!sb())return;
+  clearTimeout(shareTimer);
+  var res=await sb().from(SHARE_TABLE).update({game_name:'Playbook',data:{kind:'playbook',off:true}}).eq('id',S.shareId).select('id').single();
+  if(res.error)throw res.error;
+  S.shareId=null;save();
+}
+async function loadShared(id){
+  S.view=true;S.busy='Loading playbook\u2026';draw();
+  var bad='';
+  try{
+    var res=await sb().from(SHARE_TABLE).select('data').eq('id',id).single();
+    var d=res.data&&res.data.data;
+    if(res.error||!d||d.kind!=='playbook')bad='This playbook link was not found.';
+    else if(d.off)bad='This playbook link has been turned off. Ask the coach who sent it for a new one.';
+    else{
+      S.calls=normalize(d.calls);
+      (d.calls||[]).filter(function(c){return c&&c.name}).forEach(function(c,i){if(c.u&&S.calls[i]){S.calls[i].img='v:'+i;S.mem['v:'+i]=c.u}});
+    }
+  }catch(e){bad='This playbook could not be loaded. Check your connection and try again.'}
+  S.busy='';S.viewError=bad;draw();
+}
+function openShare(){
+  if(!user()){modal('<div class="pbk-dh"><h2>Share</h2><button class="pbk-btn" data-act="mclose">Close</button></div><div class="pbk-form"><p>Sign up to share your playbook with your staff.</p></div>');return}
+  var on=!!S.shareId;
+  modal('<div class="pbk-dh"><h2>Share with your staff</h2><button class="pbk-btn" data-act="mclose">Close</button></div><div class="pbk-form">'+
+    (on?'<p>Anyone with this link can look through your playbook. They cannot change it, and they do not need an account. It updates on its own when you edit calls.</p>'+
+        '<label class="pbk-f"><span>View-only link</span><input id="pbkShareUrl" readonly value="'+esc(shareUrl())+'"/></label>'+
+        '<div class="pbk-form-btns"><button class="pbk-btn pbk-danger" data-act="shareoff">Turn off link</button><button class="pbk-btn pbk-primary" data-act="sharecopy">Copy link</button></div>'
+       :'<p>Create a view-only link to your playbook. Anyone with the link can look through your calls and play cards. They cannot change anything, and they do not need an account.</p>'+
+        '<p>Treat the link like the playbook itself: anyone it gets forwarded to can open it. You can turn it off here at any time.</p>'+
+        '<div class="pbk-form-btns"><span></span><button class="pbk-btn pbk-primary" data-act="shareon">Create view-only link</button></div>')+
+    '<div class="pbk-msg" id="pbkShareMsg"></div></div>');
+  var i=root.querySelector('#pbkShareUrl');if(i)i.addEventListener('focus',function(){i.select()});
+}
+function shareMsg(t){var m=root.querySelector('#pbkShareMsg');if(m)m.textContent=t}
+async function shareOn(btn){
+  btn.disabled=true;shareMsg('Creating your link\u2026');
+  try{await publishShare();openShare();shareMsg('Link created. Copy it and send it to your staff.')}
+  catch(e){btn.disabled=false;shareMsg('The link could not be created: '+(e.message||e))}
+}
+async function shareOff(btn){
+  if(btn.getAttribute('data-sure')!=='1'){btn.setAttribute('data-sure','1');btn.textContent='Tap again to turn off';return}
+  btn.disabled=true;
+  try{await stopShare();openShare();shareMsg('Link turned off. The old link no longer opens your playbook.')}
+  catch(e){btn.disabled=false;shareMsg('The link could not be turned off: '+(e.message||e))}
+}
+function shareCopy(){
+  var url=shareUrl(),i=root.querySelector('#pbkShareUrl');
+  try{navigator.clipboard.writeText(url).then(function(){shareMsg('Link copied.')},function(){if(i){i.focus();i.select()}shareMsg('Press and hold the link to copy it.')})}
+  catch(e){if(i){i.focus();i.select()}shareMsg('Press and hold the link to copy it.')}
 }
 
 /* ---------- CSV ---------- */
@@ -192,12 +268,13 @@ function has(arr,v){return arr.indexOf(v)>=0}
 function shell(){
   root.innerHTML=
   '<div class="pbk-top">'+
-    '<div class="pbk-brand"><img src="juice-wordmark.png" alt="Juice Box"/><span>Playbook</span></div>'+
+    '<div class="pbk-brand"><img src="juice-wordmark.png" alt="Juice Box"/><span>Playbook'+(S.view?' \u00b7 view only':'')+'</span></div>'+
     '<div class="pbk-top-right">'+
       '<input class="pbk-search" id="pbkQ" type="search" placeholder="Search calls" aria-label="Search calls"/>'+
-      '<button class="pbk-btn" data-act="add">Add call</button>'+
+      (S.view?'':'<button class="pbk-btn" data-act="add">Add call</button>'+
       '<button class="pbk-btn" data-act="import">Import</button>'+
-      '<button class="pbk-btn pbk-primary" data-act="close">Back to cards</button>'+
+      '<button class="pbk-btn" data-act="share">Share</button>'+
+      '<button class="pbk-btn pbk-primary" data-act="close">Back to cards</button>')+
     '</div>'+
   '</div>'+
   '<div class="pbk-main" id="pbkMain"></div><div id="pbkModal"></div>';
@@ -207,7 +284,11 @@ function draw(){
   if(!root)return;var main=root.querySelector('#pbkMain');if(!main)return;
   if(S.busy){main.innerHTML='<div class="pbk-empty"><p>'+esc(S.busy)+'</p></div>';return}
   var h='';
-  if(S.setup)h+='<div class="pbk-note">Playbook storage is not set up on this site yet, so changes stay on this device. Run supabase/playbook.sql once in Supabase to turn on cloud saving.</div>';
+  if(S.view){
+    if(S.viewError){main.innerHTML='<div class="pbk-empty"><h2>Playbook not available</h2><p>'+esc(S.viewError)+'</p></div>';return}
+    if(!S.calls.length){main.innerHTML='<div class="pbk-empty"><h2>No calls yet</h2><p>This playbook is empty.</p></div>';return}
+  }
+  else if(S.setup)h+='<div class="pbk-note">Playbook storage is not set up on this site yet, so changes stay on this device. Run supabase/playbook.sql once in Supabase to turn on cloud saving.</div>';
   else if(!user())h+='<div class="pbk-note">You are in demo mode. Sign up to save your playbook and its pictures.</div>';
   if(!S.calls.length){
     main.innerHTML=h+'<div class="pbk-empty"><h2>Build your playbook</h2>'+
@@ -236,7 +317,7 @@ function draw(){
   p2.slice().sort(function(x,y){return y.snaps-x.snaps||x.name.localeCompare(y.name)}).forEach(function(c){
     var src=imgSrc(c);
     h+='<button class="pbk-card" data-act="open" data-v="'+esc(c.id)+'">'+
-      (src?'<img loading="lazy" alt="" src="'+esc(src)+'"/>':'<div class="pbk-noimg">No picture yet</div>')+
+      (src?'<img loading="lazy" alt="" src="'+esc(src)+'"/>':'<div class="pbk-noimg">'+(S.view?'No picture':'No picture yet')+'</div>')+
       '<div class="pbk-card-b"><div class="pbk-card-n">'+esc(c.name)+'</div>'+
       '<div class="pbk-meta"><b>'+esc(frontOf(c))+'</b><span>'+esc(covs(c).join(' / '))+'</span>'+(c.snaps?'<span>'+c.snaps+(c.snaps===1?' snap':' snaps')+'</span>':'')+'</div>'+
       (c.who?'<div class="pbk-meta"><span>'+esc(c.who)+'</span></div>':'')+
@@ -256,8 +337,8 @@ function openCard(id){
   var c=find(id);if(!c)return;var src=imgSrc(c);
   var rows=[['Front',frontOf(c)],['Coverage',covs(c).join(' / ')],['Pressure',typeOf(c)],['Who is coming',c.who||'—'],['Snaps',c.snaps||0]];
   if(c.tag)rows.push(['Tag',c.tag]);
-  modal('<div class="pbk-dh"><h2>'+esc(c.name)+'</h2><div><button class="pbk-btn" data-act="edit" data-v="'+esc(c.id)+'">Edit</button> <button class="pbk-btn" data-act="mclose">Close</button></div></div>'+
-    (src?'<img class="pbk-big" alt="'+esc(c.name)+' diagram" src="'+esc(src)+'"/>':'<div class="pbk-noimg pbk-big">No picture yet. Edit this call to add one.</div>')+
+  modal('<div class="pbk-dh"><h2>'+esc(c.name)+'</h2><div>'+(S.view?'':'<button class="pbk-btn" data-act="edit" data-v="'+esc(c.id)+'">Edit</button> ')+'<button class="pbk-btn" data-act="mclose">Close</button></div></div>'+
+    (src?'<img class="pbk-big" alt="'+esc(c.name)+' diagram" src="'+esc(src)+'"/>':'<div class="pbk-noimg pbk-big">'+(S.view?'No picture for this call.':'No picture yet. Edit this call to add one.')+'</div>')+
     '<div class="pbk-db"><dl>'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd></div>'}).join('')+'</dl>'+
     (c.notes?'<p class="pbk-notes">'+esc(c.notes)+'</p>':'')+
     (/^https?:\/\//i.test(c.link)?'<a href="'+esc(c.link)+'" target="_blank" rel="noopener">Open the slide</a>':'')+'</div>');
@@ -364,6 +445,11 @@ function onClick(e){
   if(act==='a'){S.a=v||null;S.b=null;return draw()}
   if(act==='b'){S.b=v||null;return draw()}
   if(act==='open')return openCard(v);
+  if(S.view)return;
+  if(act==='share')return openShare();
+  if(act==='shareon')return shareOn(t);
+  if(act==='shareoff')return shareOff(t);
+  if(act==='sharecopy')return shareCopy();
   if(act==='edit')return openForm(v);
   if(act==='add')return openForm(null);
   if(act==='del')return delCall(v,t);
@@ -375,10 +461,18 @@ var api={
   open:function(){
     if(!root){root=document.createElement('div');root.className='pbk';root.addEventListener('click',onClick);document.body.appendChild(root);
       document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root.classList.contains('open')){var m=root.querySelector('.pbk-ov');if(m)closeModal()}})}
-    shell();root.classList.add('open');draw();load();
+    shell();root.classList.add('open');draw();if(!S.view)load();
   },
-  close:function(){if(root)root.classList.remove('open')},
+  close:function(){if(root&&!S.view)root.classList.remove('open')},
   isOpen:function(){return !!(root&&root.classList.contains('open'))}
 };
 window.JBPlaybook=api;
+
+// A view-only link (?playbook=<id>) opens straight into the shared playbook, no account needed.
+var sharedId=null;try{sharedId=new URLSearchParams(location.search).get('playbook')}catch(e){}
+if(sharedId&&sb()){
+  S.view=true;
+  ['auth-screen','landing-page'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('hidden')});
+  api.open();loadShared(sharedId);
+}
 })();
