@@ -8,6 +8,8 @@ var currentUser=null;
 var savingToCloud=false;
 var autoSaveTimer=null;
 var demoMode=false;
+// Bridge for playbook.js (the Playbook tab lives in its own file)
+window.JBF={sb:supabase,user:function(){return currentUser},demo:function(){return demoMode},toast:function(m){try{showToast(m)}catch(e){}}};
 
 function showLanding(){
   document.getElementById('landing-page').classList.remove('hidden');
@@ -106,6 +108,7 @@ function initAuth(){
     }else{
       currentUser=null;
       initialLoadDone=false;
+      if(window.JBPlaybook)window.JBPlaybook.close();
       if(!demoMode)showLanding();
     }
   });
@@ -2813,6 +2816,7 @@ function render(){
   h+='<div class="v2-right">';
   if(demoMode){h+='<span class="v2-user" style="color:#C6A355">Demo</span><button class="v2-iconbtn" id="btnExitDemo">Sign Up</button>';}
   else if(currentUser){h+='<span class="v2-user">'+esc(currentUser.email)+'</span><button class="v2-iconbtn" id="btnSignOut" title="Sign out">Out</button>';}
+  h+='<button class="v2-iconbtn" id="btnPlaybookTab" title="Your call playbook">Playbook</button>';
   // Tools dropdown (export + management actions, moved out of the Library panel)
   h+='<div class="v2-menu-wrap">';
   h+='<button class="v2-iconbtn" id="btnToolsMenu"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>Tools</button>';
@@ -2822,7 +2826,7 @@ function render(){
   h+='<div class="v2-menu-row"><span>Grid</span><button class="v2-menu-chip" data-grid-export="2">2-up</button><button class="v2-menu-chip" data-grid-export="4">4-up</button><button class="v2-menu-chip" data-grid-export="6">6-up</button></div>';
   h+='<div class="v2-menu-div"></div>';
   h+='<button class="v2-menu-item" id="btnReports">Reports'+(getScoutReports().length?' ('+getScoutReports().length+')':'')+'</button>';
-  h+='<button class="v2-menu-item" id="btnPlaybooks">Playbooks'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
+  h+='<button class="v2-menu-item" id="btnPlaybooks">PDF Library'+(userPlaybooks.length?' ('+userPlaybooks.length+')':'')+'</button>';
   h+='<button class="v2-menu-item" id="btnBranding">Branding</button>';
   h+='<button class="v2-menu-item'+(scriptMode?' on':'')+'" id="btnScript">Practice Script'+(scriptMode?' &#10003;':'')+'</button>';
   h+='</div></div>';
@@ -2849,7 +2853,7 @@ function render(){
   // Playbooks Modal
   h+='<div id="playbooksModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">';
   h+='<div style="background:#F7F7F5;border-radius:4px;padding:24px;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">Playbook Library</span><button id="playbooksClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:16px;color:#1A3C2B">PDF Library</span><button id="playbooksClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">&times;</button></div>';
   h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:rgba(58,58,56,.45);margin-bottom:16px;letter-spacing:.05em">PDFs persist across weeks and are included when you share.</div>';
   // Upload area
   h+='<div style="margin-bottom:16px;padding:14px;background:#fff;border:1px solid rgba(58,58,56,.12);border-radius:2px;text-align:center">';
@@ -3000,9 +3004,10 @@ function render(){
   h+='<div style="'+ps+'"><b>Grid</b> &mdash; Print multiple cards per page (2-up, 4-up, or 6-up).</div>';
   h+='<div style="'+ps+'"><b>Share</b> &mdash; Creates a shareable link at juiceboxfootball.cc. Players can view scout cards, play designs, tap to enlarge, and access uploaded playbook PDFs.</div>';
 
-  h+='<div style="'+hs+'">Team, Playbooks &amp; Reports</div>';
+  h+='<div style="'+hs+'">Team, Playbook &amp; Reports</div>';
   h+='<div style="'+ps+'"><b>Team</b> &mdash; Set your team name, logo URL, and primary color. Branding appears on shared player pages.</div>';
-  h+='<div style="'+ps+'"><b>Playbooks</b> &mdash; Upload PDF playbook files. These persist across weeks and are included in share links. Upload a glossary PDF for terminology reference.</div>';
+  h+='<div style="'+ps+'"><b>Playbook</b> &mdash; Your call finder. Add every call once, then find it by pressure, front and coverage. Import a call list (CSV) and your playbook PDF, or add calls by hand. Only you can see it.</div>';
+  h+='<div style="'+ps+'"><b>PDF Library</b> &mdash; Upload PDF playbook files. These persist across weeks and are included in share links. Upload a glossary PDF for terminology reference.</div>';
   h+='<div style="'+ps+'"><b>Reports</b> &mdash; Upload scouting report PDFs for each game week. These are week-specific and included when sharing.</div>';
 
   h+='<div style="'+hs+'">Practice Scripts</div>';
@@ -4805,7 +4810,10 @@ function bind(){
     });
   }
 
-  // Playbooks modal
+  // Playbook tab (playbook.js)
+  var btnPlaybookTab=document.getElementById('btnPlaybookTab');
+  if(btnPlaybookTab)btnPlaybookTab.addEventListener('click',function(){if(window.JBPlaybook)window.JBPlaybook.open()});
+  // PDF Library modal (was "Playbooks")
   var btnPlaybooks=document.getElementById('btnPlaybooks');
   var playbooksModal=document.getElementById('playbooksModal');
   if(btnPlaybooks&&playbooksModal){
