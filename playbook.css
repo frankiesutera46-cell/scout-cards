@@ -66,6 +66,7 @@
 .pbk-dh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--c-line)}
 .pbk-dh h2{font-size:16px;margin:0;color:var(--c-ink);overflow-wrap:anywhere}
 .pbk-big{display:block;width:100%;background:#fff}
+.pbk-sheet{padding:8px 16px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--c-ink-dim);border-top:1px solid var(--c-line)}
 .pbk-noimg.pbk-big{aspect-ratio:16/6}
 .pbk-db{display:flex;flex-direction:column;gap:12px;padding:14px 16px}
 .pbk-db dl{display:flex;flex-wrap:wrap;gap:10px 26px;margin:0}
