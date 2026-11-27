@@ -5,8 +5,8 @@
    - Cross-origin fonts / CDN libs (supabase, pdf.js, Google Fonts): cache-first.
    - Supabase API (auth + data): never touched — always straight to the network.
    Bump CACHE when this file's logic changes to drop old caches. */
-var CACHE = 'jbf-v2';
-var CORE = ['./', './index.html', './styles.css', './app.js',
+var CACHE = 'jbf-v3';
+var CORE = ['./', './index.html', './styles.css', './app.js', './playbook.js', './playbook.css',
             './juice-wordmark.png', './juice-full.png', './juice-icon.png'];
 
 self.addEventListener('install', function(e){
