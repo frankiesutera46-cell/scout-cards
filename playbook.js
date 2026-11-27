@@ -30,10 +30,17 @@ function frontOf(c){return c.front||'No front'}
 function typeOf(c){return c.type||'Base'}
 
 /* ---------- storage ---------- */
+function nums(v){return String(v==null?'':v).split(/[^0-9]+/).map(function(x){return parseInt(x,10)}).filter(function(n){return n>0})}
+function used(path,except){return S.calls.some(function(x){return x!==except&&x.imgs.indexOf(path)>=0})}
+function allImgs(){var o=[];S.calls.forEach(function(c){c.imgs.forEach(function(p){if(o.indexOf(p)<0)o.push(p)})});return o}
+// A call can have several sheets: pages = slide/PDF page numbers, imgs = one stored picture per sheet.
+// page and img mirror the first of each (and are what older saved data has).
 function normalize(list){
   return (Array.isArray(list)?list:[]).filter(function(c){return c&&c.name}).map(function(c){
+    var pages=Array.isArray(c.pages)&&c.pages.length?nums(c.pages.join(',')):nums(c.page);
+    var imgs=Array.isArray(c.imgs)&&c.imgs.length?c.imgs.filter(Boolean):(c.img?[c.img]:[]);
     return {id:c.id||newId(),name:String(c.name),front:c.front||'',coverage:c.coverage||'',type:c.type||'Base',who:c.who||'',
-      snaps:parseInt(c.snaps,10)||0,tag:c.tag||'',page:parseInt(c.page,10)||0,img:c.img||'',link:c.link||'',notes:c.notes||''};
+      snaps:parseInt(c.snaps,10)||0,tag:c.tag||'',page:pages[0]||0,pages:pages,img:imgs[0]||'',imgs:imgs,link:c.link||'',notes:c.notes||''};
   });
 }
 async function load(){
@@ -68,7 +75,7 @@ function save(){
 }
 async function signUrls(){
   var u=user();if(!u||!sb())return;
-  var paths=[];S.calls.forEach(function(c){if(c.img&&!S.urls[c.img]&&paths.indexOf(c.img)<0)paths.push(c.img)});
+  var paths=allImgs().filter(function(p){return !S.urls[p]&&p.indexOf('mem:')!==0});
   for(var i=0;i<paths.length;i+=100){
     try{
       var res=await sb().storage.from(BUCKET).createSignedUrls(paths.slice(i,i+100),60*60*6);
@@ -76,7 +83,9 @@ async function signUrls(){
     }catch(e){}
   }
 }
-function imgSrc(c){return c.img?(S.urls[c.img]||S.mem[c.img]||''):''}
+function srcOf(p){return p?(S.urls[p]||S.mem[p]||''):''}
+function imgSrc(c){return srcOf(c.img)}
+function imgSrcs(c){return c.imgs.map(srcOf).filter(Boolean)}
 async function putImage(blob,label){
   var u=user();
   if(!u||!sb()){ // demo: keep the picture for this session only
@@ -111,14 +120,14 @@ function shrink(file,maxW){ // image file -> jpeg blob no wider than maxW
 function shareUrl(){return location.origin+'/?playbook='+S.shareId}
 async function publishShare(){ // writes a read-only snapshot anyone with the link can open
   var u=user();if(!u||!sb())throw new Error('Sign in to share your playbook.');
-  var paths=[],urls={};S.calls.forEach(function(c){if(c.img&&c.img.indexOf('mem:')!==0&&paths.indexOf(c.img)<0)paths.push(c.img)});
+  var urls={},paths=allImgs().filter(function(p){return p.indexOf('mem:')!==0});
   for(var i=0;i<paths.length;i+=100){
     var r=await sb().storage.from(BUCKET).createSignedUrls(paths.slice(i,i+100),60*60*24*365);
     if(r.error)throw r.error;
     (r.data||[]).forEach(function(d){if(d&&d.signedUrl)urls[d.path]=d.signedUrl});
   }
   var payload={kind:'playbook',updated:new Date().toISOString(),calls:S.calls.map(function(c){
-    return {name:c.name,front:c.front,coverage:c.coverage,type:c.type,who:c.who,snaps:c.snaps,tag:c.tag,notes:c.notes,link:c.link,u:urls[c.img]||''};
+    return {name:c.name,front:c.front,coverage:c.coverage,type:c.type,who:c.who,snaps:c.snaps,tag:c.tag,notes:c.notes,link:c.link,u:urls[c.img]||'',us:c.imgs.map(function(p){return urls[p]}).filter(Boolean)};
   })};
   var res=null;
   if(S.shareId)res=await sb().from(SHARE_TABLE).update({game_name:'Playbook',data:payload}).eq('id',S.shareId).select('id').single();
@@ -144,7 +153,10 @@ async function loadShared(id){
     else if(d.off)bad='This playbook link has been turned off. Ask the coach who sent it for a new one.';
     else{
       S.calls=normalize(d.calls);
-      (d.calls||[]).filter(function(c){return c&&c.name}).forEach(function(c,i){if(c.u&&S.calls[i]){S.calls[i].img='v:'+i;S.mem['v:'+i]=c.u}});
+      (d.calls||[]).filter(function(c){return c&&c.name}).forEach(function(c,i){
+        var us=Array.isArray(c.us)&&c.us.length?c.us:(c.u?[c.u]:[]),t=S.calls[i];if(!t||!us.length)return;
+        t.imgs=us.map(function(u,j){var k='v:'+i+':'+j;S.mem[k]=u;return k});t.img=t.imgs[0];
+      });
     }
   }catch(e){bad='This playbook could not be loaded. Check your connection and try again.'}
   S.busy='';S.viewError=bad;draw();
@@ -208,14 +220,14 @@ function callsFromCSV(text){
 function csvCell(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function toCSV(list){
   var out=[['Call','Front','Coverage','Pressure','Who','Snaps','Tag','Slide','Link','Notes']];
-  list.forEach(function(c){out.push([c.name,c.front,c.coverage,c.type,c.who,c.snaps||'',c.tag,c.page||'',c.link,c.notes])});
+  list.forEach(function(c){out.push([c.name,c.front,c.coverage,c.type,c.who,c.snaps||'',c.tag,c.pages&&c.pages.length?c.pages.join(', '):(c.page||''),c.link,c.notes])});
   return out.map(function(r){return r.map(csvCell).join(',')}).join('\n');
 }
 function download(name,text){
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download=name;
   document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},100);
 }
-var TEMPLATE=[{name:'Base 4',front:'Base',coverage:'C4',type:'Base',who:'',snaps:0,tag:'',page:2,link:'',notes:''},
+var TEMPLATE=[{name:'Base 4',front:'Base',coverage:'C4',type:'Base',who:'',snaps:0,tag:'',page:'2, 3',link:'',notes:'More than one sheet: list every slide number'},
   {name:'Load Favre 3',front:'Load',coverage:'C3',type:'Sim',who:'Nickel',snaps:0,tag:'',page:14,link:'',notes:''},
   {name:'Ace Brady Check',front:'Ace',coverage:'C3 / QQH',type:'Sim',who:'LB',snaps:0,tag:'',page:0,link:'',notes:'Two coverages: separate them with " / "'}];
 
@@ -224,10 +236,10 @@ async function picturesFromPDF(file,onStep){
   if(!window.pdfjsLib)throw new Error('The PDF reader did not load. Check your connection and try again.');
   try{if(!window.pdfjsLib.GlobalWorkerOptions.workerSrc)window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}catch(e){}
   var pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-  var pages=[];S.calls.forEach(function(c){if(c.page>0&&c.page<=pdf.numPages&&pages.indexOf(c.page)<0)pages.push(c.page)});
+  var pages=[];S.calls.forEach(function(c){c.pages.forEach(function(n){if(n<=pdf.numPages&&pages.indexOf(n)<0)pages.push(n)})});
   pages.sort(function(a,b){return a-b});
   if(!pages.length)throw new Error('No call has a Slide number that matches a page in this PDF.');
-  var old=[],done=0;
+  var old=[],done=0,byPage={};
   for(var i=0;i<pages.length;i++){
     var n=pages[i];onStep('Page '+n+' ('+(i+1)+' of '+pages.length+')');
     var pg=await pdf.getPage(n),vp=pg.getViewport({scale:1});vp=pg.getViewport({scale:Math.min(2,1100/vp.width)});
@@ -236,10 +248,13 @@ async function picturesFromPDF(file,onStep){
     await pg.render({canvasContext:cx,viewport:vp}).promise;
     var blob=await new Promise(function(ok){cv.toBlob(ok,'image/jpeg',.76)});
     var path=await putImage(blob,'p'+n);
-    S.calls.forEach(function(c){if(c.page===n){if(c.img&&old.indexOf(c.img)<0)old.push(c.img);c.img=path;done++}});
+    byPage[n]=path;
   }
-  var still={};S.calls.forEach(function(c){still[c.img]=1});
-  removeImages(old.filter(function(p){return !still[p]}));
+  S.calls.forEach(function(c){
+    var next=c.pages.map(function(n){return byPage[n]}).filter(Boolean);if(!next.length)return;
+    c.imgs.forEach(function(p){if(old.indexOf(p)<0)old.push(p)});c.imgs=next;c.img=next[0];done++;
+  });
+  removeImages(old.filter(function(p){return !used(p,null)}));
   save();
   return {pages:pages.length,calls:done};
 }
@@ -319,7 +334,7 @@ function draw(){
     h+='<button class="pbk-card" data-act="open" data-v="'+esc(c.id)+'">'+
       (src?'<img loading="lazy" alt="" src="'+esc(src)+'"/>':'<div class="pbk-noimg">'+(S.view?'No picture':'No picture yet')+'</div>')+
       '<div class="pbk-card-b"><div class="pbk-card-n">'+esc(c.name)+'</div>'+
-      '<div class="pbk-meta"><b>'+esc(frontOf(c))+'</b><span>'+esc(covs(c).join(' / '))+'</span>'+(c.snaps?'<span>'+c.snaps+(c.snaps===1?' snap':' snaps')+'</span>':'')+'</div>'+
+      '<div class="pbk-meta"><b>'+esc(frontOf(c))+'</b><span>'+esc(covs(c).join(' / '))+'</span>'+(c.snaps?'<span>'+c.snaps+(c.snaps===1?' snap':' snaps')+'</span>':'')+(c.imgs.length>1?'<span>'+c.imgs.length+' sheets</span>':'')+'</div>'+
       (c.who?'<div class="pbk-meta"><span>'+esc(c.who)+'</span></div>':'')+
       '<div class="pbk-pills"><span class="pbk-ty pbk-ty-'+typeClass(typeOf(c))+'">'+esc(typeOf(c))+'</span>'+(c.tag?'<span class="pbk-tag">'+esc(c.tag)+'</span>':'')+'</div>'+
       '</div></button>';
@@ -338,7 +353,7 @@ function openCard(id){
   var rows=[['Front',frontOf(c)],['Coverage',covs(c).join(' / ')],['Pressure',typeOf(c)],['Who is coming',c.who||'—'],['Snaps',c.snaps||0]];
   if(c.tag)rows.push(['Tag',c.tag]);
   modal('<div class="pbk-dh"><h2>'+esc(c.name)+'</h2><div>'+(S.view?'':'<button class="pbk-btn" data-act="edit" data-v="'+esc(c.id)+'">Edit</button> ')+'<button class="pbk-btn" data-act="mclose">Close</button></div></div>'+
-    (src?'<img class="pbk-big" alt="'+esc(c.name)+' diagram" src="'+esc(src)+'"/>':'<div class="pbk-noimg pbk-big">'+(S.view?'No picture for this call.':'No picture yet. Edit this call to add one.')+'</div>')+
+    (src?imgSrcs(c).map(function(u,i,a){return (a.length>1?'<div class="pbk-sheet">Sheet '+(i+1)+' of '+a.length+'</div>':'')+'<img class="pbk-big" alt="'+esc(c.name)+' sheet '+(i+1)+'" src="'+esc(u)+'"/>'}).join(''):'<div class="pbk-noimg pbk-big">'+(S.view?'No picture for this call.':'No picture yet. Edit this call to add one.')+'</div>')+
     '<div class="pbk-db"><dl>'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd></div>'}).join('')+'</dl>'+
     (c.notes?'<p class="pbk-notes">'+esc(c.notes)+'</p>':'')+
     (/^https?:\/\//i.test(c.link)?'<a href="'+esc(c.link)+'" target="_blank" rel="noopener">Open the slide</a>':'')+'</div>');
@@ -357,10 +372,10 @@ function openForm(id){
       field('Who is coming','pfWho',v.who,'list="pdlW" placeholder="LB, Nickel, Corner…"')+'</div>'+
     '<div class="pbk-f2">'+field('Snaps called','pfSnaps',v.snaps||'','type="number" min="0" inputmode="numeric"')+
       field('Tag (optional)','pfTag',v.tag,'list="pdlG" placeholder="3rd down, Red zone…"')+'</div>'+
-    '<div class="pbk-f2">'+field('Slide or PDF page (optional)','pfPage',v.page||'','type="number" min="0" inputmode="numeric"')+
+    '<div class="pbk-f2">'+field('Slides or PDF pages (optional)','pfPage',(v.pages&&v.pages.length?v.pages.join(', '):''),'placeholder="2, 3, 9"')+
       field('Link (optional)','pfLink',v.link,'type="url" placeholder="https://"')+'</div>'+
     '<label class="pbk-f"><span>Notes (optional)</span><textarea id="pfNotes" rows="2">'+esc(v.notes)+'</textarea></label>'+
-    '<label class="pbk-f"><span>Picture of the play'+(c&&c.img?' (leave empty to keep the current one)':'')+'</span><input id="pfImg" type="file" accept="image/*"/></label>'+
+    '<label class="pbk-f"><span>Pictures of the play'+(c&&c.img?' (leave empty to keep the current '+c.imgs.length+'; choosing new ones replaces them)':' (pick more than one for several sheets)')+'</span><input id="pfImg" type="file" accept="image/*" multiple/></label>'+
     opts('pdlF',uniq(function(x){return x.front}))+opts('pdlC',uniq(function(x){return covs(x).filter(function(k){return k!=='No coverage'})}))+
     opts('pdlT',TYPE_ORDER.concat(uniq(typeOf).filter(function(t){return TYPE_ORDER.indexOf(t)<0})))+opts('pdlW',uniq(function(x){return x.who}))+opts('pdlG',uniq(function(x){return x.tag}))+
     '<div class="pbk-form-btns">'+(c?'<button type="button" class="pbk-btn pbk-danger" data-act="del" data-v="'+esc(c.id)+'">Delete call</button>':'<span></span>')+
@@ -374,14 +389,16 @@ async function saveForm(f){
   var id=f.getAttribute('data-id'),c=id?find(id):null,msg=root.querySelector('#pfMsg'),btn=root.querySelector('#pfSave');
   var name=val('pfName');if(!name){msg.textContent='Give the call a name.';return}
   btn.disabled=true;msg.textContent='Saving…';
-  var o=c||{id:newId(),img:''};
+  var o=c||{id:newId(),img:'',imgs:[]};
   o.name=name;o.front=val('pfFront');o.coverage=val('pfCov');o.type=val('pfType')||'Base';o.who=val('pfWho');
-  o.snaps=parseInt(val('pfSnaps'),10)||0;o.tag=val('pfTag');o.page=parseInt(val('pfPage'),10)||0;o.link=val('pfLink');o.notes=val('pfNotes');
-  var file=root.querySelector('#pfImg').files[0];
+  o.snaps=parseInt(val('pfSnaps'),10)||0;o.tag=val('pfTag');o.pages=nums(val('pfPage'));o.page=o.pages[0]||0;o.link=val('pfLink');o.notes=val('pfNotes');
+  var files=[].slice.call(root.querySelector('#pfImg').files||[]);
   try{
-    if(file){
-      var old=o.img,path=await putImage(await shrink(file,1400),name);o.img=path;
-      if(old&&!S.calls.some(function(x){return x!==o&&x.img===old}))removeImages([old]);
+    if(files.length){
+      var old=o.imgs.slice(),next=[];
+      for(var i=0;i<files.length;i++)next.push(await putImage(await shrink(files[i],1400),name+'-'+(i+1)));
+      o.imgs=next;o.img=next[0];
+      removeImages(old.filter(function(p){return !used(p,o)}));
     }
   }catch(e){btn.disabled=false;msg.textContent='The picture did not upload: '+(e.message||e)+'. The rest was not saved.';return}
   if(!c)S.calls.push(o);
@@ -391,18 +408,18 @@ function delCall(id,btn){
   if(btn.getAttribute('data-sure')!=='1'){btn.setAttribute('data-sure','1');btn.textContent='Tap again to delete';return}
   var c=find(id);if(!c)return;
   S.calls=S.calls.filter(function(x){return x.id!==id});
-  if(c.img&&!S.calls.some(function(x){return x.img===c.img}))removeImages([c.img]);
+  removeImages(c.imgs.filter(function(p){return !used(p,null)}));
   save();closeModal();draw();toast('Call deleted');
 }
 function openImport(){
-  var n=S.calls.length,withPage=S.calls.filter(function(c){return c.page>0}).length;
+  var n=S.calls.length,withPage=S.calls.filter(function(c){return c.pages.length>0}).length;
   modal('<div class="pbk-dh"><h2>Import</h2><button class="pbk-btn" data-act="mclose">Close</button></div><div class="pbk-form">'+
     '<h3>1 · Call list</h3><p>Upload a CSV with one call per row. Columns: Call, Front, Coverage, Pressure, Who, Snaps, Tag, Slide, Link, Notes. Only Call is required. In Excel or Google Sheets, use File, Download, CSV.</p>'+
     '<div class="pbk-row"><button class="pbk-btn" data-act="tpl">Download a blank template</button>'+(n?'<button class="pbk-btn" data-act="export">Download my calls</button>':'')+'</div>'+
     (n?'<div class="pbk-radio"><label><input type="radio" name="pbkHow" id="pbkHowAdd" value="add" checked/> Add to my '+n+' calls (same name and front gets updated)</label>'+
        '<label><input type="radio" name="pbkHow" id="pbkHowRep" value="replace"/> Replace all '+n+' calls</label></div>':'')+
     '<label class="pbk-f"><span>Call list file (.csv)</span><input id="pbkCsv" type="file" accept=".csv,text/csv"/></label>'+
-    '<h3>2 · Pictures from your playbook PDF</h3><p>Upload the playbook as a PDF. Each call that has a Slide number gets that page as its picture.'+(n?' '+withPage+' of your '+n+' calls have a Slide number.':'')+'</p>'+
+    '<h3>2 · Pictures from your playbook PDF</h3><p>Upload the playbook as a PDF. Each call that has a Slide number gets that page as its picture. A call with several numbers (2, 3, 9) gets every one of those sheets.'+(n?' '+withPage+' of your '+n+' calls have a Slide number.':'')+'</p>'+
     '<label class="pbk-f"><span>Playbook file (.pdf)</span><input id="pbkPdf" type="file" accept="application/pdf,.pdf"/></label>'+
     '<div class="pbk-msg" id="pbkImpMsg"></div></div>');
   root.querySelector('#pbkCsv').addEventListener('change',function(e){var f=e.target.files[0];if(f)importCSV(f)});
@@ -413,12 +430,12 @@ async function importCSV(file){
   try{
     var list=callsFromCSV(await file.text()),rep=root.querySelector('#pbkHowRep'),added=0,updated=0;
     if(rep&&rep.checked){
-      var gone=S.calls.filter(function(c){return c.img}).map(function(c){return c.img});
+      var gone=allImgs();
       S.calls=list;added=list.length;removeImages(gone);
     }else{
       list.forEach(function(c){
         var hit=null;S.calls.forEach(function(x){if(x.name.toLowerCase()===c.name.toLowerCase()&&x.front.toLowerCase()===c.front.toLowerCase())hit=x});
-        if(hit){var img=hit.img,id=hit.id;Object.keys(c).forEach(function(k){hit[k]=c[k]});hit.id=id;hit.img=img;updated++}else{S.calls.push(c);added++}
+        if(hit){var img=hit.img,imgs=hit.imgs,id=hit.id;Object.keys(c).forEach(function(k){hit[k]=c[k]});hit.id=id;hit.img=img;hit.imgs=imgs;updated++}else{S.calls.push(c);added++}
       });
     }
     S.ty=S.a=S.b=null;save();draw();openImport();
